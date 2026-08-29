@@ -2370,6 +2370,87 @@ function renderAwardsVsStats() {
   });
 }
 
+// Historical per-party ("night") power rankings — Adam's real site computes a rank/percentile
+// per player per party and averages those into a season-long "power ranking" number; this is
+// that same frozen historical record (rankings_long in the season spreadsheet), not something
+// this tool derives. RANK 1 is best that night; PCT is field-size-normalized (100 = first place
+// that night, 0 = last), same definition the site uses. Only the 5 parties that actually have
+// logged game video are included here — the other 10 parties in the real record predate any
+// footage existing at all, so "performance on the night" could never be computed for them.
+const PARTY_RANKINGS = [
+  { date: "2026-07-29", players: [
+    { slug: "ben", rank: 1, fieldSize: 5, pct: 100 }, { slug: "adam", rank: 2, fieldSize: 5, pct: 75 },
+    { slug: "zach", rank: 3, fieldSize: 5, pct: 50 }, { slug: "g-ian", rank: 4, fieldSize: 5, pct: 25 },
+    { slug: "g-michael-t", rank: 5, fieldSize: 5, pct: 0 }
+  ] },
+  { date: "2026-08-02", players: [
+    { slug: "ben", rank: 1, fieldSize: 5, pct: 100 }, { slug: "adam", rank: 2, fieldSize: 5, pct: 75 },
+    { slug: "zach", rank: 3, fieldSize: 5, pct: 50 }, { slug: "g-ian", rank: 4, fieldSize: 5, pct: 25 },
+    { slug: "g-lukas", rank: 5, fieldSize: 5, pct: 0 }
+  ] },
+  { date: "2026-08-05", players: [
+    { slug: "zach", rank: 1, fieldSize: 6, pct: 100 }, { slug: "ben", rank: 2, fieldSize: 6, pct: 80 },
+    { slug: "reilly", rank: 3, fieldSize: 6, pct: 60 }, { slug: "adam", rank: 4, fieldSize: 6, pct: 40 },
+    { slug: "logan-watson", rank: 5, fieldSize: 6, pct: 20 }, { slug: "g-lukas", rank: 6, fieldSize: 6, pct: 0 }
+  ] },
+  { date: "2026-08-10", players: [
+    { slug: "evan", rank: 1, fieldSize: 9, pct: 100 }, { slug: "zach", rank: 2, fieldSize: 9, pct: 87.5 },
+    { slug: "reilly", rank: 3, fieldSize: 9, pct: 75 }, { slug: "adam", rank: 4, fieldSize: 9, pct: 62.5 },
+    { slug: "ben", rank: 5, fieldSize: 9, pct: 50 }, { slug: "alex", rank: 6, fieldSize: 9, pct: 37.5 },
+    { slug: "g-lukas", rank: 7, fieldSize: 9, pct: 25 }, { slug: "g-ian", rank: 8, fieldSize: 9, pct: 12.5 },
+    { slug: "viraj", rank: 9, fieldSize: 9, pct: 0 }
+  ] },
+  { date: "2026-08-16", players: [
+    { slug: "adam", rank: 1, fieldSize: 5, pct: 100 }, { slug: "zach", rank: 2, fieldSize: 5, pct: 75 },
+    { slug: "ben", rank: 3, fieldSize: 5, pct: 50 }, { slug: "sean", rank: 4, fieldSize: 5, pct: 25 },
+    { slug: "alex", rank: 5, fieldSize: 5, pct: 0 }
+  ] }
+];
+
+// For each historical party, pairs its frozen power ranking with that same player's *actual*
+// per-20 performance in just the games logged for that date — scoped per player to the games
+// they themselves appeared in that night (not every game logged that date), same "only games
+// with real shots logged count" rule as everywhere else. Computed live, every render; only the
+// ranking side is the frozen historical record.
+function computePowerRankingVsPerformance() {
+  return PARTY_RANKINGS.map(party => {
+    const gamesThatNight = state.games.filter(g => g.date === party.date && g.scoringEvents.length > 0);
+    const rows = party.players.map(pr => {
+      const player = state.players.find(p => p.id === pr.slug);
+      const gamesPlayed = player ? gamesThatNight.filter(g => g.teamA.includes(pr.slug) || g.teamB.includes(pr.slug)) : [];
+      const perf = gamesPlayed.length > 0 ? computeRateSummaryForGames(pr.slug, gamesPlayed) : null;
+      return { slug: pr.slug, player, rank: pr.rank, fieldSize: pr.fieldSize, pct: pr.pct, perf };
+    });
+    return { date: party.date, players: rows };
+  });
+}
+
+function renderPowerRankingVsPerformance() {
+  const wrap = document.getElementById("powerRankingVsPerformance");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  computePowerRankingVsPerformance().forEach(party => {
+    const section = document.createElement("div");
+    section.className = "power-ranking-night";
+    const rowsHtml = party.players.map(r => `
+      <tr>
+        <td>${r.rank} <span class="hint" style="margin:0">(of ${r.fieldSize})</span></td>
+        <td>${r.player ? escapeHtml(r.player.name) : `${escapeHtml(r.slug)} (not in current roster)`}</td>
+        <td>${r.pct}%</td>
+        <td>${r.perf ? `${r.perf.twoWayPer20.toFixed(1)} <span class="hint" style="margin:0">(${r.perf.gp} game${r.perf.gp === 1 ? "" : "s"})</span>` : "—"}</td>
+      </tr>
+    `).join("");
+    section.innerHTML = `
+      <h4>${escapeHtml(formatDateDisplay(party.date))}</h4>
+      <table class="matchup-table">
+        <thead><tr><th>Power Rank</th><th>Player</th><th>Power %</th><th>Two-Way/20 That Night</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    `;
+    wrap.appendChild(section);
+  });
+}
+
 function renderAssistSynergy() {
   const body = document.getElementById("assistSynergyBody");
   const rows = computeAssistConnections();
@@ -2606,6 +2687,7 @@ function renderLeaderboardHeader() {
 function renderLeaderboard() {
   renderLeaderboardHeader();
   renderAwardsVsStats();
+  renderPowerRankingVsPerformance();
   renderLeagueHeatmap();
   renderAssistSynergy();
   renderThreePtDistancePanel();

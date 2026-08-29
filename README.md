@@ -183,6 +183,15 @@ individual player, not a team.
    themselves; the stat list is live. Seeing them side by side is the actual point of this
    panel — a vote and the numbers landing in a different order isn't a bug to fix, it's the
    answer to "did the numbers back up the vote." Click **▲ Hide standings** to collapse it again.
+   Right below that, **Power Ranking vs. Performance** does the same kind of comparison, but
+   per-night instead of per-season: the real Poolean site computes its own power ranking for
+   every party (rank 1 = best that night, a field-size-normalized percentile — 100 for first,
+   0 for last), and that's a frozen historical record here too, not something this tool derives.
+   Paired against that same player's actual Two-Way/20 in just the games logged for that
+   specific date — only the 5 nights that actually have game video are shown, since the other 10
+   real parties predate any footage existing at all, so there's nothing to check them against. A
+   player who didn't have a game logged for that particular night shows "—", not a zero — that's
+   a gap in what's been reviewed, not a real 0.0 performance.
    Below that, **Game-Winning Buckets** counts, per player, how many times their shot actually
    closed out a game their team won — the real game-ending basket in Poolean's race-to-a-target
    format. Credited only when *every* made shot in that game has a real video timestamp — a

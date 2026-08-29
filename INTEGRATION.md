@@ -328,6 +328,24 @@ reconcile or merge the two into one list if you port this; keeping them visibly 
 intentional. If a future season's awards get added, `votedStandings` needs the same manual-entry
 treatment as `AWARD_RESULTS.winners` — there's no live connection to a ballot system here at all.
 
+**Power Ranking vs. Performance is the same "half hardcoded, half live" shape as Awards vs.
+Stats, one level down: per-night instead of per-season.** `PARTY_RANKINGS` (`app.js`) is a frozen
+snapshot of `rankings_long` from the season spreadsheet — your own site's per-party rank and
+field-size-normalized percentile for every player at every party, the same numbers your "season
+average" already averages over. That part is hardcoded and won't update itself, exactly like
+`AWARD_RESULTS`. Only 5 of the real 15 parties are included — the ones with `date` values
+matching games that actually exist in `poolean-seed.json` (2026-07-29, 08-02, 08-05, 08-10,
+08-16) — since the other 10 parties predate any game footage existing at all, and "performance
+on the night" has nothing to compute for them. What's live: `computePowerRankingVsPerformance()`
+filters `games` to that exact `date` with `scoring_events.length > 0`, further filters to just
+the games that specific player's `teamA`/`teamB` includes (a party can have more than one game,
+and a player may not have played in all of them), and runs those through
+`computeRateSummaryForGames()` — the same helper Teammate Synergy above uses — for that player's
+Two-Way/20 in just that night's games. A player with no qualifying game that night renders "—",
+not a zero, same reasoning as everywhere else non-participation isn't a bad performance. If you
+add parties 6-10 here (or a future season's), you'd need both the `date`-to-party mapping and,
+eventually, actual footage for "performance" to mean anything for them.
+
 **Game-Winning Buckets is also purely computed, nothing stored** — a season count, per player,
 of games where `gameWinningShot()` (`app.js`) identified their shot as the one that actually
 closed out a game their team won. The logic: find the winning team (higher final score; a tie

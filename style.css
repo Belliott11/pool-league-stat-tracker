@@ -969,3 +969,13 @@ button:disabled {
   font-weight: 600;
   white-space: nowrap;
 }
+
+.power-ranking-night {
+  margin-bottom: 18px;
+}
+.power-ranking-night:last-child {
+  margin-bottom: 0;
+}
+.power-ranking-night h4 {
+  margin: 0 0 6px;
+}
