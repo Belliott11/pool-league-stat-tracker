@@ -304,6 +304,22 @@ each award's `standings` array; the UI renders that behind a per-card "See stand
 (`expandedAwards`, a plain in-memory `Set` of expanded award keys — UI state, not app data, and
 not persisted across a reload).
 
+**Each award's `votedStandings` array is a second, entirely separate hardcoded snapshot from
+the same season spreadsheet — the real ballot tally, not something this tool derives.** Sourced
+from `award_tally_long`'s `borda_points` measure (`pair_votes` for `best-duo`/`worst-duo`, which
+aren't single-candidate ballots) — every candidate who received at least one vote, with their
+point total, in the exact order that actually decided the award. Unlike everything else on this
+page, `votedStandings` entries carry their own `name` directly (not resolved through
+`state.players`), since a vote tally is a historical fact independent of who happens to be in
+the current browser's roster — Logan H, Kayla, Ian, and others who received votes were never
+imported into `poolean-seed.json` at all, and that's fine; the vote list still shows them
+correctly by name. When the UI expands an award, it renders `votedStandings` ("How the vote
+went") side by side with the live `standings` array ("Stat standings") — the entire point of the
+panel is comparing a fixed historical vote against a live-computed number, so don't try to
+reconcile or merge the two into one list if you port this; keeping them visibly separate is
+intentional. If a future season's awards get added, `votedStandings` needs the same manual-entry
+treatment as `AWARD_RESULTS.winners` — there's no live connection to a ballot system here at all.
+
 **Game-Winning Buckets is also purely computed, nothing stored** — a season count, per player,
 of games where `gameWinningShot()` (`app.js`) identified their shot as the one that actually
 closed out a game their team won. The logic: find the winning team (higher final score; a tie

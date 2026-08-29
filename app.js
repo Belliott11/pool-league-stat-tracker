@@ -2158,18 +2158,79 @@ function renderGameWinningBucketsPanel() {
 // season-long Two-Way total rather than a per-20 rate, on the theory that "played a lot and
 // contributed a lot" should outweigh a slightly higher rate over fewer games for that specific
 // award — every other award here still compares on the per-20 rate.
+// `votedStandings` is the real ballot tally (`award_tally_long`'s `borda_points` measure —
+// `pair_votes` for the two duo awards, which aren't single-candidate ballots) for every
+// candidate who got at least one vote, not just the winner — a genuine second ranking to sit
+// next to the stat standings, sourced from the same spreadsheet as everything else here. `name`
+// is the display name straight from that sheet (pre-joined as "X + Y" for a duo), so this list
+// never depends on whether that person happens to be in the current browser's roster.
 const AWARD_RESULTS = [
-  { key: "mvp", label: "MVP", winners: ["ben"], statKey: "twoWayTotal" },
-  { key: "best-player", label: "Best Player", winners: ["phillip"], statKey: "twoWay" },
-  { key: "dpoy", label: "Defensive Player of the Year", winners: ["adam"], statKey: "defImpact" },
-  { key: "clutch", label: "Clutch", winners: ["phillip"], statKey: "gwb" },
-  { key: "mip-season", label: "Most Improved (Season)", winners: ["zach"], statKey: "trend" },
-  { key: "mip-yoy", label: "Most Improved (Year-over-Year)", winners: ["zach"], statKey: "trend" },
-  { key: "teammate", label: "Best Teammate", winners: ["ben"], statKey: "teammateLift" },
-  { key: "first-team", label: "First Team", winners: ["phillip", "ben", "sean"], statKey: "twoWay" },
-  { key: "second-team", label: "Second Team", winners: ["adam", "reilly", "evan"], statKey: "twoWay" },
-  { key: "best-duo", label: "Best Duo", winners: ["phillip", "ben"], statKey: "twoWay", isDuo: true },
-  { key: "worst-duo", label: "Worst Duo", winners: ["phillip", "viraj"], statKey: "twoWay", isDuo: true }
+  { key: "mvp", label: "MVP", winners: ["ben"], statKey: "twoWayTotal", votedStandings: [
+    { slug: "ben", name: "Ben", points: 18 }, { slug: "adam", name: "Adam", points: 11 },
+    { slug: "phillip", name: "Phillip", points: 7 }, { slug: "reilly", name: "Reilly", points: 6 },
+    { slug: "zach", name: "Zach", points: 5 }, { slug: "evan", name: "Evan", points: 1 }
+  ] },
+  { key: "best-player", label: "Best Player", winners: ["phillip"], statKey: "twoWay", votedStandings: [
+    { slug: "phillip", name: "Phillip", points: 21 }, { slug: "ben", name: "Ben", points: 7 },
+    { slug: "logan-hoskins", name: "Logan H", points: 6 }, { slug: "adam", name: "Adam", points: 4 },
+    { slug: "evan", name: "Evan", points: 4 }, { slug: "reilly", name: "Reilly", points: 3 },
+    { slug: "sean", name: "Sean", points: 2 }, { slug: "kayla", name: "Kayla", points: 1 }
+  ] },
+  { key: "dpoy", label: "Defensive Player of the Year", winners: ["adam"], statKey: "defImpact", votedStandings: [
+    { slug: "adam", name: "Adam", points: 9 }, { slug: "jason", name: "Jason", points: 9 },
+    { slug: "phillip", name: "Phillip", points: 6 }, { slug: "ben", name: "Ben", points: 4 },
+    { slug: "logan-hoskins", name: "Logan H", points: 3 }, { slug: "sean", name: "Sean", points: 3 },
+    { slug: "g-ian", name: "Ian", points: 2 }, { slug: "reilly", name: "Reilly", points: 2 },
+    { slug: "will", name: "Will", points: 2 }, { slug: "evan", name: "Evan", points: 1 },
+    { slug: "zach", name: "Zach", points: 1 }
+  ] },
+  { key: "clutch", label: "Clutch", winners: ["phillip"], statKey: "gwb", votedStandings: [
+    { slug: "phillip", name: "Phillip", points: 7 }, { slug: "zach", name: "Zach", points: 7 },
+    { slug: "adam", name: "Adam", points: 5 }, { slug: "evan", name: "Evan", points: 5 },
+    { slug: "alex", name: "Alex", points: 4 }, { slug: "reilly", name: "Reilly", points: 4 },
+    { slug: "ben", name: "Ben", points: 3 }, { slug: "viraj", name: "Viraj", points: 1 }
+  ] },
+  { key: "mip-season", label: "Most Improved (Season)", winners: ["zach"], statKey: "trend", votedStandings: [
+    { slug: "zach", name: "Zach", points: 19 }, { slug: "ben", name: "Ben", points: 7 },
+    { slug: "alex", name: "Alex", points: 4 }, { slug: "evan", name: "Evan", points: 4 },
+    { slug: "g-lukas", name: "Lukas", points: 4 }, { slug: "adam", name: "Adam", points: 2 },
+    { slug: "jason", name: "Jason", points: 2 }
+  ] },
+  { key: "mip-yoy", label: "Most Improved (Year-over-Year)", winners: ["zach"], statKey: "trend", votedStandings: [
+    { slug: "zach", name: "Zach", points: 9 }, { slug: "ben", name: "Ben", points: 6 },
+    { slug: "adam", name: "Adam", points: 5 }, { slug: "alex", name: "Alex", points: 3 },
+    { slug: "jason", name: "Jason", points: 3 }, { slug: "viraj", name: "Viraj", points: 3 },
+    { slug: "logan-watson", name: "Logan W", points: 2 }, { slug: "ryder", name: "Ryder", points: 2 },
+    { slug: "sean", name: "Sean", points: 2 }, { slug: "evan", name: "Evan", points: 1 }
+  ] },
+  { key: "teammate", label: "Best Teammate", winners: ["ben"], statKey: "teammateLift", votedStandings: [
+    { slug: "ben", name: "Ben", points: 10 }, { slug: "reilly", name: "Reilly", points: 6 },
+    { slug: "sean", name: "Sean", points: 6 }, { slug: "evan", name: "Evan", points: 4 },
+    { slug: "jason", name: "Jason", points: 4 }, { slug: "adam", name: "Adam", points: 3 },
+    { slug: "logan-hoskins", name: "Logan H", points: 3 }, { slug: "phillip", name: "Phillip", points: 2 },
+    { slug: "alex", name: "Alex", points: 1 }, { slug: "g-ian", name: "Ian", points: 1 },
+    { slug: "will", name: "Will", points: 1 }, { slug: "zach", name: "Zach", points: 1 }
+  ] },
+  { key: "first-team", label: "First Team", winners: ["phillip", "ben", "sean"], statKey: "twoWay", votedStandings: [
+    { slug: "phillip", name: "Phillip", points: 29 }, { slug: "ben", name: "Ben", points: 22 },
+    { slug: "sean", name: "Sean", points: 13 }, { slug: "adam", name: "Adam", points: 12 },
+    { slug: "reilly", name: "Reilly", points: 10 }, { slug: "evan", name: "Evan", points: 9 },
+    { slug: "logan-hoskins", name: "Logan H", points: 7 }, { slug: "zach", name: "Zach", points: 3 }
+  ] },
+  { key: "second-team", label: "Second Team", winners: ["adam", "reilly", "evan"], statKey: "twoWay", votedStandings: [
+    { slug: "phillip", name: "Phillip", points: 29 }, { slug: "ben", name: "Ben", points: 22 },
+    { slug: "sean", name: "Sean", points: 13 }, { slug: "adam", name: "Adam", points: 12 },
+    { slug: "reilly", name: "Reilly", points: 10 }, { slug: "evan", name: "Evan", points: 9 },
+    { slug: "logan-hoskins", name: "Logan H", points: 7 }, { slug: "zach", name: "Zach", points: 3 }
+  ] },
+  { key: "best-duo", label: "Best Duo", winners: ["phillip", "ben"], statKey: "twoWay", isDuo: true, votedStandings: [
+    { slug: "ben|phillip", name: "Ben + Phillip", points: 3 }, { slug: "alex|kayla", name: "Alex + Kayla", points: 1 },
+    { slug: "alex|viraj", name: "Alex + Viraj", points: 1 }
+  ] },
+  { key: "worst-duo", label: "Worst Duo", winners: ["phillip", "viraj"], statKey: "twoWay", isDuo: true, votedStandings: [
+    { slug: "phillip|viraj", name: "Phillip + Viraj", points: 4 }, { slug: "adam|zach", name: "Adam + Zach", points: 1 },
+    { slug: "alex|viraj", name: "Alex + Viraj", points: 1 }
+  ] }
 ];
 
 // For each award, resolves its voted winner(s) against whatever's actually logged in this
@@ -2259,11 +2320,23 @@ function renderAwardsVsStats() {
         <span class="hint" style="margin:0">${escapeHtml(w.detail)}</span>
       </div>
     `).join("");
-    const hasStandings = award.standings.length > 0;
+    const votedHtml = award.votedStandings && award.votedStandings.length > 0
+      ? `<ol class="award-standings">${award.votedStandings.map(v => `<li><span class="award-standings-name">${escapeHtml(v.name)}</span><span class="hint" style="margin:0">${v.points} pt${v.points === 1 ? "" : "s"}</span></li>`).join("")}</ol>`
+      : '<p class="empty-state" style="margin:0">No ballot data for this award.</p>';
+    const statHtml = award.standings.length > 0
+      ? `<ol class="award-standings">${award.standings.map(s => `<li><span class="award-standings-name">${escapeHtml(s.player.name)}</span><span class="hint" style="margin:0">${escapeHtml(s.display)}</span></li>`).join("")}</ol>`
+      : '<p class="empty-state" style="margin:0">No standings yet for this stat.</p>';
     const standingsHtml = isExpanded
-      ? (hasStandings
-          ? `<ol class="award-standings">${award.standings.map(s => `<li><span class="award-standings-name">${escapeHtml(s.player.name)}</span><span class="hint" style="margin:0">${escapeHtml(s.display)}</span></li>`).join("")}</ol>`
-          : '<p class="empty-state" style="margin:8px 0 0">No standings yet for this stat.</p>')
+      ? `
+        <div class="award-standings-col">
+          <h4 class="award-standings-heading">How the vote went</h4>
+          ${votedHtml}
+        </div>
+        <div class="award-standings-col">
+          <h4 class="award-standings-heading">Stat standings</h4>
+          ${statHtml}
+        </div>
+      `
       : "";
     row.innerHTML = `
       <button type="button" class="award-toggle" aria-expanded="${isExpanded}">

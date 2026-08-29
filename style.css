@@ -939,6 +939,18 @@ button:disabled {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.award-standings-heading {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
 }
 .award-standings {
   margin: 0;
