@@ -220,12 +220,15 @@ individual player, not a team.
    provisional than the 3PT one. Only field goals with a marked shot location count (see
    **Export → Backfill Shot Locations** to fill in the rest); kept in its own panel rather than
    as more columns on the main table above, since it's a cut most people only need occasionally.
+   Click any column header to sort by it (a zone with zero attempts always sorts last, same as
+   an empty stat anywhere else on this page).
    Below that, **Out-of-Bounds Misses**
    shows how often a player's own missed shot ends up out of bounds — per Poolean's actual rule,
    whoever last touched the ball loses possession, so this is really "how often does the ball
    leave their hands for good on a miss," not a shooting-accuracy stat. Misses are the
    denominator, not total shots, since a make can never go out of bounds; a league-wide line
-   above the table gives the same rate across everyone, for context. Click a player's name to
+   above the table gives the same rate across everyone, for context. Click any column header
+   here to sort by it too. Click a player's name to
    open their **Player Detail** page:
    - **Shot Heatmap** — the same grid, scoped to just this player's marked field goals across
      every game.

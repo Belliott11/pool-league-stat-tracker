@@ -2382,12 +2382,22 @@ function renderAssistSynergy() {
 // main Leaderboard table, since it's a secondary cut most people only need occasionally, not
 // something worth widening every row of the main table for. Reuses computeLeaderboard()'s
 // existing per-player shooting totals rather than recomputing them.
+const SHOT_DISTANCE_COLUMNS = [
+  { key: "player", label: "Player", accessor: r => r.player.name },
+  { key: "close", label: "Close", accessor: r => pct(r.shooting.closeM, r.shooting.closeA) },
+  { key: "mid", label: "Midrange", accessor: r => pct(r.shooting.midM, r.shooting.midA) },
+  { key: "line", label: "3PT Line", accessor: r => pct(r.shooting.tpArcM, r.shooting.tpArcA) },
+  { key: "deep", label: "3PT Deep", accessor: r => pct(r.shooting.tpDeepM, r.shooting.tpDeepA) }
+];
+let shotDistanceSort = { key: "player", dir: "asc" };
+
 function renderThreePtDistancePanel() {
+  renderSortableHeader(document.getElementById("threePtDistanceHeaderRow"), SHOT_DISTANCE_COLUMNS, shotDistanceSort, renderThreePtDistancePanel);
   const body = document.getElementById("threePtDistanceBody");
   const totalBanded = r => r.shooting.closeA + r.shooting.midA + r.shooting.tpArcA + r.shooting.tpDeepA;
-  const rows = computeLeaderboard()
-    .filter(r => totalBanded(r) > 0)
-    .sort((a, b) => totalBanded(b) - totalBanded(a));
+  const rows = computeLeaderboard().filter(r => totalBanded(r) > 0);
+  const sortCol = SHOT_DISTANCE_COLUMNS.find(c => c.key === shotDistanceSort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), shotDistanceSort.dir));
   body.innerHTML = rows.length === 0
     ? '<tr><td colspan="5" class="empty-state">No field goals with a marked shot location yet.</td></tr>'
     : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${formatShootingSplit(r.shooting.closeM, r.shooting.closeA)}</td><td>${formatShootingSplit(r.shooting.midM, r.shooting.midA)}</td><td>${formatShootingSplit(r.shooting.tpArcM, r.shooting.tpArcA)}</td><td>${formatShootingSplit(r.shooting.tpDeepM, r.shooting.tpDeepA)}</td></tr>`).join("");
@@ -2413,7 +2423,16 @@ function computeOutOfBoundsStats() {
     .sort((a, b) => b.misses - a.misses);
 }
 
+const OUT_OF_BOUNDS_COLUMNS = [
+  { key: "player", label: "Player", accessor: r => r.player.name },
+  { key: "misses", label: "Misses", accessor: r => r.misses },
+  { key: "oob", label: "Out of Bounds", accessor: r => r.oob },
+  { key: "oobPct", label: "OOB%", accessor: r => pct(r.oob, r.misses) }
+];
+let outOfBoundsSort = { key: "misses", dir: "desc" };
+
 function renderOutOfBoundsPanel() {
+  renderSortableHeader(document.getElementById("outOfBoundsHeaderRow"), OUT_OF_BOUNDS_COLUMNS, outOfBoundsSort, renderOutOfBoundsPanel);
   const rows = computeOutOfBoundsStats();
   const summaryEl = document.getElementById("outOfBoundsSummary");
   const totalMisses = rows.reduce((sum, r) => sum + r.misses, 0);
@@ -2421,6 +2440,8 @@ function renderOutOfBoundsPanel() {
   summaryEl.textContent = totalMisses > 0
     ? `League-wide: ${totalOob} of ${totalMisses} missed shots this season went out of bounds (${formatPct(pct(totalOob, totalMisses))}).`
     : "No missed shots logged yet.";
+  const sortCol = OUT_OF_BOUNDS_COLUMNS.find(c => c.key === outOfBoundsSort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), outOfBoundsSort.dir));
   const body = document.getElementById("outOfBoundsBody");
   body.innerHTML = rows.length === 0
     ? '<tr><td colspan="4" class="empty-state">No missed shots logged yet.</td></tr>'
@@ -2531,6 +2552,33 @@ function compareForSort(a, b, dir) {
   if (b === null) return -1;
   const cmp = typeof a === "string" ? a.localeCompare(b) : a - b;
   return dir === "asc" ? cmp : -cmp;
+}
+
+// Shared click-to-sort header renderer for the smaller Leaderboard-tab tables (Out-of-Bounds
+// Misses, Shot Distance) — same mechanism as the main Leaderboard table's own sort
+// (LEADERBOARD_COLUMNS/renderLeaderboardHeader), just generalized to take any {key, label,
+// accessor} column list and a mutable {key, dir} sort-state object instead of being wired to
+// LEADERBOARD_COLUMNS specifically. Mutates `sortState`'s properties in place (not reassigning
+// it) so the caller's own variable stays in sync across renders.
+function renderSortableHeader(headerRowEl, columns, sortState, onChange) {
+  headerRowEl.innerHTML = "";
+  columns.forEach(col => {
+    const th = document.createElement("th");
+    th.className = "sortable-th";
+    const active = sortState.key === col.key;
+    th.textContent = col.label + (active ? (sortState.dir === "desc" ? " ▼" : " ▲") : "");
+    if (active) th.classList.add("sorted");
+    th.addEventListener("click", () => {
+      if (sortState.key === col.key) {
+        sortState.dir = sortState.dir === "desc" ? "asc" : "desc";
+      } else {
+        sortState.key = col.key;
+        sortState.dir = "desc";
+      }
+      onChange();
+    });
+    headerRowEl.appendChild(th);
+  });
 }
 
 function renderLeaderboardHeader() {
