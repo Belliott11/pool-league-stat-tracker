@@ -157,7 +157,34 @@ individual player, not a team.
    last 5 games with real shots logged (fewer if they haven't played 5 yet), with a ▲/▼ showing
    whether that's above or below their season GmSc/20 (within ±0.5 counts as flat, shown as ●
    rather than a dash, since a dash next to a number reads as a minus sign).
-   Below the table, a **League Shot Heatmap** plots
+   Below the table, **Awards vs. Stats** lines up Summer 2026's voted awards (MVP, DPOY, Clutch,
+   Most Improved, Best Teammate, First/Second Team, Best/Worst Duo — from that season's closed
+   ballot, a fixed historical record, not something this tool derives) against whichever tracked
+   stat is the closest comparison for that award: **MVP** compares season-long total Two-Way
+   Score (not a per-20 rate) — durability and total contribution should count for MVP, not just
+   rate over however many games someone happened to play. **Best Player**, **First/Second Team**,
+   and the duo awards compare Two-Way/20 rank instead; **DPOY** compares Def Impact/20 rank;
+   **Most Improved** compares the Last 5 trend (Two-Way/20, same mechanism as the Leaderboard's
+   own Last 5 column, just using Two-Way instead of GmSc here); **Best Teammate** compares the
+   average Two-Way/20 lift that player gives their actual teammates (each teammate's own
+   With/Without split, same source as the Teammate Synergy panel on Player Detail) — a duo award
+   also shows how many assists actually happened between that pair. **Clutch** compares
+   **Game-Winning Buckets** (see below) rather than being left blank, now that there's a tracked
+   stat that actually fits it. Every number here is computed live from whatever games are
+   actually logged in this browser, so it's only ever as complete as your Shot Log is — a vote
+   sitting outside the top of its column isn't a bug, the vote and the numbers are allowed to
+   disagree, that's the whole point of comparing them. A voted player who isn't in your current
+   roster (nobody's added them yet, or they were a guest) shows as "not in current roster"
+   instead of erroring.
+   Below that, **Game-Winning Buckets** counts, per player, how many times their shot actually
+   closed out a game their team won — the real game-ending basket in Poolean's race-to-a-target
+   format. Credited only when *every* made shot in that game has a real video timestamp — a
+   single untimed shot could have happened at any point, early or late, so a partial set of
+   timestamps can't reliably say which shot was really last. That's a real limitation, not a
+   preference: a game logged without timestamps (or with just a few) will never contribute here,
+   even if you're certain from memory which shot actually won it. A season count, not a rate,
+   since a rate would round a rare, memorable thing down to an unreadable decimal.
+   Below that, a **League Shot Heatmap** plots
    every marked field goal, league-wide, into a coarse 5×6 grid at the pool's real proportions
    (~30ft by ~15ft, 2:1), hoop at the *bottom* like the shot chart, which reads more naturally
    for something you're studying rather than clicking shots onto. The rows aren't evenly spaced —
@@ -174,9 +201,10 @@ individual player, not a team.
    straight readout of the Shot Log's assist tags, sorted by count. (There's deliberately no
    win/loss duo table here — the real Poolean site already tracks that.) Below that, **3PT Shot
    Distance** splits every player's 3-pointers further by how far past the line they actually
-   were — a shot just past it (**Arc**) is a normal, makeable three; a much longer near-pool-length
+   were — a shot right at it (**Line**) is a normal, makeable three; a much longer near-pool-length
    heave (**Deep**) is a different, lower-percentage shot the plain 3PT% column blends in with it.
-   Split by radial distance from the hoop (`√((x-50)² + y²)` in the shot chart's own 0-100
+   ("Line" rather than "Arc" for the shorter-range bucket, since Poolean's three is a straight
+   line, not a curved arc.) Split by radial distance from the hoop (`√((x-50)² + y²)` in the shot chart's own 0-100
    coordinates, not real feet) against a threshold of 80 units — a single adjustable constant
    (`THREE_PT_DEEP_THRESHOLD` in `app.js`), drawn from an early, small sample, not a settled rule.
    Only 3-pointers with a marked shot location count (see **Export → Backfill Shot Locations** to
@@ -289,6 +317,17 @@ also there for the case Undo's grace period doesn't cover: realizing an already-
 wrong after the fact. Check **Show already-marked shots too** above the list to bring those back
 into view (each shows its current dot) and click straight through to a new spot to fix it — no
 need to remember which shot it was or dig through the Shot Log to find it.
+
+**Flagged Shot Locations**, right below Backfill, is Backfill's counterpart for the opposite
+problem: every marked 2PT/3PT shot where the spot disagrees with the point value you picked at
+logging time — the same mismatch the Shot Log flags one row at a time with a "📍 2PT range"/
+"📍 3PT range" badge, collected here so a whole season's worth can be caught in one pass instead
+of noticed by accident while scrolling. Same video-per-game, click-to-remark, Undo-toast
+mechanics as Backfill. Re-marking a shot to a spot that now agrees with its point value drops it
+off the list; re-marking to a spot that's still on the wrong side just redraws the dot and it
+stays flagged. If the *point value* was actually the mistake (not where you clicked), this tool
+can't fix that — remove and re-log the shot from the Shot Log instead, since a shot's points
+isn't something either backfill tool edits in place.
 
 ## Starting from your existing Poolean data
 
@@ -416,11 +455,12 @@ eFG%, TS%, Game Score, Two-Way Score, and the defensive numbers (Pts Allowed, Op
 Stops) shown in the Game Stats table and Leaderboard are all computed from this array plus
 `stats` — see `shootingStats()`, `gameDefenseStats()`, `trueShootingPct()`, `effectiveFgPct()`,
 `gameScore()`, `defensiveImpact()`, and `twoWayScore()` in `app.js`. None of these are stored as
-separate fields. Also computed from `shotLocation`, only for 3PT attempts: the **3PT Arc /
-3PT Deep** split (`threePtBand()` in `app.js`) — a shot's radial distance from the hoop
-(`√((x-50)² + y²)`) against `THREE_PT_DEEP_THRESHOLD` (currently 80), used because a shot just
-past the line and a much-longer heave are different shots that a single blended 3PT% would
-average together. See the Stat Entry section above for the full rationale and the caveat about
+separate fields. Also computed from `shotLocation`, only for 3PT attempts: the **3PT Line /
+3PT Deep** split (`threePtBand()` in `app.js`, still returning `"arc"` internally — only the
+displayed label changed, since a code rename wasn't worth the churn) — a shot's radial distance
+from the hoop (`√((x-50)² + y²)`) against `THREE_PT_DEEP_THRESHOLD` (currently 80), used because
+a shot right at the line and a much-longer heave are different shots that a single blended 3PT%
+would average together. See the Stat Entry section above for the full rationale and the caveat about
 this being a provisional threshold, not a settled one.
 
 `turnoverEvents`, `stealEvents`, and `foulEvents` each hold one row per occurrence:

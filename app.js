@@ -213,7 +213,7 @@ function showTab(tab) {
   document.getElementById("tab-" + tab).classList.add("active");
   const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
   if (btn) btn.classList.add("active");
-  if (tab === "export") { renderExportGameSelect(); renderMasterVideoList(); renderBrokenVideoLinks(); renderBackfillShotLocations(); }
+  if (tab === "export") { renderExportGameSelect(); renderMasterVideoList(); renderBrokenVideoLinks(); renderBackfillShotLocations(); renderFlaggedShotMismatches(); }
   if (tab === "leaderboard") renderLeaderboard();
   // currentGameId/currentPlayerId are always set before showTab() is called for "stats"/"player"
   // (see openGame/openPlayerDetail), so this always captures the right context alongside the tab.
@@ -694,9 +694,10 @@ function shotDistanceFromHoop(loc) {
   return Math.sqrt(Math.pow(loc.x - 50, 2) + Math.pow(loc.y, 2));
 }
 
-// Where a 3PT attempt splits into "Arc" (a normal three, just past the line) vs. "Deep" (a
-// much lower-percentage near-pool-length heave) — the single blended "3PT%" number was making
-// a real, makeable arc three look worse than it is and a heave look better than it is. Drawn
+// Where a 3PT attempt splits into "Line" (a normal three, right at the line — Poolean's three
+// is straight, not a curved arc, hence "Line" rather than "Arc") vs. "Deep" (a much
+// lower-percentage near-pool-length heave) — the single blended "3PT%" number was making
+// a real, makeable line three look worse than it is and a heave look better than it is. Drawn
 // from a small early sample (41 total 3PT attempts logged when this threshold was introduced),
 // not a settled rule — a single easy-to-find constant so it's easy to revisit as more games get
 // logged, deliberately not a UI setting for a one-operator tool. Only ever applied within the
@@ -2069,9 +2070,13 @@ function computeLeaderboard() {
       winPct: (wins + losses) > 0 ? pct(wins, wins + losses) : null,
       gameScorePer20: seasonGmScPer20,
       twoWayPer20: per20(totalTwoWay),
+      // Season-long sums, not per-20 rates — for the rare comparison (MVP) where "played a lot
+      // and contributed a lot" should outweigh a slightly higher rate over fewer games.
+      gameScoreTotal: totalGameScore,
+      twoWayTotal: totalTwoWay,
       stocks: totals.stl + totals.blk,
       astTov: formatAstTov(totals.ast, totals.tov),
-      last5Gp: last5.gp, last5GmScPer20: last5.gmScorePer20, last5Trend
+      last5Gp: last5.gp, last5GmScPer20: last5.gmScorePer20, last5TwoWayPer20: last5.twoWayPer20, last5Trend
     };
   });
 }
@@ -2096,6 +2101,160 @@ function computeAssistConnections() {
       count
     };
   }).filter(r => r.passer && r.scorer).sort((a, b) => b.count - a.count);
+}
+
+// The shot that actually brought the winning team to their final score — the real
+// game-ending basket in a race-to-a-target format, not just "scored late." Only credited when
+// the shot in question has a real video timestamp: without one, "last in array order" isn't
+// trustworthy enough to call a specific shot the game-winner, since edits/backfill workflows
+// don't guarantee insertion order matches game order. A tied game has no winner and therefore
+// no winning shot.
+function gameWinningShot(game) {
+  if (game.scoringEvents.length === 0) return null;
+  const scoreA = teamScore(game, game.teamA);
+  const scoreB = teamScore(game, game.teamB);
+  if (scoreA === scoreB) return null;
+  const winningTeam = scoreA > scoreB ? game.teamA : game.teamB;
+  const makes = game.scoringEvents.filter(ev => ev.made !== false);
+  if (makes.length === 0) return null;
+  // Only trust the ordering when *every* make in the game has a real timestamp — a single
+  // untimed shot could have happened at any point in the game, early or late, so a partial set
+  // of timestamps can't reliably say which specific shot actually came last.
+  if (makes.some(ev => ev.videoTime === null || ev.videoTime === undefined)) return null;
+  const last = [...makes].sort((a, b) => a.videoTime - b.videoTime)[makes.length - 1];
+  return winningTeam.includes(last.scorerId) ? last : null;
+}
+
+// Season count of game-winning buckets per player — a discrete "big moment" tally, not a per-20
+// rate, since a rate would round a rare, memorable thing down to an unreadable decimal. Kept in
+// its own panel (like Out-of-Bounds Misses) rather than as a Leaderboard column.
+function computeGameWinningBuckets() {
+  const totals = {};
+  state.games.forEach(game => {
+    const shot = gameWinningShot(game);
+    if (shot) totals[shot.scorerId] = (totals[shot.scorerId] || 0) + 1;
+  });
+  return Object.entries(totals)
+    .map(([playerId, count]) => ({ player: state.players.find(p => p.id === playerId), count }))
+    .filter(r => r.player)
+    .sort((a, b) => b.count - a.count);
+}
+
+function renderGameWinningBucketsPanel() {
+  const body = document.getElementById("gameWinningBucketsBody");
+  if (!body) return;
+  const rows = computeGameWinningBuckets();
+  body.innerHTML = rows.length === 0
+    ? '<tr><td colspan="2" class="empty-state">No game-winning buckets identified yet — needs a timestamped make that closes out a decided game.</td></tr>'
+    : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${r.count}</td></tr>`).join("");
+}
+
+// Summer 2026's voted awards, straight from that season's closed ballot (award_results in the
+// original season spreadsheet) — fixed, historical facts, not something this tool derives or
+// could recompute. `winners` are player slugs, which match this tool's own player.id for anyone
+// imported from poolean-seed.json (see INTEGRATION.md). `statKey` says which tracked stat is
+// the closest comparison for that award; null means there's no tracked equivalent to compare
+// against, so the panel says that plainly instead of forcing a stretch metric onto it. MVP uses
+// season-long Two-Way total rather than a per-20 rate, on the theory that "played a lot and
+// contributed a lot" should outweigh a slightly higher rate over fewer games for that specific
+// award — every other award here still compares on the per-20 rate.
+const AWARD_RESULTS = [
+  { key: "mvp", label: "MVP", winners: ["ben"], statKey: "twoWayTotal" },
+  { key: "best-player", label: "Best Player", winners: ["phillip"], statKey: "twoWay" },
+  { key: "dpoy", label: "Defensive Player of the Year", winners: ["adam"], statKey: "defImpact" },
+  { key: "clutch", label: "Clutch", winners: ["phillip"], statKey: "gwb" },
+  { key: "mip-season", label: "Most Improved (Season)", winners: ["zach"], statKey: "trend" },
+  { key: "mip-yoy", label: "Most Improved (Year-over-Year)", winners: ["zach"], statKey: "trend" },
+  { key: "teammate", label: "Best Teammate", winners: ["ben"], statKey: "teammateLift" },
+  { key: "first-team", label: "First Team", winners: ["phillip", "ben", "sean"], statKey: "twoWay" },
+  { key: "second-team", label: "Second Team", winners: ["adam", "reilly", "evan"], statKey: "twoWay" },
+  { key: "best-duo", label: "Best Duo", winners: ["phillip", "ben"], statKey: "twoWay", isDuo: true },
+  { key: "worst-duo", label: "Worst Duo", winners: ["phillip", "viraj"], statKey: "twoWay", isDuo: true }
+];
+
+// For each award, resolves its voted winner(s) against whatever's actually logged in this
+// browser right now — a rank/value on the closest tracked stat, or an honest "no games logged
+// yet" / "no comparable tracked stat" rather than a fabricated number. Recomputed fresh every
+// render, same as every other Leaderboard panel — nothing about awards or their pairing to a
+// stat is stored in `state`.
+function computeAwardsVsStats() {
+  const board = computeLeaderboard().filter(r => r.gp > 0);
+  const twoWayRanked = [...board].sort((a, b) => b.twoWayPer20 - a.twoWayPer20);
+  const twoWayTotalRanked = [...board].sort((a, b) => b.twoWayTotal - a.twoWayTotal);
+  const defRanked = [...board].sort((a, b) => defensiveImpact(b.rateDefense) - defensiveImpact(a.rateDefense));
+  const gwbRanked = computeGameWinningBuckets();
+
+  function rankDetail(ranked, slug, valueFn, label) {
+    const idx = ranked.findIndex(r => r.player.id === slug);
+    if (idx === -1) return "No games logged yet";
+    return `${label}: ${valueFn(ranked[idx]).toFixed(1)} (#${idx + 1} of ${ranked.length})`;
+  }
+
+  function winnerDetail(slug, statKey) {
+    if (statKey === "twoWay") return rankDetail(twoWayRanked, slug, r => r.twoWayPer20, "Two-Way/20");
+    if (statKey === "twoWayTotal") return rankDetail(twoWayTotalRanked, slug, r => r.twoWayTotal, "Two-Way (season)");
+    if (statKey === "defImpact") return rankDetail(defRanked, slug, r => defensiveImpact(r.rateDefense), "Def Impact/20");
+    if (statKey === "gwb") {
+      const idx = gwbRanked.findIndex(r => r.player.id === slug);
+      if (idx === -1) return "0 game-winning buckets this season";
+      return `${gwbRanked[idx].count} game-winning bucket${gwbRanked[idx].count === 1 ? "" : "s"} this season (#${idx + 1} of ${gwbRanked.length})`;
+    }
+    if (statKey === "trend") {
+      const row = board.find(r => r.player.id === slug);
+      return row ? `Last 5: ${row.last5Trend} ${row.last5TwoWayPer20.toFixed(1)} vs. season ${row.twoWayPer20.toFixed(1)} Two-Way/20` : "No games logged yet";
+    }
+    if (statKey === "teammateLift") {
+      const lifts = [];
+      state.players.forEach(p => {
+        if (p.id === slug) return;
+        const synergy = computeTeammateSynergy(p.id).find(s => s.teammate.id === slug);
+        if (synergy && synergy.with.gp > 0 && synergy.without.gp > 0) lifts.push(synergy.with.twoWayPer20 - synergy.without.twoWayPer20);
+      });
+      if (lifts.length === 0) return "Not enough With/Without games logged yet";
+      const avg = lifts.reduce((a, b) => a + b, 0) / lifts.length;
+      return `Teammates average ${avg >= 0 ? "+" : ""}${avg.toFixed(1)} Two-Way/20 with them on the floor (${lifts.length} teammate${lifts.length === 1 ? "" : "s"} with enough games)`;
+    }
+    return "No directly comparable tracked stat";
+  }
+
+  return AWARD_RESULTS.map(award => {
+    const winners = award.winners.map(slug => ({
+      slug,
+      player: state.players.find(p => p.id === slug),
+      detail: winnerDetail(slug, award.statKey)
+    }));
+    let duoDetail = null;
+    if (award.isDuo && award.winners.length === 2) {
+      const [aId, bId] = award.winners;
+      const total = computeAssistConnections()
+        .filter(c => (c.passer.id === aId && c.scorer.id === bId) || (c.passer.id === bId && c.scorer.id === aId))
+        .reduce((sum, c) => sum + c.count, 0);
+      duoDetail = total > 0 ? `${total} assist${total === 1 ? "" : "s"} between them, either direction` : "No assist connections between them logged yet";
+    }
+    return { ...award, winners, duoDetail };
+  });
+}
+
+function renderAwardsVsStats() {
+  const wrap = document.getElementById("awardsVsStats");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  computeAwardsVsStats().forEach(award => {
+    const row = document.createElement("div");
+    row.className = "award-row";
+    const winnersHtml = award.winners.map(w => `
+      <div class="award-winner">
+        <span class="award-winner-name">${w.player ? escapeHtml(w.player.name) : `${escapeHtml(w.slug)} (not in current roster)`}</span>
+        <span class="hint" style="margin:0">${escapeHtml(w.detail)}</span>
+      </div>
+    `).join("");
+    row.innerHTML = `
+      <div class="award-label">${escapeHtml(award.label)}</div>
+      <div class="award-winners">${winnersHtml}</div>
+      ${award.duoDetail ? `<div class="hint" style="margin:4px 0 0">${escapeHtml(award.duoDetail)}</div>` : ""}
+    `;
+    wrap.appendChild(row);
+  });
 }
 
 function renderAssistSynergy() {
@@ -2284,10 +2443,12 @@ function renderLeaderboardHeader() {
 
 function renderLeaderboard() {
   renderLeaderboardHeader();
+  renderAwardsVsStats();
   renderLeagueHeatmap();
   renderAssistSynergy();
   renderThreePtDistancePanel();
   renderOutOfBoundsPanel();
+  renderGameWinningBucketsPanel();
   const body = document.getElementById("leaderboardBody");
   body.innerHTML = "";
   // Players with no games yet just clutter the table with a row of dashes.
@@ -2864,6 +3025,130 @@ function renderBackfillShotLocations() {
     // `videoWrap.isConnected` guard in loadBackfillVideo silently bails, leaving "Loading
     // video…" stuck forever. An uncached load only surfaced this by accident: the IndexedDB
     // round-trip is slow enough that the DOM always catches up first.
+    loadBackfillVideo(game, videoWrap);
+  });
+}
+
+// Every marked 2PT/3PT shot where the spot disagrees with the point value picked at logging
+// time — the same mismatch the Shot Log's "📍 2PT range"/"📍 3PT range" badge flags one row at
+// a time (see renderScoringLog), collected here so a whole season's worth can be reviewed in
+// one pass instead of stumbled onto while scrolling. Free throws never have a location, so
+// they're never candidates.
+function computeFlaggedShotMismatches() {
+  const flagged = [];
+  state.games.forEach(game => {
+    game.scoringEvents.forEach(ev => {
+      if (!ev.shotLocation || (ev.points !== 2 && ev.points !== 3)) return;
+      const zone = ev.shotLocation.y >= 60 ? 3 : 2;
+      if (zone !== ev.points) flagged.push({ game, ev });
+    });
+  });
+  return flagged;
+}
+
+let flaggedUndoTimer = null;
+
+// Same grace-period Undo as Backfill's — puts a re-marked shot's location right back to
+// wherever it was before this click.
+function showFlaggedUndoToast(playerName, game, eventId, previousLocation) {
+  const toast = document.getElementById("flaggedShotUndoToast");
+  if (!toast) return;
+  clearTimeout(flaggedUndoTimer);
+  toast.innerHTML = `<span class="hint" style="margin:0">Location updated for ${escapeHtml(playerName)}'s shot.</span> <button type="button" class="icon-btn" data-undo-location="1">Undo</button>`;
+  toast.querySelector("[data-undo-location]").addEventListener("click", () => {
+    const ev = game.scoringEvents.find(e => e.id === eventId);
+    if (ev) ev.shotLocation = previousLocation;
+    saveState();
+    clearTimeout(flaggedUndoTimer);
+    renderFlaggedShotMismatches();
+  });
+  flaggedUndoTimer = setTimeout(() => { toast.innerHTML = ""; }, 8000);
+}
+
+// Grouped by game, same shape and video-loading approach as Backfill Shot Locations — each
+// group loads its own video once so a shot can be re-marked against the actual play instead of
+// from memory. Re-marking a shot that then agrees with its point value drops it from the list,
+// the same "click removes just that row" pattern Backfill uses so other groups' video playback
+// isn't disturbed; re-marking to a spot that's still flagged just redraws the dot in place.
+function renderFlaggedShotMismatches() {
+  const wrap = document.getElementById("flaggedShotMismatches");
+  if (!wrap) return;
+  const flagged = computeFlaggedShotMismatches();
+  const byGame = {};
+  flagged.forEach(({ game, ev }) => {
+    (byGame[game.id] = byGame[game.id] || { game, shots: [] }).shots.push(ev);
+  });
+  const groups = Object.values(byGame).sort((a, b) => (a.game.date || "").localeCompare(b.game.date || ""));
+
+  if (groups.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No flagged shots — every marked 2PT/3PT location agrees with its point value.</p>';
+    return;
+  }
+
+  wrap.innerHTML = `<p class="hint flagged-summary" style="margin-top:0">${flagged.length} shot${flagged.length === 1 ? "" : "s"} flagged.</p><div id="flaggedShotUndoToast"></div>`;
+  const summaryEl = wrap.querySelector(".flagged-summary");
+
+  groups.forEach(({ game, shots }) => {
+    const groupEl = document.createElement("div");
+    groupEl.className = "backfill-game-group";
+    groupEl.innerHTML = `<h4>${escapeHtml(formatDateDisplay(game.date))}</h4><div class="backfill-video-wrap"><p class="hint" style="margin:0">Loading video…</p></div>`;
+    const videoWrap = groupEl.querySelector(".backfill-video-wrap");
+
+    const rowsEl = document.createElement("div");
+    rowsEl.className = "backfill-shot-rows";
+    shots.forEach(ev => {
+      const scorer = state.players.find(p => p.id === ev.scorerId);
+      const hasTime = ev.videoTime !== null && ev.videoTime !== undefined;
+      const zoneLabel = ev.shotLocation.y >= 60 ? "3PT range" : "2PT range";
+      const row = document.createElement("div");
+      row.className = "backfill-shot-row backfill-shot-row-marked";
+      row.innerHTML = `
+        <div class="backfill-shot-label">
+          ${scorer ? escapeHtml(scorer.name) : "?"} — picked ${ev.points}pt, marked at 📍 ${zoneLabel}
+        </div>
+        <button type="button" class="secondary-btn" data-watch="1" ${hasTime ? "" : "disabled"}>▶ Watch</button>
+        ${renderShotChartBaseSvg("data-shot-chart")}
+      `;
+      setShotChartDot(row.querySelector("[data-shot-chart]"), ev.shotLocation);
+      row.querySelector("[data-watch]").addEventListener("click", () => {
+        const video = videoWrap.querySelector("video");
+        if (!video || !hasTime) return;
+        video.currentTime = ev.videoTime;
+        video.play();
+      });
+      row.querySelector("[data-shot-chart]").addEventListener("click", e => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const previousLocation = ev.shotLocation;
+        const xFrac = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+        const yFrac = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+        ev.shotLocation = { x: xFrac, y: 100 - yFrac };
+        saveState();
+        showFlaggedUndoToast(scorer ? scorer.name : "?", game, ev.id, previousLocation);
+
+        const stillFlagged = (ev.shotLocation.y >= 60 ? 3 : 2) !== ev.points;
+        if (stillFlagged) {
+          setShotChartDot(e.currentTarget, ev.shotLocation);
+          return;
+        }
+        row.remove();
+        if (!rowsEl.querySelector(".backfill-shot-row")) groupEl.remove();
+        const left = Math.max(0, parseInt(summaryEl.textContent, 10) - 1);
+        if (left <= 0) {
+          summaryEl.textContent = "";
+          if (!wrap.querySelector(".flagged-done-msg")) {
+            const doneMsg = document.createElement("p");
+            doneMsg.className = "empty-state flagged-done-msg";
+            doneMsg.textContent = "No flagged shots — every marked 2PT/3PT location agrees with its point value.";
+            wrap.appendChild(doneMsg);
+          }
+        } else {
+          summaryEl.textContent = `${left} shot${left === 1 ? "" : "s"} flagged.`;
+        }
+      });
+      rowsEl.appendChild(row);
+    });
+    groupEl.appendChild(rowsEl);
+    wrap.appendChild(groupEl);
     loadBackfillVideo(game, videoWrap);
   });
 }

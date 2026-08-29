@@ -225,6 +225,12 @@
     </div>
 
     <div class="panel">
+      <h2>Awards vs. Stats</h2>
+      <p class="hint">Summer 2026's voted awards, from that season's closed ballot, checked against the closest tracked stat — computed live from whatever games are actually logged in this browser, so it's only as complete as your Shot Log is. A stat winner sitting outside the top of its column isn't a bug — the vote and the numbers are allowed to disagree, that's the point of comparing them.</p>
+      <div id="awardsVsStats" class="awards-grid"></div>
+    </div>
+
+    <div class="panel">
       <h2>League Shot Heatmap</h2>
       <p class="hint">Every marked field goal, league-wide, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. A zone stays blank until at least one shot lands in it. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
       <div id="leagueHeatmap"></div>
@@ -243,10 +249,10 @@
 
     <div class="panel">
       <h2>3PT Shot Distance</h2>
-      <p class="hint">Every 3-pointer splits further by how far past the line it actually was — a shot just past it (<strong>Arc</strong>) is a normal, makeable three; a much longer near-pool-length heave (<strong>Deep</strong>) is a different, lower-percentage shot that the plain 3PT% on the table above blends in with it. Split by radial distance from the hoop against a threshold of 80 (in the shot chart's own 0-100 coordinates) — a single adjustable constant (`THREE_PT_DEEP_THRESHOLD` in <code>app.js</code>), drawn from an early, small sample, not a settled rule. Only 3-pointers with a marked shot location count (see <strong>Export → Backfill Shot Locations</strong> to fill in the rest), sorted by how many of those each player has. Treat any one player's split as an early read, not a verdict, until more games are logged.</p>
+      <p class="hint">Every 3-pointer splits further by how far past the line it actually was — a shot right at the line (<strong>Line</strong>) is a normal, makeable three; a much longer near-pool-length heave (<strong>Deep</strong>) is a different, lower-percentage shot that the plain 3PT% on the table above blends in with it. (Poolean's three is a straight line, not a curved arc, so "Line" rather than "Arc" for the shorter-range bucket.) Split by radial distance from the hoop against a threshold of 80 (in the shot chart's own 0-100 coordinates) — a single adjustable constant (`THREE_PT_DEEP_THRESHOLD` in <code>app.js</code>), drawn from an early, small sample, not a settled rule. Only 3-pointers with a marked shot location count (see <strong>Export → Backfill Shot Locations</strong> to fill in the rest), sorted by how many of those each player has. Treat any one player's split as an early read, not a verdict, until more games are logged.</p>
       <div class="table-scroll">
         <table class="matchup-table" id="threePtDistanceTable">
-          <thead><tr><th>Player</th><th>3PT Arc</th><th>3PT Deep</th></tr></thead>
+          <thead><tr><th>Player</th><th>3PT Line</th><th>3PT Deep</th></tr></thead>
           <tbody id="threePtDistanceBody"></tbody>
         </table>
       </div>
@@ -260,6 +266,17 @@
         <table class="matchup-table" id="outOfBoundsTable">
           <thead><tr><th>Player</th><th>Misses</th><th>Out of Bounds</th><th>OOB%</th></tr></thead>
           <tbody id="outOfBoundsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Game-Winning Buckets</h2>
+      <p class="hint">How many times a player's shot was the one that actually closed out a game their team won — the real game-ending basket in a race-to-a-target format, feeding the Clutch comparison above. Only credited when that specific shot has a real video timestamp; without one, there's no trustworthy way to say it was really the last shot of the game, so the game is skipped rather than guessed at. A season count, not a rate — a rare, memorable thing like this shouldn't get rounded down to a decimal.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="gameWinningBucketsTable">
+          <thead><tr><th>Player</th><th>Game-Winning Buckets</th></tr></thead>
+          <tbody id="gameWinningBucketsBody"></tbody>
         </table>
       </div>
     </div>
@@ -371,6 +388,12 @@
       <h2>Backfill Shot Locations</h2>
       <p class="hint">Every field goal (2 or 3, not free throws) that's missing a shot chart location, across every game — click a spot on the mini chart to set it, no need to reopen the game or its video. Each click saves immediately and the shot drops off this list.</p>
       <div id="backfillShotLocations"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Flagged Shot Locations</h2>
+      <p class="hint">Every marked field goal where the spot disagrees with the point value picked at logging time — the same mismatch the Shot Log flags one row at a time with a "📍 2PT range"/"📍 3PT range" badge, collected here so a whole season's worth can be reviewed at once. Click a spot on the mini chart to re-mark it — if the new spot agrees with the point value, the shot drops off this list; if the point value itself was wrong (not the spot), remove and re-log the shot from the Shot Log instead, since this tool only ever moves the marked location.</p>
+      <div id="flaggedShotMismatches"></div>
     </div>
 
     <div class="panel">

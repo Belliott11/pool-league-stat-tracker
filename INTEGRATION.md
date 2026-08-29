@@ -277,6 +277,43 @@ into the denominator would just dilute the number with shots that couldn't have 
 bounds in the first place. A league-wide version of the same rate (summed across every player)
 renders above the per-player table for context.
 
+**Awards vs. Stats on the Leaderboard is a different case from everything else in this
+section: half of it is genuinely hardcoded, not computed.** `AWARD_RESULTS` (`app.js`) is a
+fixed snapshot of Summer 2026's closed award ballot (`award_results` in the season's own
+spreadsheet export) — winners by player slug, one entry per award. That part is **not** derived
+from anything in `state` and won't update itself; it's a historical record of a vote that
+already happened. What *is* computed live, every render, is each winner's standing on whichever
+tracked stat `computeAwardsVsStats()` pairs with that award — Two-Way/20 rank for most of them,
+**season-long total Two-Way** (not a rate — see `twoWayTotal` on `computeLeaderboard()`'s
+per-player object) specifically for MVP, Def Impact/20 rank for DPOY, Game-Winning Buckets for
+Clutch (see below), the Last 5 trend for Most Improved (`last5TwoWayPer20` vs. `twoWayPer20`,
+same mechanism as the Leaderboard's own Last 5 column but Two-Way instead of GmSc here), or the
+average Two-Way/20 lift a "Best Teammate" winner gives their actual teammates, reusing
+`computeTeammateSynergy()` from the section above — same "nothing stored, always current"
+pattern as the rest of this page. If you add a new season's awards, that means editing
+`AWARD_RESULTS` by hand (or building a real `award_results` collection and reading from it) —
+there's no mechanism here that pulls it from anywhere automatically. Winner slugs are matched
+against `player.id` exactly like `poolean-seed.json` (see "Player and game ids already match
+your PocketBase" above); a slug with no matching player renders as "not in current roster"
+rather than erroring, which covers both a genuinely-absent player and one Ben simply hasn't
+added to this browser's roster yet — the UI can't tell those two cases apart, and doesn't try to.
+
+**Game-Winning Buckets is also purely computed, nothing stored** — a season count, per player,
+of games where `gameWinningShot()` (`app.js`) identified their shot as the one that actually
+closed out a game their team won. The logic: find the winning team (higher final score; a tie
+has no winning shot at all), then require that *every* `made: true` row in that game's
+`scoring_events` has a non-null `video_time` — if even one make lacks a timestamp, the whole game
+is skipped, since an untimed shot could have happened at any point in the game and a partial set
+of timestamps can't reliably establish which specific shot was really last. Only among fully
+timestamped games does the chronologically-last make (by `video_time`) count, and only if it
+belongs to the winning team. This is a real precision-over-recall tradeoff, not a UI nicety: a
+game logged without full timestamps will never contribute a Game-Winning Bucket, even if a human
+watching would know exactly which shot won it. If you replicate this server-side, keep that same
+all-or-nothing timestamp requirement per game rather than falling back to insertion order for the
+untimed rows — insertion order is not guaranteed to reflect game order once backfill/edit
+workflows are involved, and a wrong "winning shot" attribution would be worse than none at all
+here specifically, since it feeds directly into a voted award comparison.
+
 **The heatmaps on Player Detail and the Leaderboard are also purely computed, nothing stored.**
 They bucket every field goal with a non-null `shot_x`/`shot_y` into a 5×6 grid over the court
 (`computeHeatmapCells()` in `app.js`), color each occupied cell by that zone's FG%, and label it

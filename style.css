@@ -876,3 +876,40 @@ button:disabled {
   padding: 5px 8px;
   font-size: 0.85rem;
 }
+
+/* Awards vs. Stats — each voted award alongside its winner(s) and their standing on the
+   closest tracked stat. A simple card grid rather than a table, since the "detail" text per
+   winner varies in length award to award (a rank, a trend arrow, an average delta) in a way
+   that doesn't line up cleanly into fixed columns. */
+.awards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.award-row {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: var(--surface-tint);
+}
+.award-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.award-winners {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.award-winner {
+  display: flex;
+  flex-direction: column;
+}
+.award-winner-name {
+  font-weight: 700;
+}
