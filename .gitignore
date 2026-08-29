@@ -1,3 +1,8 @@
 .DS_Store
 Thumbs.db
 *.local
+
+# Real players' names and season data — kept local-only once the repo is public.
+# Still referenced/used from README's "Starting from your existing Poolean data" section;
+# it just isn't tracked in git anymore.
+poolean-seed.json
