@@ -206,17 +206,21 @@ individual player, not a team.
    Connections** lists every passer-to-scorer pairing, league-wide, with how many times each has
    happened — directional (Alice assisting Bob is a separate row from Bob assisting Alice) — a
    straight readout of the Shot Log's assist tags, sorted by count. (There's deliberately no
-   win/loss duo table here — the real Poolean site already tracks that.) Below that, **3PT Shot
-   Distance** splits every player's 3-pointers further by how far past the line they actually
-   were — a shot right at it (**Line**) is a normal, makeable three; a much longer near-pool-length
-   heave (**Deep**) is a different, lower-percentage shot the plain 3PT% column blends in with it.
-   ("Line" rather than "Arc" for the shorter-range bucket, since Poolean's three is a straight
-   line, not a curved arc.) Split by radial distance from the hoop (`√((x-50)² + y²)` in the shot chart's own 0-100
-   coordinates, not real feet) against a threshold of 80 units — a single adjustable constant
-   (`THREE_PT_DEEP_THRESHOLD` in `app.js`), drawn from an early, small sample, not a settled rule.
-   Only 3-pointers with a marked shot location count (see **Export → Backfill Shot Locations** to
-   fill in the rest); kept in its own panel rather than as more columns on the main table above,
-   since it's a cut most people only need occasionally. Below that, **Out-of-Bounds Misses**
+   win/loss duo table here — the real Poolean site already tracks that.) Below that, **Shot
+   Distance** splits every field goal further by how far it actually was from the hoop, on both
+   sides of the 3pt line: **Close** and **Midrange** split the 2PT zone at its midpoint;
+   **Line** (a normal, makeable three right at the line — "Line" not "Arc," since Poolean's
+   three is straight, not curved) and **Deep** (a much lower-percentage near-pool-length heave)
+   split the 3PT zone the same way the plain 3PT% column on the table above blends together.
+   Both splits are radial distance from the hoop (`√((x-50)² + y²)` in the shot chart's own
+   0-100 coordinates, not real feet) against a single adjustable constant each
+   (`CLOSE_RANGE_THRESHOLD` at 30 for the 2PT split, `THREE_PT_DEEP_THRESHOLD` at 80 for the 3PT
+   one, both in `app.js`) — the 3PT threshold drawn from an early season sample, the 2PT one a
+   rougher starting guess with no shot volume behind it yet, so treat it as even more
+   provisional than the 3PT one. Only field goals with a marked shot location count (see
+   **Export → Backfill Shot Locations** to fill in the rest); kept in its own panel rather than
+   as more columns on the main table above, since it's a cut most people only need occasionally.
+   Below that, **Out-of-Bounds Misses**
    shows how often a player's own missed shot ends up out of bounds — per Poolean's actual rule,
    whoever last touched the ball loses possession, so this is really "how often does the ball
    leave their hands for good on a miss," not a shooting-accuracy stat. Misses are the
@@ -272,15 +276,16 @@ individual player, not a team.
      a session video) — otherwise `fileName` never actually reaches anyone reading just that one
      file.
    - **Box Score CSV** — one row per player per game (with a Team A/B label for that game),
-     including that game's Game Score and Two-Way Score, and the 3PT Arc/Deep split
-     (`tp_arc_m`/`tp_arc_a`/`tp_deep_m`/`tp_deep_a`) alongside the plain `tpm`/`tpa`.
+     including that game's Game Score and Two-Way Score, and the full shot-distance split
+     (`close_m`/`close_a`, `mid_m`/`mid_a`, `tp_arc_m`/`tp_arc_a`, `tp_deep_m`/`tp_deep_a`)
+     alongside the plain `fgm`/`fga`/`tpm`/`tpa`.
    - **Shot Log CSV** — one row per shot attempt (make or miss), with the shooter, result,
      points, who (if anyone) assisted it, who (if anyone) was contesting (multiple defenders
      joined with "+"), who (if anyone) blocked it, whether it went out of bounds for a turnover,
      who (if anyone) rebounded it and whether that was an OREB or DREB, the marked shot location
-     if any (`shot_x`/`shot_y`, each 0-100, blank if unmarked or a free throw), which 3PT band it
-     falls in if it's a marked 3-pointer (`three_pt_band`: `arc`/`deep`/blank), and the video
-     timestamp it was logged at (seconds and mm:ss, blank if none).
+     if any (`shot_x`/`shot_y`, each 0-100, blank if unmarked or a free throw), which distance
+     band it falls in if it's a marked field goal (`shot_band`: `close`/`midrange`/`line`/`deep`/
+     blank), and the video timestamp it was logged at (seconds and mm:ss, blank if none).
    - **Shot Locations CSV** — a focused subset of the Shot Log: only shots with a marked
      location (`shot_x`/`shot_y` are never blank here), with just the player, team, make/miss,
      points, and video timestamp alongside them. Meant for handing off exactly what a shot chart
@@ -294,7 +299,7 @@ individual player, not a team.
      from the source video file — the dashboard only marks *where* the clips are, since it can't
      export video itself.
    - **Leaderboard CSV** — season totals per player (across the same stats-logged-only games the
-     page itself counts), including the 3PT Arc/Deep split, plus PTS/20, GmSc/20, and Two-Way/20.
+     page itself counts), including the full shot-distance split, plus PTS/20, GmSc/20, and Two-Way/20.
      Not the per-20 rates the Leaderboard page displays for every other counting stat — the CSV
      keeps raw totals plus `games_played`, so anyone consuming it can derive whichever rate or
      average they want without losing precision to a pre-divided number.
@@ -462,13 +467,16 @@ eFG%, TS%, Game Score, Two-Way Score, and the defensive numbers (Pts Allowed, Op
 Stops) shown in the Game Stats table and Leaderboard are all computed from this array plus
 `stats` — see `shootingStats()`, `gameDefenseStats()`, `trueShootingPct()`, `effectiveFgPct()`,
 `gameScore()`, `defensiveImpact()`, and `twoWayScore()` in `app.js`. None of these are stored as
-separate fields. Also computed from `shotLocation`, only for 3PT attempts: the **3PT Line /
-3PT Deep** split (`threePtBand()` in `app.js`, still returning `"arc"` internally — only the
-displayed label changed, since a code rename wasn't worth the churn) — a shot's radial distance
-from the hoop (`√((x-50)² + y²)`) against `THREE_PT_DEEP_THRESHOLD` (currently 80), used because
-a shot right at the line and a much-longer heave are different shots that a single blended 3PT%
-would average together. See the Stat Entry section above for the full rationale and the caveat about
-this being a provisional threshold, not a settled one.
+separate fields. Also computed from `shotLocation`, for any 2PT or 3PT attempt: the **Close /
+Midrange / Line / Deep** shot-distance split (`shotBand()` in `app.js` — internally still
+returning `"arc"` for what's displayed as "Line," only the label changed, since a code rename
+wasn't worth the churn) — a shot's radial distance from the hoop (`√((x-50)² + y²)`) against
+`CLOSE_RANGE_THRESHOLD` (currently 30, splitting the 2PT zone) for a 2PT attempt, or
+`THREE_PT_DEEP_THRESHOLD` (currently 80, splitting the 3PT zone) for a 3PT attempt — used
+because a shot right at the hoop and one from just inside the line are different shots a plain
+2PT% blends together, same reasoning as the 3PT split. See the Stat Entry section above for the
+full rationale and the caveat about both thresholds being provisional, not settled — especially
+the 2PT one, which has no real shot-volume analysis behind it yet.
 
 `turnoverEvents`, `stealEvents`, and `foulEvents` each hold one row per occurrence:
 `playerId` did it, `opponentId` (nullable) is the one other player tagged as involved — who

@@ -248,11 +248,11 @@
     </div>
 
     <div class="panel">
-      <h2>3PT Shot Distance</h2>
-      <p class="hint">Every 3-pointer splits further by how far past the line it actually was — a shot right at the line (<strong>Line</strong>) is a normal, makeable three; a much longer near-pool-length heave (<strong>Deep</strong>) is a different, lower-percentage shot that the plain 3PT% on the table above blends in with it. (Poolean's three is a straight line, not a curved arc, so "Line" rather than "Arc" for the shorter-range bucket.) Split by radial distance from the hoop against a threshold of 80 (in the shot chart's own 0-100 coordinates) — a single adjustable constant (`THREE_PT_DEEP_THRESHOLD` in <code>app.js</code>), drawn from an early, small sample, not a settled rule. Only 3-pointers with a marked shot location count (see <strong>Export → Backfill Shot Locations</strong> to fill in the rest), sorted by how many of those each player has. Treat any one player's split as an early read, not a verdict, until more games are logged.</p>
+      <h2>Shot Distance</h2>
+      <p class="hint">Every field goal splits further by how far it actually was from the hoop, on both sides of the 3pt line — <strong>Close</strong> and <strong>Midrange</strong> split the 2PT zone at its midpoint; <strong>Line</strong> (a normal, makeable three right at the line — Poolean's three is straight, not a curved arc, hence "Line" not "Arc") and <strong>Deep</strong> (a much lower-percentage near-pool-length heave) split the 3PT zone the same way the plain 3PT% on the table above blends together. Both breakpoints are radial distance from the hoop against a single adjustable constant (`CLOSE_RANGE_THRESHOLD` and `THREE_PT_DEEP_THRESHOLD` in <code>app.js</code>) — the 3PT one drawn from an early season sample, the 2PT one a rougher starting guess with no shot volume behind it yet, so treat it as even more provisional. Only field goals with a marked shot location count (see <strong>Export → Backfill Shot Locations</strong> to fill in the rest), sorted by how many of those each player has. Treat any one player's split as an early read, not a verdict, until more games are logged.</p>
       <div class="table-scroll">
         <table class="matchup-table" id="threePtDistanceTable">
-          <thead><tr><th>Player</th><th>3PT Line</th><th>3PT Deep</th></tr></thead>
+          <thead><tr><th>Player</th><th>Close</th><th>Midrange</th><th>3PT Line</th><th>3PT Deep</th></tr></thead>
           <tbody id="threePtDistanceBody"></tbody>
         </table>
       </div>

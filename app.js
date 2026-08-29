@@ -695,16 +695,25 @@ function shotDistanceFromHoop(loc) {
 }
 
 // Where a 3PT attempt splits into "Line" (a normal three, right at the line — Poolean's three
-// is straight, not a curved arc, hence "Line" rather than "Arc") vs. "Deep" (a much
-// lower-percentage near-pool-length heave) — the single blended "3PT%" number was making
-// a real, makeable line three look worse than it is and a heave look better than it is. Drawn
-// from a small early sample (41 total 3PT attempts logged when this threshold was introduced),
-// not a settled rule — a single easy-to-find constant so it's easy to revisit as more games get
-// logged, deliberately not a UI setting for a one-operator tool. Only ever applied within the
-// 3PT bucket — the 2PT/3PT boundary itself (the actual 3pt line, at 60% depth) doesn't change.
+// is straight, not a curved arc, hence "Line" rather than "Arc" — the returned value stays
+// "arc" internally, only the displayed label changed) vs. "Deep" (a much lower-percentage
+// near-pool-length heave) — the single blended "3PT%" number was making a real, makeable line
+// three look worse than it is and a heave look better than it is. Drawn from a small early
+// sample (41 total 3PT attempts logged when this threshold was introduced), not a settled rule —
+// a single easy-to-find constant so it's easy to revisit as more games get logged, deliberately
+// not a UI setting for a one-operator tool. Only ever applied within the 3PT bucket — the
+// 2PT/3PT boundary itself (the actual 3pt line, at 60% depth) doesn't change.
 const THREE_PT_DEEP_THRESHOLD = 80;
-function threePtBand(loc) {
-  return shotDistanceFromHoop(loc) > THREE_PT_DEEP_THRESHOLD ? "deep" : "arc";
+// Same idea, one level closer to the hoop: splits the 2PT bucket into "Close" and "Midrange" at
+// the midpoint of the 2PT zone (y: 0-60, so 30). Unlike THREE_PT_DEEP_THRESHOLD, this wasn't
+// derived from a season's worth of logged 2PT attempts — there isn't the shot volume yet to draw
+// a real breakpoint from — so treat this one as an even rougher starting guess, equally easy to
+// revisit here as the single constant it is.
+const CLOSE_RANGE_THRESHOLD = 30;
+function shotBand(loc, points) {
+  const distance = shotDistanceFromHoop(loc);
+  if (points === 3) return distance > THREE_PT_DEEP_THRESHOLD ? "deep" : "arc";
+  return distance > CLOSE_RANGE_THRESHOLD ? "mid" : "close";
 }
 
 // Field goal / free throw splits derived from scoringEvents for one player in one game.
@@ -713,18 +722,23 @@ function shootingStats(game, playerId) {
   const shots = game.scoringEvents.filter(ev => ev.scorerId === playerId);
   const made = ev => ev.made !== false;
   const fg = shots.filter(ev => ev.points === 2 || ev.points === 3);
+  const two = shots.filter(ev => ev.points === 2);
   const three = shots.filter(ev => ev.points === 3);
   const ft = shots.filter(ev => ev.points === 1);
-  // Banded 3PT split — only among attempts with a marked shot location (banding needs x/y to
-  // measure distance). An unmarked 3PT attempt still counts in tpm/tpa above, just not in
-  // either band below — same as the heatmap/backfill tools treat an unmarked shot as excluded,
-  // so tpArcA + tpDeepA can be less than tpa until every 3PT attempt has a location marked.
-  const threeArc = three.filter(ev => ev.shotLocation && threePtBand(ev.shotLocation) === "arc");
-  const threeDeep = three.filter(ev => ev.shotLocation && threePtBand(ev.shotLocation) === "deep");
+  // Banded splits — only among attempts with a marked shot location (banding needs x/y to
+  // measure distance). An unmarked attempt still counts in fgm/fga/tpm/tpa above, just not in
+  // any band below — same as the heatmap/backfill tools treat an unmarked shot as excluded, so
+  // e.g. tpArcA + tpDeepA can be less than tpa until every 3PT attempt has a location marked.
+  const close = two.filter(ev => ev.shotLocation && shotBand(ev.shotLocation, 2) === "close");
+  const mid = two.filter(ev => ev.shotLocation && shotBand(ev.shotLocation, 2) === "mid");
+  const threeArc = three.filter(ev => ev.shotLocation && shotBand(ev.shotLocation, 3) === "arc");
+  const threeDeep = three.filter(ev => ev.shotLocation && shotBand(ev.shotLocation, 3) === "deep");
   return {
     fgm: fg.filter(made).length, fga: fg.length,
     tpm: three.filter(made).length, tpa: three.length,
     ftm: ft.filter(made).length, fta: ft.length,
+    closeM: close.filter(made).length, closeA: close.length,
+    midM: mid.filter(made).length, midA: mid.length,
     tpArcM: threeArc.filter(made).length, tpArcA: threeArc.length,
     tpDeepM: threeDeep.filter(made).length, tpDeepA: threeDeep.length
   };
@@ -2013,7 +2027,7 @@ function computeLeaderboard() {
     // every average toward 0 for a game nobody has reviewed yet.
     const gamesPlayed = state.games.filter(g => (g.teamA.includes(p.id) || g.teamB.includes(p.id)) && g.scoringEvents.length > 0);
     const totals = { pts: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, pf: 0 };
-    const shooting = { fgm: 0, fga: 0, tpm: 0, tpa: 0, tpArcM: 0, tpArcA: 0, tpDeepM: 0, tpDeepA: 0, ftm: 0, fta: 0 };
+    const shooting = { fgm: 0, fga: 0, tpm: 0, tpa: 0, closeM: 0, closeA: 0, midM: 0, midA: 0, tpArcM: 0, tpArcA: 0, tpDeepM: 0, tpDeepA: 0, ftm: 0, fta: 0 };
     const defense = { ptsAllowed: 0, timesBeaten: 0, stops: 0 };
     let wins = 0, losses = 0, ties = 0, combinedPoints = 0;
     gamesPlayed.forEach(g => {
@@ -2370,12 +2384,13 @@ function renderAssistSynergy() {
 // existing per-player shooting totals rather than recomputing them.
 function renderThreePtDistancePanel() {
   const body = document.getElementById("threePtDistanceBody");
+  const totalBanded = r => r.shooting.closeA + r.shooting.midA + r.shooting.tpArcA + r.shooting.tpDeepA;
   const rows = computeLeaderboard()
-    .filter(r => r.shooting.tpArcA + r.shooting.tpDeepA > 0)
-    .sort((a, b) => (b.shooting.tpArcA + b.shooting.tpDeepA) - (a.shooting.tpArcA + a.shooting.tpDeepA));
+    .filter(r => totalBanded(r) > 0)
+    .sort((a, b) => totalBanded(b) - totalBanded(a));
   body.innerHTML = rows.length === 0
-    ? '<tr><td colspan="3" class="empty-state">No 3-pointers with a marked shot location yet.</td></tr>'
-    : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${formatShootingSplit(r.shooting.tpArcM, r.shooting.tpArcA)}</td><td>${formatShootingSplit(r.shooting.tpDeepM, r.shooting.tpDeepA)}</td></tr>`).join("");
+    ? '<tr><td colspan="5" class="empty-state">No field goals with a marked shot location yet.</td></tr>'
+    : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${formatShootingSplit(r.shooting.closeM, r.shooting.closeA)}</td><td>${formatShootingSplit(r.shooting.midM, r.shooting.midA)}</td><td>${formatShootingSplit(r.shooting.tpArcM, r.shooting.tpArcA)}</td><td>${formatShootingSplit(r.shooting.tpDeepM, r.shooting.tpDeepA)}</td></tr>`).join("");
 }
 
 // How often a player's own missed shot ends up out of bounds (a turnover for them, per
@@ -2773,7 +2788,7 @@ function csvEscape(val) {
 
 document.getElementById("exportBoxScoreCsvBtn").addEventListener("click", () => {
   const rows = [["game_id", "date", "team", "player", ...STAT_FIELDS,
-    "fgm", "fga", "tpm", "tpa", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "efg_pct", "ts_pct", "stocks", "ast_tov",
+    "fgm", "fga", "tpm", "tpa", "close_m", "close_a", "mid_m", "mid_a", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "efg_pct", "ts_pct", "stocks", "ast_tov",
     "pts_allowed", "opp_fg_pct", "times_beaten", "stops", "game_score", "two_way_score"]];
   state.games.forEach(game => {
     game.stats.forEach(s => {
@@ -2784,7 +2799,7 @@ document.getElementById("exportBoxScoreCsvBtn").addEventListener("click", () => 
       const def = gameDefenseStats(game, s.playerId);
       rows.push([
         game.id, game.date, teamLabel, player.name, ...STAT_FIELDS.map(f => s[f]),
-        sh.fgm, sh.fga, sh.tpm, sh.tpa, sh.tpArcM, sh.tpArcA, sh.tpDeepM, sh.tpDeepA, sh.ftm, sh.fta,
+        sh.fgm, sh.fga, sh.tpm, sh.tpa, sh.closeM, sh.closeA, sh.midM, sh.midA, sh.tpArcM, sh.tpArcA, sh.tpDeepM, sh.tpDeepA, sh.ftm, sh.fta,
         effectiveFgPct(sh.fgm, sh.tpm, sh.fga), trueShootingPct(s.pts, sh.fga, sh.fta),
         s.stl + s.blk, formatAstTov(s.ast, s.tov),
         def.ptsAllowed, def.oppFgPct, def.timesBeaten, def.stops, gameScore(s, sh).toFixed(1), twoWayScore(s, sh, def).toFixed(1)
@@ -2801,7 +2816,7 @@ function videoTimeCsv(videoTime) {
 }
 
 document.getElementById("exportScoringLogCsvBtn").addEventListener("click", () => {
-  const rows = [["game_id", "date", "shooter", "made", "points", "assist", "defenders", "blocked_by", "out_of_bounds_turnover", "rebounded_by", "rebound_type", "shot_x", "shot_y", "three_pt_band", "video_time_seconds", "video_time_mmss"]];
+  const rows = [["game_id", "date", "shooter", "made", "points", "assist", "defenders", "blocked_by", "out_of_bounds_turnover", "rebounded_by", "rebound_type", "shot_x", "shot_y", "shot_band", "video_time_seconds", "video_time_mmss"]];
   state.games.forEach(game => {
     game.scoringEvents.forEach(ev => {
       const scorer = state.players.find(p => p.id === ev.scorerId);
@@ -2809,7 +2824,8 @@ document.getElementById("exportScoringLogCsvBtn").addEventListener("click", () =
       const blocker = ev.blockerId ? state.players.find(p => p.id === ev.blockerId) : null;
       const rebounder = ev.rebounderId ? state.players.find(p => p.id === ev.rebounderId) : null;
       const reboundType = rebounder ? (sameTeam(game, ev.scorerId, rebounder.id) ? "OREB" : "DREB") : "";
-      const band = ev.points === 3 && ev.shotLocation ? threePtBand(ev.shotLocation) : "";
+      const bandLabels = { close: "close", mid: "midrange", arc: "line", deep: "deep" };
+      const band = ev.shotLocation && (ev.points === 2 || ev.points === 3) ? bandLabels[shotBand(ev.shotLocation, ev.points)] : "";
       rows.push([game.id, game.date, scorer ? scorer.name : "", ev.made !== false, ev.points, assister ? assister.name : "", defenderNames(ev.defenderIds), blocker ? blocker.name : "", !!ev.turnoverEventId, rebounder ? rebounder.name : "", reboundType, ev.shotLocation ? ev.shotLocation.x.toFixed(1) : "", ev.shotLocation ? ev.shotLocation.y.toFixed(1) : "", band, ...videoTimeCsv(ev.videoTime)]);
     });
   });
@@ -2860,12 +2876,12 @@ document.getElementById("exportMatchupCsvBtn").addEventListener("click", () => {
 
 document.getElementById("exportLeaderboardCsvBtn").addEventListener("click", () => {
   const rows = [["player", "games_played", ...STAT_FIELDS,
-    "fgm", "fga", "tpm", "tpa", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "efg_pct", "ts_pct", "stocks", "ast_tov",
+    "fgm", "fga", "tpm", "tpa", "close_m", "close_a", "mid_m", "mid_a", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "efg_pct", "ts_pct", "stocks", "ast_tov",
     "pts_allowed", "opp_fg_pct", "times_beaten", "stops", "pts_per_20", "game_score_per_20", "two_way_per_20"]];
   computeLeaderboard().forEach(r => {
     rows.push([
       r.player.name, r.gp, ...STAT_FIELDS.map(f => r.totals[f]),
-      r.shooting.fgm, r.shooting.fga, r.shooting.tpm, r.shooting.tpa, r.shooting.tpArcM, r.shooting.tpArcA, r.shooting.tpDeepM, r.shooting.tpDeepA, r.shooting.ftm, r.shooting.fta,
+      r.shooting.fgm, r.shooting.fga, r.shooting.tpm, r.shooting.tpa, r.shooting.closeM, r.shooting.closeA, r.shooting.midM, r.shooting.midA, r.shooting.tpArcM, r.shooting.tpArcA, r.shooting.tpDeepM, r.shooting.tpDeepA, r.shooting.ftm, r.shooting.fta,
       effectiveFgPct(r.shooting.fgm, r.shooting.tpm, r.shooting.fga), trueShootingPct(r.totals.pts, r.shooting.fga, r.shooting.fta),
       r.stocks, r.astTov, r.defense.ptsAllowed,
       pct(r.defense.timesBeaten, r.defense.timesBeaten + r.defense.stops),

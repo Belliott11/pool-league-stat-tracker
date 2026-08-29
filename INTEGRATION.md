@@ -233,39 +233,47 @@ collection, not stored anywhere separately — see `shootingStats()` and `gameDe
 `app.js` for the exact logic (points-allowed and "beaten" only count `made: true` rows against a
 defender; a contested miss counts as a "stop" instead).
 
-**The 3PT Arc / 3PT Deep split is also purely computed, nothing stored — a further breakdown of
-`shootingStats()`'s existing `tpm`/`tpa`, not a new field on `scoring_events`.** The motivating
-finding: a season's worth of 3PT attempts, split by radial distance from the hoop, showed a real
-gap between shots just past the line (a normal, makeable three) and much-longer near-pool-length
-heaves (a different, far lower-percentage shot) — a single blended "3PT%" was quietly averaging
-the two together, making the arc three look worse than it is and the heave look better. Compute:
+**The Close / Midrange / Line / Deep shot-distance split is also purely computed, nothing
+stored — a further breakdown of `shootingStats()`'s existing `fgm`/`fga`/`tpm`/`tpa`, not a new
+field on `scoring_events`.** The motivating finding, originally for 3PT only: a season's worth
+of 3PT attempts, split by radial distance from the hoop, showed a real gap between shots just
+past the line (a normal, makeable three) and much-longer near-pool-length heaves (a different,
+far lower-percentage shot) — a single blended "3PT%" was quietly averaging the two together,
+making the line three look worse than it is and the heave look better. The same idea was later
+extended one zone closer to the hoop, splitting the 2PT bucket into Close and Midrange too.
+Compute (`shotBand()` in `app.js`):
 
 ```
 distance = sqrt((shot_x - 50)^2 + (shot_y - 0)^2)   // hoop is always at (50, 0) in this coordinate space
-band = distance > THREE_PT_DEEP_THRESHOLD ? "deep" : "arc"   // threshold currently 80
+band = points === 3
+  ? (distance > THREE_PT_DEEP_THRESHOLD ? "deep" : "arc")     // threshold currently 80 — displayed as "Line," returns "arc" internally
+  : (distance > CLOSE_RANGE_THRESHOLD ? "mid" : "close")       // threshold currently 30, only applies to points === 2
 ```
 
-`THREE_PT_DEEP_THRESHOLD` (`app.js`) is a single, easy-to-find constant, not a settled rule or a
-per-user setting — it was drawn from a small early sample (41 total 3PT attempts league-wide when
-it was introduced) and is expected to move as more games get logged. If you replicate this
-server-side, keep it similarly easy to change in one place rather than hardcoding 80 into a
-query, and don't build anything (UI copy, alerts) that treats a player's per-band split as a
-settled number while the league-wide sample is still this small. Only `points === 3` rows with a
-non-null `shot_x`/`shot_y` get banded — an unmarked 3PT attempt still counts toward the plain
-`tpm`/`tpa`, just not toward either band (same "unmarked shots are excluded, not zero" pattern as
-the heatmaps below). Unlike most of the other per-player numbers, this one is deliberately
-**not** inlined as extra columns on the main Leaderboard table, Game Stats table, Player Game
-Log, or the Head-to-Head tables — an earlier pass did exactly that and it read as clutter on
-tables that already carry 20+ columns, so it now lives in its own supplementary panel below the
-main Leaderboard table instead (**3PT Shot Distance**, `renderThreePtDistancePanel()` in
-`app.js`), the same pattern Assist Connections and Teammate Synergy already use for "useful but
-secondary" cuts. `shooting.tpArcM/A` and `shooting.tpDeepM/A` are still computed and present on
-every `computeLeaderboard()` row (and still exported in the Box Score/Leaderboard CSVs) — only
-the *inline table* placement was pulled back, not the underlying computation. If your version of
-this UI has more room per row than a stat-tracking tool typically does, inlining it is a
-reasonable call; just don't do it reflexively for every derived cut the way the first pass did.
-The 2PT/3PT boundary itself (the actual 3pt line, `y: 60`) is untouched by any of this — banding
-only ever subdivides shots already inside the 3PT bucket.
+Both thresholds (`app.js`) are single, easy-to-find constants, not settled rules or per-user
+settings. `THREE_PT_DEEP_THRESHOLD` was drawn from a small early sample (41 total 3PT attempts
+league-wide when it was introduced) and is expected to move as more games get logged.
+`CLOSE_RANGE_THRESHOLD` is a rougher starting guess with no comparable shot-volume analysis
+behind it at all yet — treat it as even more provisional than the 3PT threshold, and don't be
+surprised if it needs to move sooner. If you replicate this server-side, keep both similarly easy
+to change in one place rather than hardcoding them into a query, and don't build anything (UI
+copy, alerts) that treats a player's per-band split as a settled number while the sample is still
+this small — especially true for the 2PT split. Only rows with a non-null `shot_x`/`shot_y` get
+banded — an unmarked attempt still counts toward the plain `fgm`/`fga`/`tpm`/`tpa`, just not
+toward any band (same "unmarked shots are excluded, not zero" pattern as the heatmaps below).
+Deliberately **not** inlined as extra columns on the main Leaderboard table, Game Stats table,
+Player Game Log, or the Head-to-Head tables — an earlier pass did exactly that (for the 3PT-only
+version) and it read as clutter on tables that already carry 20+ columns, so it lives in its own
+supplementary panel below the main Leaderboard table instead (**Shot Distance**,
+`renderThreePtDistancePanel()` in `app.js` — the function name predates the 2PT extension and
+wasn't renamed, same "not worth the churn" call as `shotBand()`'s internal `"arc"` value), the
+same pattern Assist Connections and Teammate Synergy already use for "useful but secondary" cuts.
+`shooting.closeM/A`, `midM/A`, `tpArcM/A`, and `tpDeepM/A` are all present on every
+`computeLeaderboard()` row (and exported in the Box Score/Leaderboard CSVs; the Shot Log CSV's
+`shot_band` column covers all four values plus blank) — only the *inline table* placement was
+ever pulled back, not the underlying computation. The 2PT/3PT boundary itself (the actual 3pt
+line, `y: 60`) is untouched by any of this — both splits only ever subdivide shots already
+inside their own bucket, never move a shot across the 2PT/3PT line itself.
 
 **Out-of-Bounds Misses on the Leaderboard is also purely computed, nothing stored.**
 `computeOutOfBoundsStats()` counts, per player, `scoring_events` rows where `made: false`
