@@ -169,8 +169,11 @@ individual player, not a team.
    average Two-Way/20 lift that player gives their actual teammates (each teammate's own
    With/Without split, same source as the Teammate Synergy panel on Player Detail) — a duo award
    also shows how many assists actually happened between that pair. **Clutch** compares
-   **Game-Winning Buckets** (see below) rather than being left blank, now that there's a tracked
-   stat that actually fits it. Every number here is computed live from whatever games are
+   **Game-Winning Buckets** (see below) rather than being left blank — worth reading with a
+   grain of salt, though: in a race-to-target format the game literally ends on the winning
+   basket, so GWB tracks "who tends to close games out" more than it tracks rare late-game
+   heroics specifically. It's the closest tracked stat to Clutch this tool has, not a precise
+   match for what the award is actually asking. Every number here is computed live from whatever games are
    actually logged in this browser, so it's only ever as complete as your Shot Log is — a vote
    sitting outside the top of its column isn't a bug, the vote and the numbers are allowed to
    disagree, that's the whole point of comparing them. A voted player who isn't in your current

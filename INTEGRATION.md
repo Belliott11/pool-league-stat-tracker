@@ -383,6 +383,18 @@ untimed rows — insertion order is not guaranteed to reflect game order once ba
 workflows are involved, and a wrong "winning shot" attribution would be worse than none at all
 here specifically, since it feeds directly into a voted award comparison.
 
+**Worth knowing about the metric itself, confirmed against real production data**: in a
+race-to-target format with no clock, the last basket of *every* decided game is structurally
+guaranteed to belong to the winning team — the game ends the instant someone reaches the target,
+so there's no "last shot before the buzzer" ambiguity the way clock-based basketball has. That
+means GWB isn't tracking rare, buzzer-beater moments; it's a "who tends to be the one closing
+games out" tally that grows by exactly one per fully-timestamped decided game, distributed across
+whoever happens to hit the target-reaching shot. Also confirmed in production: the timestamp gate
+turns out not to exclude much in practice — a full ten-game, 365-shot review with disciplined
+timestamping had all ten games qualify. Both are worth keeping in mind if you build UI copy or an
+award pairing (like this tool's own Clutch comparison) around this number — it's a real signal,
+just not the "rare and memorable" one the name might suggest.
+
 **The heatmaps on Player Detail and the Leaderboard are also purely computed, nothing stored.**
 They bucket every field goal with a non-null `shot_x`/`shot_y` into a 5×6 grid over the court
 (`computeHeatmapCells()` in `app.js`), color each occupied cell by that zone's FG%, and label it
