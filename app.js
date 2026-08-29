@@ -2177,52 +2177,56 @@ const AWARD_RESULTS = [
 // yet" / "no comparable tracked stat" rather than a fabricated number. Recomputed fresh every
 // render, same as every other Leaderboard panel — nothing about awards or their pairing to a
 // stat is stored in `state`.
-function computeAwardsVsStats() {
+// Full ranked standings for each statKey a click can expand into — same underlying numbers the
+// winner-detail line already summarizes, just for every player instead of only the voted
+// winner(s). Built once per statKey (not per award), since several awards share one.
+function computeAwardStandings() {
   const board = computeLeaderboard().filter(r => r.gp > 0);
-  const twoWayRanked = [...board].sort((a, b) => b.twoWayPer20 - a.twoWayPer20);
-  const twoWayTotalRanked = [...board].sort((a, b) => b.twoWayTotal - a.twoWayTotal);
-  const defRanked = [...board].sort((a, b) => defensiveImpact(b.rateDefense) - defensiveImpact(a.rateDefense));
-  const gwbRanked = computeGameWinningBuckets();
+  const teammateLift = state.players.map(p => {
+    const lifts = [];
+    state.players.forEach(other => {
+      if (other.id === p.id) return;
+      const synergy = computeTeammateSynergy(other.id).find(s => s.teammate.id === p.id);
+      if (synergy && synergy.with.gp > 0 && synergy.without.gp > 0) lifts.push(synergy.with.twoWayPer20 - synergy.without.twoWayPer20);
+    });
+    if (lifts.length === 0) return null;
+    const avg = lifts.reduce((a, b) => a + b, 0) / lifts.length;
+    return { player: p, value: avg, display: `${avg >= 0 ? "+" : ""}${avg.toFixed(1)} Two-Way/20 avg lift (${lifts.length} teammate${lifts.length === 1 ? "" : "s"})` };
+  }).filter(Boolean).sort((a, b) => b.value - a.value);
 
-  function rankDetail(ranked, slug, valueFn, label) {
-    const idx = ranked.findIndex(r => r.player.id === slug);
-    if (idx === -1) return "No games logged yet";
-    return `${label}: ${valueFn(ranked[idx]).toFixed(1)} (#${idx + 1} of ${ranked.length})`;
-  }
+  return {
+    twoWay: [...board].sort((a, b) => b.twoWayPer20 - a.twoWayPer20)
+      .map(r => ({ player: r.player, value: r.twoWayPer20, display: `${r.twoWayPer20.toFixed(1)} Two-Way/20` })),
+    twoWayTotal: [...board].sort((a, b) => b.twoWayTotal - a.twoWayTotal)
+      .map(r => ({ player: r.player, value: r.twoWayTotal, display: `${r.twoWayTotal.toFixed(1)} Two-Way (season)` })),
+    defImpact: [...board].sort((a, b) => defensiveImpact(b.rateDefense) - defensiveImpact(a.rateDefense))
+      .map(r => ({ player: r.player, value: defensiveImpact(r.rateDefense), display: `${defensiveImpact(r.rateDefense).toFixed(1)} Def Impact/20` })),
+    gwb: computeGameWinningBuckets()
+      .map(r => ({ player: r.player, value: r.count, display: `${r.count} game-winning bucket${r.count === 1 ? "" : "s"}` })),
+    trend: [...board].sort((a, b) => b.last5TwoWayPer20 - a.last5TwoWayPer20)
+      .map(r => ({ player: r.player, value: r.last5TwoWayPer20, display: `Last 5: ${r.last5Trend} ${r.last5TwoWayPer20.toFixed(1)} vs. season ${r.twoWayPer20.toFixed(1)} Two-Way/20` })),
+    teammateLift
+  };
+}
 
-  function winnerDetail(slug, statKey) {
-    if (statKey === "twoWay") return rankDetail(twoWayRanked, slug, r => r.twoWayPer20, "Two-Way/20");
-    if (statKey === "twoWayTotal") return rankDetail(twoWayTotalRanked, slug, r => r.twoWayTotal, "Two-Way (season)");
-    if (statKey === "defImpact") return rankDetail(defRanked, slug, r => defensiveImpact(r.rateDefense), "Def Impact/20");
-    if (statKey === "gwb") {
-      const idx = gwbRanked.findIndex(r => r.player.id === slug);
-      if (idx === -1) return "0 game-winning buckets this season";
-      return `${gwbRanked[idx].count} game-winning bucket${gwbRanked[idx].count === 1 ? "" : "s"} this season (#${idx + 1} of ${gwbRanked.length})`;
-    }
-    if (statKey === "trend") {
-      const row = board.find(r => r.player.id === slug);
-      return row ? `Last 5: ${row.last5Trend} ${row.last5TwoWayPer20.toFixed(1)} vs. season ${row.twoWayPer20.toFixed(1)} Two-Way/20` : "No games logged yet";
-    }
-    if (statKey === "teammateLift") {
-      const lifts = [];
-      state.players.forEach(p => {
-        if (p.id === slug) return;
-        const synergy = computeTeammateSynergy(p.id).find(s => s.teammate.id === slug);
-        if (synergy && synergy.with.gp > 0 && synergy.without.gp > 0) lifts.push(synergy.with.twoWayPer20 - synergy.without.twoWayPer20);
-      });
-      if (lifts.length === 0) return "Not enough With/Without games logged yet";
-      const avg = lifts.reduce((a, b) => a + b, 0) / lifts.length;
-      return `Teammates average ${avg >= 0 ? "+" : ""}${avg.toFixed(1)} Two-Way/20 with them on the floor (${lifts.length} teammate${lifts.length === 1 ? "" : "s"} with enough games)`;
-    }
-    return "No directly comparable tracked stat";
-  }
+const AWARD_NOT_FOUND_TEXT = { gwb: "0 game-winning buckets this season", teammateLift: "Not enough With/Without games logged yet" };
+
+function computeAwardsVsStats() {
+  const standings = computeAwardStandings();
 
   return AWARD_RESULTS.map(award => {
-    const winners = award.winners.map(slug => ({
-      slug,
-      player: state.players.find(p => p.id === slug),
-      detail: winnerDetail(slug, award.statKey)
-    }));
+    const ranking = award.statKey ? standings[award.statKey] : null;
+    const winners = award.winners.map(slug => {
+      const player = state.players.find(p => p.id === slug);
+      let detail = "No directly comparable tracked stat";
+      if (ranking) {
+        const idx = ranking.findIndex(r => r.player.id === slug);
+        detail = idx === -1
+          ? (AWARD_NOT_FOUND_TEXT[award.statKey] || "No games logged yet")
+          : `${ranking[idx].display} (#${idx + 1} of ${ranking.length})`;
+      }
+      return { slug, player, detail };
+    });
     let duoDetail = null;
     if (award.isDuo && award.winners.length === 2) {
       const [aId, bId] = award.winners;
@@ -2231,9 +2235,15 @@ function computeAwardsVsStats() {
         .reduce((sum, c) => sum + c.count, 0);
       duoDetail = total > 0 ? `${total} assist${total === 1 ? "" : "s"} between them, either direction` : "No assist connections between them logged yet";
     }
-    return { ...award, winners, duoDetail };
+    return { ...award, winners, duoDetail, standings: ranking || [] };
   });
 }
+
+// Which award cards currently have their full standings expanded — a plain module-level Set
+// rather than anything stored, since it's just this render's UI state, not app data. Persists
+// across re-renders within a session (e.g. after a stat-changing edit elsewhere) but resets on
+// reload, which is fine for a "let me peek at the full list" interaction.
+let expandedAwards = new Set();
 
 function renderAwardsVsStats() {
   const wrap = document.getElementById("awardsVsStats");
@@ -2242,17 +2252,33 @@ function renderAwardsVsStats() {
   computeAwardsVsStats().forEach(award => {
     const row = document.createElement("div");
     row.className = "award-row";
+    const isExpanded = expandedAwards.has(award.key);
     const winnersHtml = award.winners.map(w => `
       <div class="award-winner">
         <span class="award-winner-name">${w.player ? escapeHtml(w.player.name) : `${escapeHtml(w.slug)} (not in current roster)`}</span>
         <span class="hint" style="margin:0">${escapeHtml(w.detail)}</span>
       </div>
     `).join("");
+    const hasStandings = award.standings.length > 0;
+    const standingsHtml = isExpanded
+      ? (hasStandings
+          ? `<ol class="award-standings">${award.standings.map(s => `<li><span class="award-standings-name">${escapeHtml(s.player.name)}</span><span class="hint" style="margin:0">${escapeHtml(s.display)}</span></li>`).join("")}</ol>`
+          : '<p class="empty-state" style="margin:8px 0 0">No standings yet for this stat.</p>')
+      : "";
     row.innerHTML = `
-      <div class="award-label">${escapeHtml(award.label)}</div>
+      <button type="button" class="award-toggle" aria-expanded="${isExpanded}">
+        <span class="award-label">${escapeHtml(award.label)}</span>
+        <span class="award-toggle-icon">${isExpanded ? "▲ Hide standings" : "▼ See standings"}</span>
+      </button>
       <div class="award-winners">${winnersHtml}</div>
       ${award.duoDetail ? `<div class="hint" style="margin:4px 0 0">${escapeHtml(award.duoDetail)}</div>` : ""}
+      <div class="award-standings-wrap">${standingsHtml}</div>
     `;
+    row.querySelector(".award-toggle").addEventListener("click", () => {
+      if (expandedAwards.has(award.key)) expandedAwards.delete(award.key);
+      else expandedAwards.add(award.key);
+      renderAwardsVsStats();
+    });
     wrap.appendChild(row);
   });
 }

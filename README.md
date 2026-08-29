@@ -175,7 +175,9 @@ individual player, not a team.
    sitting outside the top of its column isn't a bug, the vote and the numbers are allowed to
    disagree, that's the whole point of comparing them. A voted player who isn't in your current
    roster (nobody's added them yet, or they were a guest) shows as "not in current roster"
-   instead of erroring.
+   instead of erroring. Click **▼ See standings** on any award to expand the full ranked list for
+   that award's stat — not just where the winner landed, but everyone's number, so you can see
+   how close (or not) the vote actually was. Click **▲ Hide standings** to collapse it again.
    Below that, **Game-Winning Buckets** counts, per player, how many times their shot actually
    closed out a game their team won — the real game-ending basket in Poolean's race-to-a-target
    format. Credited only when *every* made shot in that game has a real video timestamp — a

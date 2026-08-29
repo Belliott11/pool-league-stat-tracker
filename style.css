@@ -899,7 +899,29 @@ button:disabled {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--accent);
+}
+.award-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
   margin-bottom: 8px;
+  font-weight: normal;
+}
+.award-toggle-icon {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.award-toggle:hover .award-toggle-icon,
+.award-toggle:hover .award-label {
+  color: var(--text);
 }
 .award-winners {
   display: flex;
@@ -912,4 +934,26 @@ button:disabled {
 }
 .award-winner-name {
   font-weight: 700;
+}
+.award-standings-wrap:not(:empty) {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.award-standings {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.award-standings li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+.award-standings-name {
+  font-weight: 600;
+  white-space: nowrap;
 }

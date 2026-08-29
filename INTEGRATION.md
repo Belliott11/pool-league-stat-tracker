@@ -297,6 +297,12 @@ against `player.id` exactly like `poolean-seed.json` (see "Player and game ids a
 your PocketBase" above); a slug with no matching player renders as "not in current roster"
 rather than erroring, which covers both a genuinely-absent player and one Ben simply hasn't
 added to this browser's roster yet — the UI can't tell those two cases apart, and doesn't try to.
+`computeAwardStandings()` builds the same underlying ranking one level up — full standings per
+statKey (every qualifying player, not just the award's own winner(s)) — which
+`computeAwardsVsStats()` both slices down to a single winner's rank/value and exposes in full as
+each award's `standings` array; the UI renders that behind a per-card "See standings" toggle
+(`expandedAwards`, a plain in-memory `Set` of expanded award keys — UI state, not app data, and
+not persisted across a reload).
 
 **Game-Winning Buckets is also purely computed, nothing stored** — a season count, per player,
 of games where `gameWinningShot()` (`app.js`) identified their shot as the one that actually
