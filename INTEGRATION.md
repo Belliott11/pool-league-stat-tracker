@@ -285,6 +285,23 @@ into the denominator would just dilute the number with shots that couldn't have 
 bounds in the first place. A league-wide version of the same rate (summed across every player)
 renders above the per-player table for context.
 
+**Second-Chance Conversion on the Leaderboard is also purely computed, nothing stored — and is
+kept deliberately identical to a standalone script, not just similar to it.**
+`computeSecondChanceConversions()` (`app.js`) and `scripts/second-chance-analysis.js` (repo
+root) implement the exact same algorithm on purpose: an offensive rebound is a `made: false`
+`scoring_events` row with `rebounder` on the shooter's own team (`sameTeam()`); it counts as
+*converted* if, within `SECOND_CHANCE_WINDOW_SECONDS` (currently 20) of that row's own `at`
+timestamp, some other made row in the same game has `scorer` equal to the rebounder or `assist`
+equal to the rebounder — either path counts once. Both the miss and the candidate make need a
+non-null `at` to be evaluated; a miss without one still counts toward OREB but is excluded from
+the conversion check (and tallied separately as "couldn't be checked"). The window's inclusive
+on both ends. The script exists because this is genuinely useful run against an arbitrary
+exported file (someone else's export, an older season) without that data being loaded into a
+live browser session at all — if you ever build an equivalent on your side, replicate the
+"require a real timestamp on both ends, don't infer order from anything else" rule exactly the
+same way Game-Winning Buckets does, for the same reason: a wrong conversion attribution here is
+worse than an undercounted one.
+
 **Awards vs. Stats on the Leaderboard is a different case from everything else in this
 section: half of it is genuinely hardcoded, not computed.** `AWARD_RESULTS` (`app.js`) is a
 fixed snapshot of Summer 2026's closed award ballot (`award_results` in the season's own

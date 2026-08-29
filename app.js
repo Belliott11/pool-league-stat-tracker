@@ -2495,6 +2495,70 @@ function renderThreePtDistancePanel() {
 // to rebound. Scoped to misses specifically — a make can never go out of bounds — so this reads
 // as "when this player misses, how often does the ball leave their hands for good," not a
 // shooting-accuracy stat.
+// "True" second-chance conversion — same algorithm as scripts/second-chance-analysis.js
+// (the standalone script this panel was built from), kept in sync with it deliberately, just
+// running against whatever's already loaded in this browser instead of an exported file. An
+// offensive rebound is a missed shot with a rebounderId on the shooter's own team; it counts as
+// *converted* if, within SECOND_CHANCE_WINDOW_SECONDS of the miss's own videoTime, either that
+// rebounder scored themselves or someone else scored with that rebounder as the assist — either
+// path counts once, not twice. Both the miss and the candidate score need a real videoTime to
+// be checked; a miss logged without one still counts toward OREB but can't be evaluated for
+// conversion, same "don't guess" stance as Game-Winning Buckets. Single adjustable constant,
+// not a UI setting, same reasoning as every other threshold on this page.
+const SECOND_CHANCE_WINDOW_SECONDS = 20;
+
+function computeSecondChanceConversions() {
+  const totals = {}; // playerId -> { oreb, converted, noTimestamp }
+  state.games.forEach(game => {
+    const events = game.scoringEvents;
+    events.forEach(ev => {
+      if (ev.made === false && ev.rebounderId && sameTeam(game, ev.scorerId, ev.rebounderId)) {
+        const t = totals[ev.rebounderId] = totals[ev.rebounderId] || { oreb: 0, converted: 0, noTimestamp: 0 };
+        t.oreb++;
+        const hasTimestamp = ev.videoTime !== null && ev.videoTime !== undefined;
+        if (!hasTimestamp) { t.noTimestamp++; return; }
+        const windowStart = ev.videoTime;
+        const windowEnd = ev.videoTime + SECOND_CHANCE_WINDOW_SECONDS;
+        const converted = events.some(cand => {
+          if (cand === ev || cand.made === false) return false;
+          if (cand.videoTime === null || cand.videoTime === undefined) return false;
+          if (cand.videoTime < windowStart || cand.videoTime > windowEnd) return false;
+          return cand.scorerId === ev.rebounderId || cand.assistId === ev.rebounderId;
+        });
+        if (converted) t.converted++;
+      }
+    });
+  });
+  return Object.entries(totals)
+    .map(([playerId, v]) => ({ player: state.players.find(p => p.id === playerId), ...v }))
+    .filter(r => r.player)
+    .sort((a, b) => b.oreb - a.oreb);
+}
+
+const SECOND_CHANCE_COLUMNS = [
+  { key: "player", label: "Player", accessor: r => r.player.name },
+  { key: "oreb", label: "OREB", accessor: r => r.oreb },
+  { key: "converted", label: "Converted", accessor: r => r.converted },
+  { key: "rate", label: "Rate", accessor: r => pct(r.converted, r.oreb) }
+];
+let secondChanceSort = { key: "oreb", dir: "desc" };
+
+function renderSecondChancePanel() {
+  renderSortableHeader(document.getElementById("secondChanceHeaderRow"), SECOND_CHANCE_COLUMNS, secondChanceSort, renderSecondChancePanel);
+  const rows = computeSecondChanceConversions();
+  const sortCol = SECOND_CHANCE_COLUMNS.find(c => c.key === secondChanceSort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), secondChanceSort.dir));
+  const totalNoTimestamp = rows.reduce((sum, r) => sum + r.noTimestamp, 0);
+  const summaryEl = document.getElementById("secondChanceSummary");
+  summaryEl.textContent = totalNoTimestamp > 0
+    ? `${totalNoTimestamp} offensive rebound${totalNoTimestamp === 1 ? "" : "s"} had no video timestamp on the missed shot and couldn't be checked for conversion (still counted toward OREB, never toward Converted or Rate).`
+    : "";
+  const body = document.getElementById("secondChanceBody");
+  body.innerHTML = rows.length === 0
+    ? '<tr><td colspan="4" class="empty-state">No offensive rebounds logged yet.</td></tr>'
+    : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${r.oreb}</td><td>${r.converted}</td><td>${formatPct(pct(r.converted, r.oreb))}</td></tr>`).join("");
+}
+
 function computeOutOfBoundsStats() {
   const totals = {}; // playerId -> { misses, oob }
   state.games.forEach(g => {
@@ -2698,6 +2762,7 @@ function renderLeaderboard() {
   renderAssistSynergy();
   renderThreePtDistancePanel();
   renderOutOfBoundsPanel();
+  renderSecondChancePanel();
   renderGameWinningBucketsPanel();
   const body = document.getElementById("leaderboardBody");
   body.innerHTML = "";

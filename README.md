@@ -238,7 +238,20 @@ individual player, not a team.
    leave their hands for good on a miss," not a shooting-accuracy stat. Misses are the
    denominator, not total shots, since a make can never go out of bounds; a league-wide line
    above the table gives the same rate across everyone, for context. Click any column header
-   here to sort by it too. Click a player's name to
+   here to sort by it too. Below that, **Second-Chance Conversion** answers a sharper question
+   than "who grabs offensive rebounds" — of those OREBs, how many actually turned into points?
+   An OREB counts as converted when, within 20 seconds of the missed shot's own video timestamp,
+   either that rebounder scored themselves or someone else scored with them credited as the
+   assist — either path counts once, a kick-out three is worth the same as a putback. Both the
+   miss and the follow-up score need a real video timestamp to be checked; an OREB logged
+   without one still counts toward the OREB total but can't be evaluated for conversion, and a
+   note above the table says how many were skipped that way. The 20-second window is a single
+   adjustable constant (`SECOND_CHANCE_WINDOW_SECONDS` in `app.js`), same pattern as the
+   shot-distance thresholds — not a UI setting. This panel runs the exact same algorithm as
+   `scripts/second-chance-analysis.js`, a standalone read-only script that does the same
+   computation against an exported JSON file instead of whatever's loaded in this browser (handy
+   for checking someone else's export, or a season that isn't the one currently loaded here) —
+   see that file's own header comment for how to run it. Click a player's name to
    open their **Player Detail** page:
    - **Shot Heatmap** — the same grid, scoped to just this player's marked field goals across
      every game.

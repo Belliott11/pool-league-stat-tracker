@@ -277,6 +277,18 @@
     </div>
 
     <div class="panel">
+      <h2>Second-Chance Conversion</h2>
+      <p class="hint">"True" second-chance conversion, not just who grabs offensive rebounds — an OREB counts as converted when, within 20 seconds of the missed shot's own video timestamp, either that rebounder scored themselves or someone else scored with them credited as the assist (either path counts, a kick-out is worth the same as a putback). Both the miss and the scoring follow-up need a real video timestamp to be checked; an OREB logged without one still counts toward the total but can't be evaluated for conversion. The 20-second window is a single adjustable constant (`SECOND_CHANCE_WINDOW_SECONDS` in <code>app.js</code>), same pattern as the shot-distance thresholds. This panel runs the same algorithm as <code>scripts/second-chance-analysis.js</code>, just against whatever's loaded in this browser instead of an exported file.</p>
+      <p id="secondChanceSummary" class="hint" style="margin:0 0 10px"></p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="secondChanceTable">
+          <thead><tr id="secondChanceHeaderRow"></tr></thead>
+          <tbody id="secondChanceBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
       <h2>Game-Winning Buckets</h2>
       <p class="hint">How many times a player's shot was the one that actually closed out a game their team won — the real game-ending basket in a race-to-a-target format, feeding the Clutch comparison above. Only credited when that specific shot has a real video timestamp; without one, there's no trustworthy way to say it was really the last shot of the game, so the game is skipped rather than guessed at. A season count, not a rate — a rare, memorable thing like this shouldn't get rounded down to a decimal.</p>
       <div class="table-scroll">
