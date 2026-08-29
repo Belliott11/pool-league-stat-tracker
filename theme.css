@@ -1,0 +1,114 @@
+/*
+ * Design tokens only — no layout/structure rules live here.
+ * Reskin the whole dashboard by editing the values below (or by loading a second
+ * stylesheet after this one that redefines the same variable names on :root).
+ * See INTEGRATION.md → "Theming" for what each token controls.
+ *
+ * This is Ben's own working palette (navy + a single teal accent, kept deliberately
+ * restrained), not a Poolean brand mandate — swap it freely to match the live site.
+ */
+
+:root {
+  /* Surfaces */
+  --bg: #f2f6f5;
+  --panel-bg: #ffffff;
+  --border: #d7e2e0;
+  --surface-muted: #e7f1ef;
+  --surface-muted-hover: #d9ece8;
+  --surface-tint: #f8fbfa;
+  --surface-hover: #eef6f4;
+  --disabled-bg: #dbe4e0;
+
+  /* Text */
+  --text: #0f211d;
+  --muted: #5c7570;
+
+  /* Brand + semantic colors — one accent hue (teal) used everywhere, not split across two */
+  --primary: #0e8f86;
+  --primary-dark: #0b6f68;
+  --primary-light: #e2f3f1;
+  --accent: #0e8f86;
+  --accent-light: #e2f3f1;
+  --danger: #b8382d;
+  --danger-light: #fbe6e3;
+  --success: #1f7f4f;
+  --success-light: #e5f4ea;
+  --warning: #a3620f;
+  --warning-light: #fbeedc;
+
+  /* Decorative background glow (behind the whole page) */
+  --glow-1: #e2f3f1;
+  --glow-2: #eef4e9;
+
+  /* Shape + elevation — small radius, flat resting state (badges/pills stay full-round
+     regardless of this token, see .badge in style.css) */
+  --radius: 8px;
+  --radius-sm: 6px;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 8px rgba(15, 33, 29, 0.08);
+
+  /* Typography — one grotesk family for both display and body (weight carries the
+     hierarchy), a monospace face reserved for tabular stat numbers */
+  --font-body: "Archivo", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Archivo", var(--font-body);
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+/* Dark mode: system preference by default, overridden by the header toggle (data-theme) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1d29;
+    --panel-bg: #122a3a;
+    --border: #1e3a4a;
+    --surface-muted: #16303f;
+    --surface-muted-hover: #1c3a4b;
+    --surface-tint: #102633;
+    --surface-hover: #142e3d;
+    --disabled-bg: #1c3644;
+    --text: #eaf3f2;
+    --muted: #7f9aa8;
+    --primary: #33cbc0;
+    --primary-dark: #7fe0d6;
+    --primary-light: #123645;
+    --accent: #33cbc0;
+    --accent-light: #123645;
+    --danger: #f2726b;
+    --danger-light: #3a1a17;
+    --success: #4fd97f;
+    --success-light: #123322;
+    --warning: #f2a33c;
+    --warning-light: #3a2412;
+    --glow-1: rgba(51, 203, 192, 0.07);
+    --glow-2: rgba(51, 203, 192, 0.04);
+    --shadow-sm: none;
+    --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c1d29;
+  --panel-bg: #122a3a;
+  --border: #1e3a4a;
+  --surface-muted: #16303f;
+  --surface-muted-hover: #1c3a4b;
+  --surface-tint: #102633;
+  --surface-hover: #142e3d;
+  --disabled-bg: #1c3644;
+  --text: #eaf3f2;
+  --muted: #7f9aa8;
+  --primary: #33cbc0;
+  --primary-dark: #7fe0d6;
+  --primary-light: #123645;
+  --accent: #33cbc0;
+  --accent-light: #123645;
+  --danger: #f2726b;
+  --danger-light: #3a1a17;
+  --success: #4fd97f;
+  --success-light: #123322;
+  --warning: #f2a33c;
+  --warning-light: #3a2412;
+  --glow-1: rgba(51, 203, 192, 0.07);
+  --glow-2: rgba(51, 203, 192, 0.04);
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.35);
+}

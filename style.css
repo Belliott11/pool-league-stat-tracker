@@ -1,0 +1,878 @@
+/* Design tokens (colors, fonts, radii, shadows) live in theme.css, loaded before this
+   file — everything below is layout/structure only, built entirely on var(--...) tokens
+   so reskinning never requires touching this file. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background:
+    radial-gradient(circle at 15% 0%, var(--glow-1) 0%, transparent 45%),
+    radial-gradient(circle at 100% 10%, var(--glow-2) 0%, transparent 40%),
+    var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-header {
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: var(--shadow-sm);
+}
+
+.header-inner {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 18px 24px 0;
+}
+
+.header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.01em;
+}
+.app-header h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.theme-toggle-btn {
+  background: var(--surface-muted);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.theme-toggle-btn:hover { background: var(--surface-muted-hover); }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 16px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--muted);
+  border-radius: 8px 8px 0 0;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tab-btn:hover { color: var(--text); background: var(--primary-light); }
+
+.tab-btn.active {
+  color: var(--primary-dark);
+  border-bottom-color: var(--primary);
+  background: var(--primary-light);
+}
+
+main {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel h2 {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.panel h4 {
+  margin: 14px 0 6px;
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.panel h4:first-of-type { margin-top: 0; }
+
+.hint {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  margin-top: -4px;
+  margin-bottom: 12px;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+input, select, button {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-bg);
+  color: var(--text);
+}
+
+input:focus, select:focus, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+button:hover { background: var(--primary-dark); }
+button:active { transform: translateY(1px); }
+
+.secondary-btn {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.secondary-btn:hover { background: var(--surface-muted-hover); }
+
+.danger-btn {
+  background: var(--danger);
+}
+.danger-btn:hover { filter: brightness(0.88); }
+
+.highlight-btn {
+  background: var(--success);
+}
+.highlight-btn:hover { filter: brightness(0.88); }
+
+.lowlight-btn {
+  background: var(--danger);
+}
+.lowlight-btn:hover { filter: brightness(0.88); }
+
+button:disabled {
+  background: var(--disabled-bg) !important;
+  color: var(--muted);
+  cursor: not-allowed;
+  filter: none;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.file-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.teams-list, .games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.team-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.team-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.team-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.roster-row, .player-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 2px;
+  border-top: 1px solid var(--surface-muted);
+  font-weight: 500;
+}
+
+.roster-row:first-child, .player-row:first-of-type { border-top: none; }
+
+.add-player-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.icon-btn {
+  background: none;
+  color: var(--muted);
+  padding: 3px 8px;
+  font-weight: 500;
+  font-size: 0.82rem;
+  border: none;
+}
+.icon-btn:hover { color: var(--danger); background: none; }
+
+.game-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.game-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.game-card .matchup-line {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.game-card .date-line {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin-top: 2px;
+}
+
+.stat-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.stat-entry-header h2 { margin: 0; flex: 1; font-family: var(--font-display); }
+
+.score-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+
+.scoreboard-panel {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  padding: 0;
+  overflow: hidden;
+}
+
+.scoreboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 5vw, 48px);
+  padding: 20px 16px;
+}
+
+.scoreboard-team {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  opacity: 0.72;
+  transition: opacity 0.15s ease;
+}
+.scoreboard-team.leading { opacity: 1; }
+
+.scoreboard-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.scoreboard-value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 8vw, 3.5rem);
+  line-height: 1;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.scoreboard-dash {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.box-score-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 800px) {
+  .box-score-columns { grid-template-columns: 1fr; }
+}
+
+.team-box {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.team-box h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary-light);
+}
+
+.player-stat-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: var(--surface-tint);
+}
+
+.player-stat-card .name-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 6px;
+}
+
+.stat-cell {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 6px;
+  text-align: center;
+  background: var(--panel-bg);
+}
+
+.stat-cell .stat-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+
+.stat-cell .stat-value {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 3px 0;
+}
+
+.stat-cell .stat-buttons {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.stat-cell button {
+  padding: 3px 7px;
+  font-size: 0.75rem;
+  min-width: 24px;
+  border-radius: 6px;
+}
+
+.matchup-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.matchup-table th {
+  text-align: left;
+  padding: 8px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable-th:hover { color: var(--text); }
+.sortable-th.sorted { color: var(--accent); }
+
+.matchup-table td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+/* Leaderboard-only: every non-player column is a stat, so give it the tabular-precision
+   treatment — a monospace face keeps a column of numbers visually aligned in a way the body
+   font can't (Leaderboard's own numbers are proportionally spaced without it). */
+.matchup-table td.num-cell {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.matchup-table tr:hover td {
+  background: var(--surface-hover);
+}
+
+/* Pins the player-name column in place while a wide stat table (Game Stats, Leaderboard)
+   scrolls horizontally, so it's always clear whose row you're looking at. Needs its own solid
+   background — the table itself has none, it just shows the panel behind it — or scrolled-past
+   cells would show through underneath. */
+.matchup-table th.sticky-col,
+.matchup-table td.sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--panel-bg);
+  box-shadow: 2px 0 4px -2px rgba(0, 0, 0, 0.15);
+}
+.matchup-table tr:hover td.sticky-col {
+  background: var(--surface-hover);
+}
+
+.empty-state {
+  color: var(--muted);
+  font-style: italic;
+  padding: 12px 0;
+}
+
+/* Players roster */
+.roster-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Roster assignment per game */
+.roster-assignment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 800px) {
+  .roster-assignment { grid-template-columns: 1fr; }
+}
+.roster-team-col {
+  background: var(--surface-tint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.roster-team-col h4 {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+}
+.roster-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 30px;
+  margin-bottom: 10px;
+}
+.roster-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  padding: 5px 6px 5px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.roster-chip button {
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0 4px;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.65;
+}
+.roster-chip button:hover { opacity: 1; background: none; }
+.roster-add-select {
+  width: 100%;
+}
+
+/* Stat Entry: the video and the box score (the two things you're actually looking at and
+   clicking while tagging a play) sit side by side at the top, each tall enough to hold its
+   own scroll if it needs one, so neither ever has to be scrolled away to see the other.
+   Everything else — video setup, roster assignment, Game Stats, Shot Log, etc. — is used far
+   less often while actively tagging, so it lives below in normal document flow instead.
+   Falls back to a plain stacked column on narrow screens, where holding both at a fixed
+   height would just cramp everything. */
+.tagging-area {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+.video-pane {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.stat-pane {
+  max-height: 78vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.stat-pane .box-score-columns {
+  grid-template-columns: 1fr;
+  margin-bottom: 0;
+}
+@media (max-width: 900px) {
+  .tagging-area { display: block; }
+  .stat-pane { max-height: none; overflow-y: visible; margin-top: 18px; }
+}
+
+/* Video */
+#videoPlayerWrap video,
+#videoPlayerWrap iframe {
+  width: 100%;
+  max-height: 74vh;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: black;
+  box-shadow: var(--shadow-md);
+}
+#videoPlayerWrap iframe {
+  aspect-ratio: 16 / 9;
+  max-height: none;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+/* Scoring log defender picker */
+.stat-cell.expanded {
+  grid-column: 1 / -1;
+  text-align: left;
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+.defender-pick-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.defender-pick-list button {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.defender-pick-list button:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* Without this, a picked defender/assist looks identical to an unpicked one — clicking a
+   name appears to do nothing, which is exactly what makes Confirm feel unreliable. */
+.defender-pick-list button.selected {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+.defender-pick-list button.selected::before {
+  content: "✓ ";
+}
+
+.confirm-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.confirm-btn {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 1rem;
+}
+
+/* Shot chart — click-to-place shot location on a field goal. No paint or free-throw line in
+   Poolean's rules, just a straight 3pt line at 60% of the court depth from the hoop, so the
+   diagram is deliberately this simple. */
+.shot-chart-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+}
+/* The pool is ~30ft end to end (the y axis, hoop to far wall) by ~15ft wide (the x axis) — a
+   true 2:1 ratio, not the arbitrary portrait shape used before. The SVG itself stays a plain
+   0-100 square viewBox with preserveAspectRatio="none", so this is purely a CSS box shape —
+   stored coordinates are already percentages of the rendered box, not the viewBox, so nothing
+   about the click math or stored data needs to change to match. */
+.shot-chart {
+  width: 140px;
+  height: 280px;
+  cursor: crosshair;
+}
+.shot-chart-court {
+  fill: var(--surface-tint);
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.shot-chart-3pt-line {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+.shot-chart-label {
+  font-size: 6px;
+  fill: var(--muted);
+}
+.shot-chart-hoop {
+  fill: var(--muted);
+}
+.shot-chart-dot {
+  fill: var(--accent);
+  stroke: white;
+  stroke-width: 1;
+}
+
+/* Heatmap (Player Detail + Leaderboard) — reuses the shot-chart court/3pt-line, flipped so the
+   hoop renders at the bottom, with a grid of colored cells laid over it. Cell fill color is
+   generated inline per-cell (a hue from red to green based on that zone's FG%), since it's
+   data-driven rather than a fixed style. Width:height here must stay a 1:2 ratio, matching the
+   SVG's own viewBox (see HEATMAP_VIEWBOX_W/H in app.js) — that's what keeps cells/text/the hoop
+   circle rendering at their real proportions instead of stretched. */
+.heatmap-chart {
+  width: 200px;
+  height: 400px;
+  cursor: default;
+}
+.heatmap-cell-label {
+  font-size: 7px;
+  font-weight: 700;
+  fill: white;
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 0.5px;
+  paint-order: stroke;
+  pointer-events: none;
+}
+
+.heatmap-cell-pct {
+  font-size: 4.5px;
+  font-weight: 600;
+  fill: white;
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 0.4px;
+  paint-order: stroke;
+  pointer-events: none;
+}
+
+/* Backfill Shot Locations (Export tab) — a compact grid of mini shot charts, one click each,
+   so going back through already-logged games doesn't mean reopening every one. */
+.backfill-game-group {
+  margin-bottom: 18px;
+}
+.backfill-game-group h4 {
+  margin: 14px 0 8px;
+}
+.backfill-shot-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.backfill-shot-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  width: 104px;
+  background: var(--surface-tint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.backfill-shot-label {
+  font-size: 0.72rem;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--muted);
+}
+.backfill-shot-row .shot-chart {
+  width: 70px;
+  height: 140px;
+}
+.backfill-shot-row .secondary-btn {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+}
+.backfill-shot-row-marked {
+  border-color: var(--accent);
+  opacity: 0.75;
+}
+.backfill-video-wrap {
+  margin-bottom: 10px;
+}
+.backfill-video {
+  width: 480px;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: black;
+}
+#backfillUndoToast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 1.6em;
+  margin: 4px 0 10px;
+}
+#backfillUndoToast:empty {
+  margin: 0;
+}
+
+/* Highlight / lowlight reel */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.badge-highlight {
+  background: var(--success-light);
+  color: var(--success);
+}
+.badge-lowlight {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+.badge-video {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.badge-review {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+.reel-time-input {
+  width: 64px;
+  padding: 5px 6px;
+  font-size: 0.85rem;
+}
+.reel-note-input {
+  width: 140px;
+  padding: 5px 8px;
+  font-size: 0.85rem;
+}

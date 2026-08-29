@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pool League Stat Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23e8590c'/%3E%3Cstop offset='100%25' stop-color='%230e8388'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%8F%80%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  // Applied before first paint so a stored theme choice doesn't flash the other theme.
+  (function () {
+    var t = localStorage.getItem("poolLeagueTheme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-top-row">
+      <h1>Pool League <em>Stat Tracker</em></h1>
+      <button id="themeToggleBtn" class="theme-toggle-btn" type="button" title="Toggle dark mode">🌙</button>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="games">Games</button>
+      <button class="tab-btn" data-tab="stats" id="statsTabBtn" hidden>Stat Entry</button>
+      <button class="tab-btn" data-tab="leaderboard">Leaderboard</button>
+      <button class="tab-btn" data-tab="players">Players</button>
+      <button class="tab-btn" data-tab="export">Export</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- PLAYERS (league-wide roster; teams are picked fresh each game) -->
+  <section id="tab-players" class="tab-panel">
+    <div class="panel">
+      <h2>Add Player</h2>
+      <p class="hint">One roster for the whole league. You'll split players into two teams per game, since teams change each time.</p>
+      <form id="addPlayerForm" class="inline-form">
+        <input type="text" id="playerNameInput" placeholder="Player name" required>
+        <button type="submit">Add Player</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Roster</h2>
+      <div id="playersList"></div>
+    </div>
+  </section>
+
+  <!-- GAMES -->
+  <section id="tab-games" class="tab-panel active">
+    <div class="panel">
+      <h2>Create Game</h2>
+      <form id="addGameForm" class="inline-form">
+        <input type="date" id="gameDateInput" required>
+        <input type="text" id="gameVideoInput" placeholder="Video URL (YouTube or direct link, optional)" style="flex:1;min-width:220px">
+        <input type="text" id="gameNotesInput" placeholder="Notes (optional)">
+        <button type="submit">Create Game</button>
+      </form>
+    </div>
+
+    <p id="needsReviewSummary" class="hint" style="margin:0 0 10px"></p>
+
+    <div class="inline-form" style="margin-bottom:12px">
+      <input type="text" id="gameFilterInput" placeholder="Filter by date, player, or notes…" style="flex:1;min-width:220px">
+    </div>
+
+    <div id="gamesList" class="games-list"></div>
+  </section>
+
+  <!-- STAT ENTRY -->
+  <section id="tab-stats" class="tab-panel">
+    <div class="panel stat-entry-header">
+      <button id="backToGamesBtn" class="secondary-btn">&larr; Back to Games</button>
+      <h2 id="statEntryTitle"></h2>
+    </div>
+
+    <div class="panel scoreboard-panel">
+      <div id="statEntryScore" class="scoreboard"></div>
+    </div>
+
+    <div class="tagging-area">
+      <div class="video-pane">
+        <div id="videoPlayerWrap"></div>
+      </div>
+      <div class="stat-pane">
+        <div class="box-score-columns" id="boxScoreColumns"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Video Setup</h2>
+
+      <h4>Session video</h4>
+      <p class="hint">If one recording covers several games back-to-back, upload it once here and reuse it across all of them — each game just remembers its own start time in the shared video, instead of you splitting the file into separate clips.</p>
+      <div class="inline-form">
+        <select id="masterVideoSelect"></select>
+        <label class="secondary-btn file-label">
+          Upload New Session Video
+          <input type="file" id="masterVideoInput" accept="video/*" hidden>
+        </label>
+      </div>
+      <div class="inline-form" id="masterVideoStartRow" hidden>
+        <span class="hint" style="margin:0">This game starts at</span>
+        <input type="number" id="videoStartInput" min="0" step="0.5" style="width:90px">
+        <span class="hint" id="videoStartFormatted" style="margin:0"></span>
+        <button type="button" id="setStartFromPlaybackBtn" class="secondary-btn">Set From Current Playback Position</button>
+      </div>
+      <div class="inline-form" id="masterVideoEndRow" hidden>
+        <span class="hint" style="margin:0">and ends at</span>
+        <input type="number" id="videoEndInput" min="0" step="0.5" style="width:90px" placeholder="end of video">
+        <span class="hint" id="videoEndFormatted" style="margin:0"></span>
+        <button type="button" id="setEndFromPlaybackBtn" class="secondary-btn">Set From Current Playback Position</button>
+        <button type="button" id="clearVideoEndBtn" class="icon-btn">Clear</button>
+      </div>
+      <div class="inline-form" id="masterVideoDetachRow" hidden>
+        <button type="button" id="detachMasterVideoBtn" class="icon-btn">Use a different video for this game</button>
+      </div>
+
+      <h4>Or a video just for this game</h4>
+      <div class="inline-form">
+        <label class="secondary-btn file-label">
+          Choose Video File
+          <input type="file" id="localVideoInput" accept="video/*" hidden>
+        </label>
+        <span class="hint" style="margin:0">or paste a link:</span>
+        <input type="text" id="videoUrlInput" placeholder="Video URL (YouTube or direct link)" style="flex:1;min-width:220px">
+        <button id="saveVideoUrlBtn" type="button">Load URL</button>
+      </div>
+      <p class="hint">A chosen file is stored in this browser (via IndexedDB) so it stays loaded next time you open this game on this computer — but it never leaves the browser, so it isn't included in exports.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Mark a Clip</h2>
+      <p class="hint">While the video is playing, mark the moment — it grabs a ~10 second clip centered on the current playback time. Needs a local video file or direct video link loaded above (YouTube embeds can't be read for their playback time). See the full list in Highlight / Lowlight Reel below.</p>
+      <div class="button-row">
+        <button id="markHighlightBtn" type="button" class="highlight-btn" disabled>🔥 Mark Highlight</button>
+        <button id="markLowlightBtn" type="button" class="lowlight-btn" disabled>👎 Mark Lowlight</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Team Rosters for This Game</h2>
+      <p class="hint">Add players to Team A or Team B for this game. Click the &times; on a chip to remove them.</p>
+      <div id="rosterAssignment" class="roster-assignment"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Game Stats</h2>
+      <p class="hint">Everyone in this game at a glance, including shooting splits and defensive/advanced numbers derived from the Shot Log below: <strong>FG/3PT/FT</strong> (made/attempted, %), <strong>eFG%</strong> (FG% weighted for 3s counting extra), <strong>TS%</strong> (true shooting — scoring efficiency across FGs and FTs combined), <strong>A/TO</strong> (assist-to-turnover ratio), <strong>Pts Allowed</strong> and <strong>Beaten</strong> (points scored, and times scored on, while they were the tagged defender on a make), <strong>Opp FG%</strong> (shooting % of everyone they were tagged defending, make or miss), <strong>Stops</strong> (times they were the tagged defender on a miss), <strong>GmSc</strong> (Game Score — a single "how good was this game" number), and <strong>Two-Way</strong> (GmSc plus Defensive Impact — Stops minus Beaten minus 0.4×Pts Allowed — so it's 0 for anyone never tagged as a defender, not a penalty for conservative tagging). STL/BLK are shown as recorded — their sum (Stocks) is in the CSV export if you want it, but isn't repeated here since it's just those two columns added together.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="gameStatsTable">
+          <thead><tr>
+            <th class="sticky-col">Player</th><th>Team</th><th>PTS</th><th>FG</th><th>3PT</th><th>FT</th><th>eFG%</th><th>TS%</th><th>OREB</th><th>DREB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>A/TO</th><th>PF</th><th>Pts Allowed</th><th>Opp FG%</th><th>Beaten</th><th>Stops</th><th>GmSc</th><th>Two-Way</th>
+          </tr></thead>
+          <tbody id="gameStatsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Shot Log</h2>
+      <p class="hint">Every shot attempt, make or miss, with who (if anyone) was contesting it and — for makes — who assisted it. Click +1/+2/+3 (make) or the MISS buttons on a player above to log one. Each entry auto-captures the video's playback position when you logged it, so <strong>Jump</strong> takes you right back to it (needs a local video file or direct link loaded, not a YouTube embed).</p>
+      <table class="matchup-table">
+        <thead><tr><th>Shooter</th><th>Result</th><th>Value</th><th>Assist</th><th>Defender</th><th>Time</th><th></th><th></th></tr></thead>
+        <tbody id="scoringLogBody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Other Events</h2>
+      <p class="hint">Every turnover, steal, and foul, tagged with the one opponent involved where noted. Click the TOV/STL/PF +1 buttons on a player above to log one.</p>
+      <table class="matchup-table">
+        <thead><tr><th>Type</th><th>Player</th><th>Opponent</th><th>Time</th><th></th><th></th></tr></thead>
+        <tbody id="otherEventsBody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Defensive Matchups</h2>
+      <p class="hint">Track who was guarding who while you review the video. Add as many entries as the matchup changes.</p>
+      <form id="addMatchupForm" class="inline-form">
+        <select id="defenderSelect" required></select>
+        <span>guarded</span>
+        <select id="offenderSelect" required></select>
+        <input type="text" id="matchupNoteInput" placeholder="Note (e.g. Q1, 2nd half)">
+        <button type="submit">Add Matchup</button>
+      </form>
+      <table class="matchup-table">
+        <thead><tr><th>Defender</th><th>Guarded</th><th>Note</th><th>Time</th><th></th><th></th></tr></thead>
+        <tbody id="matchupTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Highlight / Lowlight Reel</h2>
+      <p class="hint">Every clip you've marked for this game — use the Mark Highlight / Mark Lowlight buttons above to add one.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="reelTable">
+          <thead><tr><th>Type</th><th>Start</th><th>End</th><th>Player</th><th>Note</th><th></th><th></th></tr></thead>
+          <tbody id="reelTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section id="tab-leaderboard" class="tab-panel">
+    <div class="panel">
+      <h2>Season Rates (Individual)</h2>
+      <p class="hint">Every counting stat here (PTS, OREB, DREB, AST, STL, BLK, TOV, PF, Pts Allowed, Beaten, Stops, Def Impact) is a rate per 20 combined points scored in the game, not a season total or a per-game average — only games with real shots logged count toward these at all, so a game that's just been rostered but not reviewed yet doesn't drag anyone's numbers down. Games are capped at different totals (16 or 21), so a plain per-game average isn't a fair comparison between a player who mostly plays 16-point games and one who mostly plays 21s — the game's combined final score stands in for "how much game happened," since possessions aren't tracked. Includes shooting splits and defensive/advanced numbers derived from each game's Shot Log — see the Game Stats table in Stat Entry for what each one means. <strong>Def Impact</strong> is Stops minus Beaten minus 0.4×Pts Allowed — 0 for anyone never tagged as a defender, not a penalty for conservative tagging. <strong>Two-Way</strong> is GmSc plus Def Impact. Click a player's name for their full game log and head-to-head history. Click a column header to sort by it (click again to flip direction).</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="leaderboardTable">
+          <thead><tr id="leaderboardHeaderRow"></tr></thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>League Shot Heatmap</h2>
+      <p class="hint">Every marked field goal, league-wide, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. A zone stays blank until at least one shot lands in it. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
+      <div id="leagueHeatmap"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Assist Connections</h2>
+      <p class="hint">Every passer-to-scorer connection, league-wide — who set up whom, and how often. Directional: Alice assisting Bob is a separate row from Bob assisting Alice, since those are different facts. Sorted by assist count. Only connections with at least one assist are listed.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="assistSynergyTable">
+          <thead><tr><th>Passer</th><th>Scorer</th><th>Assists</th></tr></thead>
+          <tbody id="assistSynergyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>3PT Shot Distance</h2>
+      <p class="hint">Every 3-pointer splits further by how far past the line it actually was — a shot just past it (<strong>Arc</strong>) is a normal, makeable three; a much longer near-pool-length heave (<strong>Deep</strong>) is a different, lower-percentage shot that the plain 3PT% on the table above blends in with it. Split by radial distance from the hoop against a threshold of 80 (in the shot chart's own 0-100 coordinates) — a single adjustable constant (`THREE_PT_DEEP_THRESHOLD` in <code>app.js</code>), drawn from an early, small sample, not a settled rule. Only 3-pointers with a marked shot location count (see <strong>Export → Backfill Shot Locations</strong> to fill in the rest), sorted by how many of those each player has. Treat any one player's split as an early read, not a verdict, until more games are logged.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="threePtDistanceTable">
+          <thead><tr><th>Player</th><th>3PT Arc</th><th>3PT Deep</th></tr></thead>
+          <tbody id="threePtDistanceBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAYER DETAIL -->
+  <section id="tab-player" class="tab-panel">
+    <div class="panel stat-entry-header">
+      <button id="backToLeaderboardBtn" class="secondary-btn">&larr; Back to Leaderboard</button>
+      <h2 id="playerDetailTitle"></h2>
+      <div id="playerDetailSummary" class="score-display"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Shot Heatmap</h2>
+      <p class="hint">Every marked field goal this player has taken, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. Only shots with a marked location are included.</p>
+      <div id="playerHeatmap"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Highlights &amp; Lowlights</h2>
+      <p class="hint">Every clip tagged to this player, across all games — tag a clip to a player from the Highlight / Lowlight Reel table in Stat Entry.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="playerReelTable">
+          <thead><tr><th>Date</th><th>Type</th><th>Time</th><th>Note</th><th></th></tr></thead>
+          <tbody id="playerReelBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Game Log</h2>
+      <p class="hint">Every game this player was in, most recent first.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="playerGameLogTable">
+          <thead><tr>
+            <th>Date</th><th>Result</th><th>PTS</th><th>FG</th><th>3PT</th><th>FT</th><th>eFG%</th><th>TS%</th><th>OREB</th><th>DREB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>A/TO</th><th>PF</th><th>Pts Allowed</th><th>Opp FG%</th><th>Beaten</th><th>Stops</th><th>GmSc</th><th>Two-Way</th>
+          </tr></thead>
+          <tbody id="playerGameLogBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Head-to-Head — As Scorer</h2>
+      <p class="hint">Shooting against each defender who has been tagged guarding this player's shots, across the season.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="h2hScorerTable">
+          <thead><tr><th>Defender</th><th>FG</th><th>FG%</th></tr></thead>
+          <tbody id="h2hScorerBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Head-to-Head — As Defender</h2>
+      <p class="hint">Shooting allowed to each scorer this player has been tagged defending, across the season.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="h2hDefenderTable">
+          <thead><tr><th>Scorer</th><th>FG Allowed</th><th>FG% Allowed</th></tr></thead>
+          <tbody id="h2hDefenderBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Teammate Synergy (With/Without)</h2>
+      <p class="hint">For each teammate this player has shared a team with, this player's own per-20 numbers in games <strong>with</strong> that teammate on their side vs. games <strong>without</strong> them (opposing team or not playing) — only games with real shots logged count either way. "—" means there's no game in that bucket yet to compare against. A small GP on either side makes the comparison noisy, not a verdict.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="teammateSynergyTable">
+          <thead><tr>
+            <th>Teammate</th><th>GP With</th><th>GP W/o</th><th>GmSc/20 With</th><th>GmSc/20 W/o</th><th>Two-Way/20 With</th><th>Two-Way/20 W/o</th>
+          </tr></thead>
+          <tbody id="teammateSynergyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPORT -->
+  <section id="tab-export" class="tab-panel">
+    <div class="panel">
+      <h2>Export All Data</h2>
+      <p class="hint">Full dump of players, games, box scores, and matchups. Give this to your friend to integrate into the website.</p>
+      <div class="button-row">
+        <button id="exportAllJsonBtn">Download JSON</button>
+        <button id="exportBoxScoreCsvBtn">Download Box Score CSV</button>
+        <button id="exportScoringLogCsvBtn">Download Shot Log CSV</button>
+        <button id="exportShotLocationsCsvBtn">Download Shot Locations CSV</button>
+        <button id="exportOtherEventsCsvBtn">Download Other Events CSV</button>
+        <button id="exportMatchupCsvBtn">Download Matchups CSV</button>
+        <button id="exportReelCsvBtn">Download Highlight Reel CSV</button>
+        <button id="exportLeaderboardCsvBtn">Download Leaderboard CSV</button>
+        <button id="exportAssistSynergyCsvBtn">Download Assist Connections CSV</button>
+        <button id="exportTeammateSynergyCsvBtn">Download Teammate Synergy CSV</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Export a Single Game</h2>
+      <div class="inline-form">
+        <select id="exportGameSelect"></select>
+        <button id="exportGameJsonBtn">Download Game JSON</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Backfill Shot Locations</h2>
+      <p class="hint">Every field goal (2 or 3, not free throws) that's missing a shot chart location, across every game — click a spot on the mini chart to set it, no need to reopen the game or its video. Each click saves immediately and the shot drops off this list.</p>
+      <div id="backfillShotLocations"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Session Videos</h2>
+      <p class="hint">Recordings uploaded once and shared across multiple games (see the Video panel in Stat Entry). Removing one here clears it from every game using it.</p>
+      <table class="matchup-table">
+        <thead><tr><th>Name</th><th>Used by</th><th></th></tr></thead>
+        <tbody id="masterVideoListBody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Broken Session Video Links</h2>
+      <p class="hint">A game can end up pointing at a session video id that no longer exists here — the video panel silently falls back to showing nothing useful, so this can go unnoticed for a while (an id can go stale if a browser profile changes, data gets imported from elsewhere, or a recording is removed some other way than the button above). A single-game export from a game listed here will carry a null <code>masterVideo</code>, even though <code>masterVideoId</code> is set.</p>
+      <div id="brokenVideoLinks"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Data Management</h2>
+      <div class="button-row">
+        <label class="secondary-btn file-label">
+          Import JSON
+          <input type="file" id="importFileInput" accept="application/json" hidden>
+        </label>
+        <button id="resetDataBtn" class="danger-btn">Reset All Data</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
