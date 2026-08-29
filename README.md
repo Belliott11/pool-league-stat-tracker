@@ -188,10 +188,11 @@ individual player, not a team.
    every party (rank 1 = best that night, a field-size-normalized percentile — 100 for first,
    0 for last), and that's a frozen historical record here too, not something this tool derives.
    Paired against that same player's actual Two-Way/20 in just the games logged for that
-   specific date — only the 5 nights that actually have game video are shown, since the other 10
-   real parties predate any footage existing at all, so there's nothing to check them against. A
-   player who didn't have a game logged for that particular night shows "—", not a zero — that's
-   a gap in what's been reviewed, not a real 0.0 performance.
+   specific date — a night only shows up here at all once at least one of its games has been
+   reviewed. The other 10 real parties predate any footage existing, so they never will; a night
+   with footage that just hasn't been reviewed yet is left out too, rather than showing a table
+   of nothing but dashes. A player who didn't have a game logged for that particular night still
+   shows "—", not a zero — that's a gap in what's been reviewed, not a real 0.0 performance.
    Below that, **Game-Winning Buckets** counts, per player, how many times their shot actually
    closed out a game their team won — the real game-ending basket in Poolean's race-to-a-target
    format. Credited only when *every* made shot in that game has a real video timestamp — a

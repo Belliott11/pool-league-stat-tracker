@@ -2411,7 +2411,8 @@ const PARTY_RANKINGS = [
 // per-20 performance in just the games logged for that date — scoped per player to the games
 // they themselves appeared in that night (not every game logged that date), same "only games
 // with real shots logged count" rule as everywhere else. Computed live, every render; only the
-// ranking side is the frozen historical record.
+// ranking side is the frozen historical record. A night where nobody's game has been reviewed
+// yet is dropped entirely — it would otherwise render as an all-"—" table telling you nothing.
 function computePowerRankingVsPerformance() {
   return PARTY_RANKINGS.map(party => {
     const gamesThatNight = state.games.filter(g => g.date === party.date && g.scoringEvents.length > 0);
@@ -2422,14 +2423,19 @@ function computePowerRankingVsPerformance() {
       return { slug: pr.slug, player, rank: pr.rank, fieldSize: pr.fieldSize, pct: pr.pct, perf };
     });
     return { date: party.date, players: rows };
-  });
+  }).filter(party => party.players.some(r => r.perf !== null));
 }
 
 function renderPowerRankingVsPerformance() {
   const wrap = document.getElementById("powerRankingVsPerformance");
   if (!wrap) return;
+  const parties = computePowerRankingVsPerformance();
+  if (parties.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games reviewed yet for any night with a power ranking.</p>';
+    return;
+  }
   wrap.innerHTML = "";
-  computePowerRankingVsPerformance().forEach(party => {
+  parties.forEach(party => {
     const section = document.createElement("div");
     section.className = "power-ranking-night";
     const rowsHtml = party.players.map(r => `
