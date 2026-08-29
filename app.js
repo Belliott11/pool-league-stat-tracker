@@ -2120,6 +2120,40 @@ function renderThreePtDistancePanel() {
     : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${formatShootingSplit(r.shooting.tpArcM, r.shooting.tpArcA)}</td><td>${formatShootingSplit(r.shooting.tpDeepM, r.shooting.tpDeepA)}</td></tr>`).join("");
 }
 
+// How often a player's own missed shot ends up out of bounds (a turnover for them, per
+// Poolean's "whoever last touched it loses possession" rule) vs. staying live for either team
+// to rebound. Scoped to misses specifically — a make can never go out of bounds — so this reads
+// as "when this player misses, how often does the ball leave their hands for good," not a
+// shooting-accuracy stat.
+function computeOutOfBoundsStats() {
+  const totals = {}; // playerId -> { misses, oob }
+  state.games.forEach(g => {
+    g.scoringEvents.filter(ev => ev.made === false).forEach(ev => {
+      const t = totals[ev.scorerId] = totals[ev.scorerId] || { misses: 0, oob: 0 };
+      t.misses++;
+      if (ev.turnoverEventId) t.oob++;
+    });
+  });
+  return Object.entries(totals)
+    .map(([playerId, v]) => ({ player: state.players.find(p => p.id === playerId), ...v }))
+    .filter(r => r.player)
+    .sort((a, b) => b.misses - a.misses);
+}
+
+function renderOutOfBoundsPanel() {
+  const rows = computeOutOfBoundsStats();
+  const summaryEl = document.getElementById("outOfBoundsSummary");
+  const totalMisses = rows.reduce((sum, r) => sum + r.misses, 0);
+  const totalOob = rows.reduce((sum, r) => sum + r.oob, 0);
+  summaryEl.textContent = totalMisses > 0
+    ? `League-wide: ${totalOob} of ${totalMisses} missed shots this season went out of bounds (${formatPct(pct(totalOob, totalMisses))}).`
+    : "No missed shots logged yet.";
+  const body = document.getElementById("outOfBoundsBody");
+  body.innerHTML = rows.length === 0
+    ? '<tr><td colspan="4" class="empty-state">No missed shots logged yet.</td></tr>'
+    : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${r.misses}</td><td>${r.oob}</td><td>${formatPct(pct(r.oob, r.misses))}</td></tr>`).join("");
+}
+
 // Same per-20 math as computeLeaderboard(), just scoped to a specific subset of one player's
 // games (their games "with" vs. "without" a given teammate) instead of their whole season.
 function computeRateSummaryForGames(playerId, games) {
@@ -2253,6 +2287,7 @@ function renderLeaderboard() {
   renderLeagueHeatmap();
   renderAssistSynergy();
   renderThreePtDistancePanel();
+  renderOutOfBoundsPanel();
   const body = document.getElementById("leaderboardBody");
   body.innerHTML = "";
   // Players with no games yet just clutter the table with a row of dashes.
@@ -2602,6 +2637,14 @@ document.getElementById("exportTeammateSynergyCsvBtn").addEventListener("click",
     });
   });
   download("teammate-synergy.csv", rows.map(r => r.map(csvEscape).join(",")).join("\n"), "text/csv");
+});
+
+document.getElementById("exportOutOfBoundsCsvBtn").addEventListener("click", () => {
+  const rows = [["player", "misses", "out_of_bounds", "oob_pct"]];
+  computeOutOfBoundsStats().forEach(r => {
+    rows.push([r.player.name, r.misses, r.oob, pct(r.oob, r.misses) ?? ""]);
+  });
+  download("out-of-bounds.csv", rows.map(r => r.map(csvEscape).join(",")).join("\n"), "text/csv");
 });
 
 document.getElementById("exportReelCsvBtn").addEventListener("click", () => {

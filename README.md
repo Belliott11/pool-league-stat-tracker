@@ -181,7 +181,12 @@ individual player, not a team.
    (`THREE_PT_DEEP_THRESHOLD` in `app.js`), drawn from an early, small sample, not a settled rule.
    Only 3-pointers with a marked shot location count (see **Export → Backfill Shot Locations** to
    fill in the rest); kept in its own panel rather than as more columns on the main table above,
-   since it's a cut most people only need occasionally. Click a player's name to
+   since it's a cut most people only need occasionally. Below that, **Out-of-Bounds Misses**
+   shows how often a player's own missed shot ends up out of bounds — per Poolean's actual rule,
+   whoever last touched the ball loses possession, so this is really "how often does the ball
+   leave their hands for good on a miss," not a shooting-accuracy stat. Misses are the
+   denominator, not total shots, since a make can never go out of bounds; a league-wide line
+   above the table gives the same rate across everyone, for context. Click a player's name to
    open their **Player Detail** page:
    - **Shot Heatmap** — the same grid, scoped to just this player's marked field goals across
      every game.
@@ -263,6 +268,8 @@ individual player, not a team.
    - **Teammate Synergy CSV** — one row per (player, teammate) pair across the whole league —
      the same With/Without split as the Player Detail table, for every player at once. GP and
      GmSc/Two-Way per 20 columns are blank on whichever side (with/without) has zero games.
+   - **Out-of-Bounds CSV** — one row per player with at least one missed shot, with their miss
+     count, how many of those went out of bounds, and the resulting OOB%.
 
 Use **Import JSON** to restore/move data between browsers or machines (e.g. hand the whole
 dataset file to your friend, or move from your laptop to another computer).

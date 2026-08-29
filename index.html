@@ -251,6 +251,18 @@
         </table>
       </div>
     </div>
+
+    <div class="panel">
+      <h2>Out-of-Bounds Misses</h2>
+      <p class="hint">How often a player's own missed shot ends up out of bounds — per Poolean's rule, whoever last touched the ball loses possession, so this is really a "how often does the ball leave their hands for good on a miss" read, not a shooting-accuracy stat. Only misses count as the denominator (a make can't go out of bounds). Sorted by number of misses.</p>
+      <p id="outOfBoundsSummary" class="hint" style="margin:0 0 10px"></p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="outOfBoundsTable">
+          <thead><tr><th>Player</th><th>Misses</th><th>Out of Bounds</th><th>OOB%</th></tr></thead>
+          <tbody id="outOfBoundsBody"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
 
   <!-- PLAYER DETAIL -->
@@ -343,6 +355,7 @@
         <button id="exportLeaderboardCsvBtn">Download Leaderboard CSV</button>
         <button id="exportAssistSynergyCsvBtn">Download Assist Connections CSV</button>
         <button id="exportTeammateSynergyCsvBtn">Download Teammate Synergy CSV</button>
+        <button id="exportOutOfBoundsCsvBtn">Download Out-of-Bounds CSV</button>
       </div>
     </div>
 

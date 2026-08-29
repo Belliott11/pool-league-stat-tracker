@@ -267,6 +267,16 @@ reasonable call; just don't do it reflexively for every derived cut the way the 
 The 2PT/3PT boundary itself (the actual 3pt line, `y: 60`) is untouched by any of this — banding
 only ever subdivides shots already inside the 3PT bucket.
 
+**Out-of-Bounds Misses on the Leaderboard is also purely computed, nothing stored.**
+`computeOutOfBoundsStats()` counts, per player, `scoring_events` rows where `made: false`
+(misses only — a make can never go out of bounds), and how many of those also have `turnover`
+set (see the out-of-bounds rule described near the top of this section). The rate is
+`turnover-set misses / all misses` for that player, not `/ all attempts` — the denominator is
+deliberately scoped to misses since a make is never a candidate for this at all, so mixing makes
+into the denominator would just dilute the number with shots that couldn't have gone out of
+bounds in the first place. A league-wide version of the same rate (summed across every player)
+renders above the per-player table for context.
+
 **The heatmaps on Player Detail and the Leaderboard are also purely computed, nothing stored.**
 They bucket every field goal with a non-null `shot_x`/`shot_y` into a 5×6 grid over the court
 (`computeHeatmapCells()` in `app.js`), color each occupied cell by that zone's FG%, and label it
