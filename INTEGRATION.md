@@ -381,7 +381,7 @@ watching would know exactly which shot won it. If you replicate this server-side
 all-or-nothing timestamp requirement per game rather than falling back to insertion order for the
 untimed rows — insertion order is not guaranteed to reflect game order once backfill/edit
 workflows are involved, and a wrong "winning shot" attribution would be worse than none at all
-here specifically, since it feeds directly into a voted award comparison.
+for a stat surfaced on its own dedicated panel.
 
 **Worth knowing about the metric itself, confirmed against real production data**: in a
 race-to-target format with no clock, the last basket of *every* decided game is structurally
@@ -391,24 +391,27 @@ means GWB isn't tracking rare, buzzer-beater moments; it's a "who tends to be th
 games out" tally that grows by exactly one per fully-timestamped decided game, distributed across
 whoever happens to hit the target-reaching shot. Also confirmed in production: the timestamp gate
 turns out not to exclude much in practice — a full ten-game, 365-shot review with disciplined
-timestamping had all ten games qualify. Both are worth keeping in mind if you build UI copy or an
-award pairing (like this tool's own Clutch comparison) around this number — it's a real signal,
-just not the "rare and memorable" one the name might suggest.
+timestamping had all ten games qualify. Both are worth keeping in mind if you build UI copy around
+this number — it's a real signal, just not the "rare and memorable" one the name might suggest,
+and (as of this session) it's no longer the Clutch award's tracked-stat comparison — see the
+Close-Game Shooting entry below for what replaced it and why.
 
-**Close-Game Shooting is also purely computed, nothing stored — a margin-aware companion to GWB,
-not a replacement for it.** `computeCloseGameShooting()` (`app.js`) filters to games where
+**Close-Game Shooting is also purely computed, nothing stored — and is now the actual `statKey`
+behind the Clutch award, not GWB.** `computeCloseGameShooting()` (`app.js`) filters to games where
 `Math.abs(teamScore(teamA) - teamScore(teamB)) <= CLUTCH_MARGIN_THRESHOLD` (5, a single adjustable
 constant, currently a starting guess with no real season margin data behind it), **including tied
 games** — deliberately different from `gameWinningShot()`'s own filter, which excludes ties
 outright since a tie has no winning shot to credit. There is no winning-shot concept here at all;
 this is plain `trueShootingPct()` pooled across every attempt a player took in a qualifying game,
-regardless of who won. The reasoning for building this as a second panel instead of swapping it
-into the Clutch award's `statKey`: GWB's count is guaranteed to grow by exactly one per
-fully-timestamped decided game (see the note above), which is real but not particularly *scarce*
-signal — this metric is a sharper one for the same question (shooting efficiency specifically
-under real pressure, not just "whoever happened to take the last shot"), offered alongside GWB
-rather than displacing it, since the existing Clutch/GWB pairing in `AWARD_RESULTS` was an
-earlier, deliberate choice this tool's own maintainer asked to leave as-is.
+regardless of who won. This panel originally shipped as a companion sitting *alongside* GWB,
+deliberately not wired into `AWARD_RESULTS`'s Clutch entry, out of respect for an earlier
+maintainer decision to leave the existing Clutch/GWB pairing as-is — that decision was
+subsequently reversed by the maintainer later in the same session ("make close game shooting the
+stat for clutch player"), so Clutch's `statKey` is now `"closeGameTs"` (`computeAwardStandings()`
+sorts `computeCloseGameShooting()` by `.ts` descending), with a matching `AWARD_NOT_FOUND_TEXT`
+entry. GWB itself is untouched and still rendered as its own panel — only the award linkage moved.
+If your backend keeps its own copy of `AWARD_RESULTS`/the statKey wiring, this is the one field to
+re-sync, not a schema or computation change.
 
 **Best & Worst Individual Games on the Leaderboard is also purely computed, nothing stored.**
 `computeIndividualGamePerformances()` (`app.js`) is the one panel on this page that deliberately
@@ -447,6 +450,22 @@ equivalent view, two behaviors worth replicating exactly:
   it, matching where shot volume actually concentrates. If you resize the grid, keep a boundary
   on 60 rather than going back to uniform rows.
 
+**Player Detail's Defensive Heatmap is also purely computed, nothing stored.** Same
+`computeHeatmapCells()` grid as the offensive heatmaps, but the input shot list is filtered to
+every field goal where `defenders` includes this specific player (`renderPlayerDefensiveHeatmap()`
+in `app.js`), same fan-out rule as `gameDefenseStats()`/`headToHeadAsDefender()` — a double-teamed
+shot counts toward every tagged defender, not split between them. **Deliberately per-player only,
+not a league-wide aggregate** — a league-wide version was built and then removed during this
+session specifically because a single aggregate collapses the exact signal this panel exists to
+show ("does *this* player's own Opp FG% hold up at every distance"). The one thing that actually
+changes from the offensive heatmaps, not just the filter: **cell color is inverted**
+(`defensiveHeatmapCellColor()` in `app.js`, hue `= (1 - fgFrac) * 120` instead of `fgFrac * 120`).
+A low FG% is good defense, so reusing the offensive heatmap's red-low/green-high mapping unchanged
+would show good defense as red — get this backwards and the whole panel reads as the opposite of
+what it means. `renderHeatmapSvg()`/`renderHeatmapInto()` both take an optional `colorFn` param
+(default `heatmapCellColor`) specifically so this variant can share every other line of heatmap
+code and only swap the color function.
+
 **The Head-to-Head Matchup Grid on the Leaderboard is also purely computed, nothing stored.** It's
 the league-wide pivot of the exact same query the per-player Head-to-Head tables on Player Detail
 already run (`headToHeadAsScorer()` / `headToHeadAsDefender()` in `app.js`) — `computeMatchupGrid()`
@@ -461,6 +480,17 @@ confident), so a 1-for-1 cell visually reads as far less certain than a well-sam
 though both would show 100%. Rows and columns are sorted independently, each by that scorer's or
 defender's own total tagged attempts — the two orderings are unrelated to each other.
 
+**Wide-Open Shooting on the Leaderboard is also purely computed, nothing stored.** The inverse
+filter from the Matchup Grid above: `computeWideOpenShooting()` (`app.js`) only counts a field
+goal attempt (`points === 2 || 3`, same restriction as Close-Game Shooting and every other
+efficiency panel) toward a player's numbers when `defenders` is empty or absent, i.e. nobody
+tagged a defender on that specific shot. **Free throws are excluded outright, not merely
+untouched by the filter** — an FT is uncontested by rule, so counting it here would silently
+inflate every player's wide-open share and TS% with a shot type that was never actually a read on
+defensive pressure. `share` is `wideOpenFga / totalFga` for that player (their own denominator,
+not the league's), printed alongside TS% specifically so a small-sample TS% (2 wide-open looks)
+doesn't read the same as a well-sampled one (20).
+
 **The Two-Way Quadrant chart on the Leaderboard is also purely computed, nothing stored.**
 `computeQuadrantData()` (`app.js`) is a thin wrapper over `computeLeaderboard()` — one point per
 player with `gp > 0`, x = `gameScorePer20`, y = `defensiveImpact(rateDefense)`. No new fields, no
@@ -469,7 +499,19 @@ new computation; it's the existing Two-Way Score inputs plotted separately inste
 direction) rather than to the data's actual min/max, so the zero-crossing quadrant lines always
 land at the plot's visual center — worth keeping if you reimplement this, since scaling to min/max
 instead would put the crossing point wherever this particular roster's data happens to center,
-not at the meaningful zero boundary both stats already use on their own.
+not at the meaningful zero boundary both stats already use on their own. Each dot's `fill` is set
+inline via `playerChartColor(index)` (`app.js`), an 8-color Okabe-Ito colorblind-safe palette
+cycling by array index — replacing an earlier version where every dot shared the single
+`var(--accent)` teal, which on a real roster was indistinguishable dot-to-dot beyond the small
+text labels. The same helper drives Volume vs. Efficiency's dots below. Legibility note that
+applies to every SVG chart on this page, not just this one: axis lines were originally styled with
+`var(--border)` (a deliberately low-contrast token meant for subtle dividers) and axis/label text
+at 6.5-8px — both read as "barely there" once actually tested. Every `*-axis` class now uses
+`var(--muted)` (or `var(--text)` for the more important labels) at a heavier stroke-width, and
+label font-sizes were bumped to 9-11px; the red-to-green hue scales used elsewhere (heatmaps,
+Matchup Grid, Teammate Lift Matrix, TS% by Shot Distance) had their saturation raised from 70% to
+85% for the same reason — a continuous hue sweep's yellow/olive midpoint is where the eye is worst
+at telling two values apart, and the extra saturation genuinely helps.
 
 **Volume vs. Efficiency on the Leaderboard is also purely computed, nothing stored.** A second
 scatter, deliberately separate from the Two-Way Quadrant above rather than a third axis bolted
@@ -482,12 +524,19 @@ small enough sample, so `renderVolumeEfficiencyChart()` scales its y-axis to `Ma
 ...values) * 1.08` rather than a fixed range — carry that forward if you port this chart, for the
 same reason.
 
-**The Shot Selection chart on the Leaderboard is also purely computed, nothing stored.** Same four
-shot-distance bands as the Shot Distance table just above it (`shotBand()` / `shootingStats()` in
-`app.js`), same underlying `shot_x`/`shot_y` dependency — it just renders each player's own
-`closeA`/`midA`/`tpArcA`/`tpDeepA` as a share of that player's total marked attempts instead of as
-an accuracy split, sorted by total attempts descending. A player with zero marked attempts across
-all four bands is filtered out entirely rather than shown as an empty bar.
+**Shot Distance is now a single merged panel, not two.** It used to be split into "Shot Distance"
+(FG% per zone) and "Shot Selection" (share of attempts per zone) — both per-player, both the exact
+same four zones and same underlying `computeLeaderboard()` shooting splits, just two different
+numbers. They were combined mid-session once that redundancy was pointed out: `SHOT_ZONES` (the
+zone/color/accessor definitions), `SHOT_ZONE_COLUMNS` (built from it, `Player` + one column per
+zone + `Attempts`, all sortable via `renderSortableHeader()`), and `renderShotZonePanel()` in
+`app.js`. Each zone `<td>` carries both numbers now (FG% split as the sortable value, share of
+attempts as a muted sub-label underneath) — reusing the old Shot Selection stacked-bar markup as
+a final non-sortable **Mix** column, appended to the header row by hand after
+`renderSortableHeader()` builds the real sortable columns (a stacked bar has no single number to
+sort by, so it isn't one of `SHOT_ZONE_COLUMNS`). If you already ported the two separate panels,
+this is a straightforward one-table consolidation, not a data or formula change — every number in
+the merged table is identical to what the two old panels showed.
 
 **League TS% Over Time on the Leaderboard is also purely computed, nothing stored.** Unlike every
 other panel that reuses `computeLeaderboard()`'s per-player rows, `computeLeagueTsOverTime()`
@@ -570,6 +619,17 @@ treated as flat (`●`, not a dash — a dash next to a number reads as a minus 
 real trend. Not included in the Leaderboard CSV export,
 matching that export's existing scope (raw season totals plus PTS/GmSc/Two-Way per 20 — see
 above), not a mirror of every UI column.
+
+**Player Detail's Two-Way Trend chart is also purely computed, nothing stored.** The graphical
+version of the "Last 5" text above: `computeTwoWayTrend()` (`app.js`) sorts this player's
+qualifying games chronologically and runs `computeRateSummaryForGames(playerId, [game])` on each
+one individually — a one-game array, so it's the same per-20 math as everywhere else, just
+normalized against that single game's own combined score rather than the season's. The season
+average (drawn as a dashed reference line, `computeRateSummaryForGames()` again over every
+qualifying game) is the same number the Leaderboard's own season Two-Way/20 column shows for this
+player. No separate "trend" computation exists anywhere — this chart and the Last 5 text are two
+presentations of the same underlying per-game numbers, so they will never disagree if you port
+both; if they ever do, one of the two ports has a bug.
 
 **The "Needs Review" badge and backlog count on the Games tab are also pure UI, nothing stored.**
 A game counts as needing review when it has a video attached (`video_url`, `master_video_id`, or

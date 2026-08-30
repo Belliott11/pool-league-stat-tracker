@@ -553,16 +553,33 @@ function computeHeatmapCells(shots) {
 
 // Red (0% FG) through green (100% FG) — plus a light opacity ramp so a single-shot cell (which
 // is really just "make" or "miss", not a rate) reads as less confident than a well-sampled one.
+// Saturation kept high (85%, not a more muted 70%) specifically because the mid-range of this
+// hue sweep (~45-70°, yellow-to-olive) is where the human eye is worst at telling two hues apart
+// — a washed-out 45% and 55% cell were reading as the same color. Every other cell/bar on this
+// page that uses this red-to-green convention (defensive heatmap, Matchup Grid, Teammate Lift
+// Matrix, TS% by Shot Distance) uses the same saturation for the same reason.
 function heatmapCellColor(cell) {
   const fgFrac = cell.makes / cell.attempts;
   const hue = fgFrac * 120;
   const opacity = Math.min(0.85, 0.32 + cell.attempts * 0.1);
-  return `hsla(${hue}, 70%, 45%, ${opacity})`;
+  return `hsla(${hue}, 85%, 42%, ${opacity})`;
+}
+
+// Inverted from heatmapCellColor — a low opponent FG% is good defense, so red/green mean the
+// opposite of what they mean on every offensive heatmap. Never share the two functions' output
+// directly for that reason, even though the math is nearly identical.
+function defensiveHeatmapCellColor(cell) {
+  const fgFrac = cell.makes / cell.attempts;
+  const hue = (1 - fgFrac) * 120;
+  const opacity = Math.min(0.85, 0.32 + cell.attempts * 0.1);
+  return `hsla(${hue}, 85%, 42%, ${opacity})`;
 }
 
 // Renders the shared court/hoop/3pt-line background with a heatmap grid over it, or null if
 // there's nothing to plot yet — the caller decides what empty-state message fits its context.
-function renderHeatmapSvg(shots) {
+// colorFn defaults to the offensive red-low/green-high convention; the defensive heatmaps pass
+// defensiveHeatmapCellColor instead, since a low percentage means something good there, not bad.
+function renderHeatmapSvg(shots, colorFn = heatmapCellColor) {
   if (shots.length === 0) return null;
   const cells = computeHeatmapCells(shots);
   const cellsSvg = cells.filter(cell => cell.attempts > 0).map(cell => {
@@ -575,7 +592,7 @@ function renderHeatmapSvg(shots) {
     const cy = vbYTop + vbH / 2;
     const fgPct = Math.round((cell.makes / cell.attempts) * 100);
     return `
-      <rect x="${vbX}" y="${vbYTop}" width="${vbW}" height="${vbH}" fill="${heatmapCellColor(cell)}" stroke="var(--panel-bg)" stroke-width="0.5" />
+      <rect x="${vbX}" y="${vbYTop}" width="${vbW}" height="${vbH}" fill="${colorFn(cell)}" stroke="var(--panel-bg)" stroke-width="0.5" />
       <text x="${cx}" y="${cy - 1}" text-anchor="middle" class="heatmap-cell-label">${cell.attempts}</text>
       <text x="${cx}" y="${cy + 7}" text-anchor="middle" class="heatmap-cell-pct">${fgPct}%</text>
     `;
@@ -598,12 +615,13 @@ function renderHeatmapSvg(shots) {
   `;
 }
 
-// Shared by the player and league heatmaps — only difference is the field goal filter.
-function renderHeatmapInto(containerId, allFieldGoals) {
+// Shared by the player, league, and defensive heatmaps — only difference is the field goal
+// filter and (for the defensive ones) the color function.
+function renderHeatmapInto(containerId, allFieldGoals, colorFn = heatmapCellColor) {
   const container = document.getElementById(containerId);
   if (!container) return;
   const withLocation = allFieldGoals.filter(ev => ev.shotLocation);
-  const svg = renderHeatmapSvg(withLocation);
+  const svg = renderHeatmapSvg(withLocation, colorFn);
   if (!svg) {
     container.innerHTML = '<p class="empty-state">No shots with a location marked yet.</p>';
     return;
@@ -621,6 +639,20 @@ function renderPlayerHeatmap(playerId) {
     if (ev.scorerId === playerId && (ev.points === 2 || ev.points === 3)) shots.push(ev);
   }));
   renderHeatmapInto("playerHeatmap", shots);
+}
+
+// The defensive counterpart to the heatmap above — same zone grid, but keyed on every shot this
+// player was tagged defending (fan-out rule: a double-teamed shot counts toward every tagged
+// defender, same as gameDefenseStats()/headToHeadAsDefender() elsewhere) instead of shots they
+// took. This is what actually answers "does this player's overall Opp FG% hold up at every
+// distance, or does it collapse somewhere specific" — a single season-long percentage can't say
+// that on its own.
+function renderPlayerDefensiveHeatmap(playerId) {
+  const shots = [];
+  state.games.forEach(g => g.scoringEvents.forEach(ev => {
+    if ((ev.points === 2 || ev.points === 3) && (ev.defenderIds || []).includes(playerId)) shots.push(ev);
+  }));
+  renderHeatmapInto("playerDefensiveHeatmap", shots, defensiveHeatmapCellColor);
 }
 
 // Every individual marked shot, plotted at its real spot rather than bucketed into a zone —
@@ -2359,7 +2391,7 @@ const AWARD_RESULTS = [
     { slug: "will", name: "Will", points: 2 }, { slug: "evan", name: "Evan", points: 1 },
     { slug: "zach", name: "Zach", points: 1 }
   ] },
-  { key: "clutch", label: "Clutch", winners: ["phillip"], statKey: "gwb", votedStandings: [
+  { key: "clutch", label: "Clutch", winners: ["phillip"], statKey: "closeGameTs", votedStandings: [
     { slug: "phillip", name: "Phillip", points: 7 }, { slug: "zach", name: "Zach", points: 7 },
     { slug: "adam", name: "Adam", points: 5 }, { slug: "evan", name: "Evan", points: 5 },
     { slug: "alex", name: "Alex", points: 4 }, { slug: "reilly", name: "Reilly", points: 4 },
@@ -2439,13 +2471,19 @@ function computeAwardStandings() {
       .map(r => ({ player: r.player, value: defensiveImpact(r.rateDefense), display: `${defensiveImpact(r.rateDefense).toFixed(1)} Def Impact/20` })),
     gwb: computeGameWinningBuckets()
       .map(r => ({ player: r.player, value: r.count, display: `${r.count} game-winning bucket${r.count === 1 ? "" : "s"}` })),
+    closeGameTs: [...computeCloseGameShooting()].sort((a, b) => b.ts - a.ts)
+      .map(r => ({ player: r.player, value: r.ts, display: `${r.ts}% TS in close games (${r.gp} game${r.gp === 1 ? "" : "s"}, ${r.attempts} att)` })),
     trend: [...board].sort((a, b) => b.last5TwoWayPer20 - a.last5TwoWayPer20)
       .map(r => ({ player: r.player, value: r.last5TwoWayPer20, display: `Last 5: ${r.last5Trend} ${r.last5TwoWayPer20.toFixed(1)} vs. season ${r.twoWayPer20.toFixed(1)} Two-Way/20` })),
     teammateLift
   };
 }
 
-const AWARD_NOT_FOUND_TEXT = { gwb: "0 game-winning buckets this season", teammateLift: "Not enough With/Without games logged yet" };
+const AWARD_NOT_FOUND_TEXT = {
+  gwb: "0 game-winning buckets this season",
+  closeGameTs: "No games decided by 5 points or fewer yet",
+  teammateLift: "Not enough With/Without games logged yet"
+};
 
 function computeAwardsVsStats() {
   const standings = computeAwardStandings();
@@ -2618,6 +2656,18 @@ function renderPowerRankingVsPerformance() {
   });
 }
 
+// Categorical colors for telling individual players apart on a scatter chart — distinct from the
+// app's semantic red/amber/teal/green tokens, which encode good/bad rather than identity, so
+// reusing them here would mean two unrelated players landing on the same "warning amber" dot for
+// no reason. Okabe-Ito, the standard colorblind-safe qualitative palette, with pure black swapped
+// for a violet so every color stays visible against both the light and dark theme backgrounds.
+// Cycles if there are more players than colors — an eventual repeat is far less confusing than
+// every single dot being identical, which was the actual problem this replaces.
+const PLAYER_CHART_COLORS = ["#e69f00", "#56b4e9", "#009e73", "#c9a227", "#0072b2", "#d55e00", "#cc79a7", "#7b52ab"];
+function playerChartColor(index) {
+  return PLAYER_CHART_COLORS[index % PLAYER_CHART_COLORS.length];
+}
+
 // One dot per player: GmSc/20 (offense) on the x-axis, Def Impact/20 on the y-axis — the two
 // halves of Two-Way Score, plotted separately instead of pre-summed, so "who's actually good"
 // splits into "good at what." The quadrant split is at 0 on both axes rather than the data's
@@ -2647,10 +2697,10 @@ function renderQuadrantChart() {
   const yScale = v => PAD + plotH - ((v + maxAbsY) / (2 * maxAbsY)) * plotH;
   const zeroX = xScale(0), zeroY = yScale(0);
 
-  const dotsSvg = data.map(d => {
+  const dotsSvg = data.map((d, i) => {
     const cx = xScale(d.gmsc), cy = yScale(d.defImpact);
     return `
-      <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot">
+      <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot" style="fill:${playerChartColor(i)}">
         <title>${escapeHtml(d.player.name)}: ${d.gmsc.toFixed(1)} GmSc/20, ${d.defImpact.toFixed(1)} Def Impact/20</title>
       </circle>
       <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
@@ -2702,10 +2752,10 @@ function renderVolumeEfficiencyChart() {
   const xScale = v => PAD_L + (v / maxVolume) * plotW;
   const yScale = v => PAD_T + plotH - (v / maxTs) * plotH;
 
-  const dotsSvg = data.map(d => {
+  const dotsSvg = data.map((d, i) => {
     const cx = xScale(d.volume), cy = yScale(d.ts);
     return `
-      <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot">
+      <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot" style="fill:${playerChartColor(i)}">
         <title>${escapeHtml(d.player.name)}: ${d.volume.toFixed(1)} FGA/20, ${d.ts}% TS</title>
       </circle>
       <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
@@ -2778,7 +2828,7 @@ function renderMatchupGrid() {
       const fgPct = pct(cell.fgm, cell.fga);
       const hue = (fgPct / 100) * 120;
       const opacity = Math.min(0.85, 0.32 + cell.fga * 0.08);
-      return `<td class="matchup-grid-cell" style="background: hsla(${hue}, 70%, 45%, ${opacity})" title="${escapeHtml(scorer.name)} vs. ${escapeHtml(defender.name)}: ${cell.fgm}/${cell.fga}">${fgPct}%</td>`;
+      return `<td class="matchup-grid-cell" style="background: hsla(${hue}, 85%, 42%, ${opacity})" title="${escapeHtml(scorer.name)} vs. ${escapeHtml(defender.name)}: ${cell.fgm}/${cell.fga}">${fgPct}%</td>`;
     }).join("");
     return `<tr><td class="sticky-col">${escapeHtml(scorer.name)}</td>${cellsHtml}</tr>`;
   }).join("");
@@ -2790,6 +2840,58 @@ function renderMatchupGrid() {
       </table>
     </div>
   `;
+}
+
+// Wide-Open Shooting — every field goal attempt with NO tagged defender at all, as opposed to
+// contested. Pure analysis off data already captured: a shot's defenderIds is empty exactly when
+// nobody tagged a defender on it, no new logging required. Free throws are excluded entirely (not
+// just untouched by defenderIds) since an FT is uncontested by rule, not by circumstance — folding
+// them in would trivially inflate every player's "wide open" numbers with a shot type that was
+// never actually a read on defensive pressure. TS%, not FG%, for the same reason every other
+// efficiency panel on this page prefers it — it accounts for the extra value of a made 3.
+function computeWideOpenShooting() {
+  const totals = {}; // playerId -> { pts, fga, totalFga }
+  state.games.forEach(game => {
+    game.scoringEvents.forEach(ev => {
+      if (ev.points !== 2 && ev.points !== 3) return;
+      const t = totals[ev.scorerId] = totals[ev.scorerId] || { pts: 0, fga: 0, totalFga: 0 };
+      t.totalFga++;
+      if (!ev.defenderIds || ev.defenderIds.length === 0) {
+        t.fga++;
+        if (ev.made !== false) t.pts += ev.points;
+      }
+    });
+  });
+  return Object.entries(totals)
+    .map(([playerId, v]) => ({
+      player: state.players.find(p => p.id === playerId),
+      wideOpenFga: v.fga,
+      totalFga: v.totalFga,
+      share: pct(v.fga, v.totalFga),
+      ts: v.fga > 0 ? trueShootingPct(v.pts, v.fga, 0) : null
+    }))
+    .filter(r => r.player && r.wideOpenFga > 0);
+}
+
+const WIDE_OPEN_COLUMNS = [
+  { key: "player", label: "Player", accessor: r => r.player.name },
+  { key: "wideOpenFga", label: "Wide-Open FGA", accessor: r => r.wideOpenFga },
+  { key: "share", label: "Share of FGA", accessor: r => r.share },
+  { key: "ts", label: "TS%", accessor: r => r.ts }
+];
+let wideOpenSort = { key: "ts", dir: "desc" };
+
+function renderWideOpenShootingPanel() {
+  const headerRow = document.getElementById("wideOpenHeaderRow");
+  if (!headerRow) return;
+  renderSortableHeader(headerRow, WIDE_OPEN_COLUMNS, wideOpenSort, renderWideOpenShootingPanel);
+  const body = document.getElementById("wideOpenBody");
+  const rows = computeWideOpenShooting();
+  const sortCol = WIDE_OPEN_COLUMNS.find(c => c.key === wideOpenSort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), wideOpenSort.dir));
+  body.innerHTML = rows.length === 0
+    ? '<tr><td colspan="4" class="empty-state">No field goals without a tagged defender yet.</td></tr>'
+    : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${r.wideOpenFga}</td><td>${formatPct(r.share)}</td><td>${formatPct(r.ts)}</td></tr>`).join("");
 }
 
 function renderAssistSynergy() {
@@ -2862,73 +2964,60 @@ function renderTeammateLiftMatrix() {
   `;
 }
 
-// The Arc/Deep 3PT split, league-wide — kept in its own panel rather than as columns on the
-// main Leaderboard table, since it's a secondary cut most people only need occasionally, not
-// something worth widening every row of the main table for. Reuses computeLeaderboard()'s
-// existing per-player shooting totals rather than recomputing them.
-const SHOT_DISTANCE_COLUMNS = [
+// Shot Distance + Shot Selection, combined — these used to be two separate panels (FG% by zone,
+// and share-of-attempts by zone) built from the exact same per-player, same-4-zone data, which
+// just meant scanning two panels to answer one real question: "where does this player shoot
+// from, and how well." Each sortable column now carries both numbers (FG% as the sortable value,
+// share-of-attempts as the muted sub-label underneath), and the old Shot Selection bar survives
+// as a non-sortable "Mix" column at the end for the same at-a-glance visual read it always gave.
+const SHOT_ZONES = [
+  { key: "close", label: "Close", cssClass: "shot-seg-close", makes: r => r.shooting.closeM, attempts: r => r.shooting.closeA },
+  { key: "mid", label: "Midrange", cssClass: "shot-seg-mid", makes: r => r.shooting.midM, attempts: r => r.shooting.midA },
+  { key: "line", label: "3PT Line", cssClass: "shot-seg-line", makes: r => r.shooting.tpArcM, attempts: r => r.shooting.tpArcA },
+  { key: "deep", label: "3PT Deep", cssClass: "shot-seg-deep", makes: r => r.shooting.tpDeepM, attempts: r => r.shooting.tpDeepA }
+];
+const totalBandedAttempts = r => SHOT_ZONES.reduce((sum, z) => sum + z.attempts(r), 0);
+const SHOT_ZONE_COLUMNS = [
   { key: "player", label: "Player", accessor: r => r.player.name },
-  { key: "close", label: "Close", accessor: r => pct(r.shooting.closeM, r.shooting.closeA) },
-  { key: "mid", label: "Midrange", accessor: r => pct(r.shooting.midM, r.shooting.midA) },
-  { key: "line", label: "3PT Line", accessor: r => pct(r.shooting.tpArcM, r.shooting.tpArcA) },
-  { key: "deep", label: "3PT Deep", accessor: r => pct(r.shooting.tpDeepM, r.shooting.tpDeepA) }
+  ...SHOT_ZONES.map(z => ({ key: z.key, label: z.label, accessor: r => pct(z.makes(r), z.attempts(r)) })),
+  { key: "attempts", label: "Attempts", accessor: r => totalBandedAttempts(r) }
 ];
-let shotDistanceSort = { key: "player", dir: "asc" };
+let shotZoneSort = { key: "attempts", dir: "desc" };
 
-function renderThreePtDistancePanel() {
-  renderSortableHeader(document.getElementById("threePtDistanceHeaderRow"), SHOT_DISTANCE_COLUMNS, shotDistanceSort, renderThreePtDistancePanel);
-  const body = document.getElementById("threePtDistanceBody");
-  const totalBanded = r => r.shooting.closeA + r.shooting.midA + r.shooting.tpArcA + r.shooting.tpDeepA;
-  const rows = computeLeaderboard().filter(r => totalBanded(r) > 0);
-  const sortCol = SHOT_DISTANCE_COLUMNS.find(c => c.key === shotDistanceSort.key);
-  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), shotDistanceSort.dir));
-  body.innerHTML = rows.length === 0
-    ? '<tr><td colspan="5" class="empty-state">No field goals with a marked shot location yet.</td></tr>'
-    : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${formatShootingSplit(r.shooting.closeM, r.shooting.closeA)}</td><td>${formatShootingSplit(r.shooting.midM, r.shooting.midA)}</td><td>${formatShootingSplit(r.shooting.tpArcM, r.shooting.tpArcA)}</td><td>${formatShootingSplit(r.shooting.tpDeepM, r.shooting.tpDeepA)}</td></tr>`).join("");
-}
+function renderShotZonePanel() {
+  const headerRow = document.getElementById("shotZoneHeaderRow");
+  renderSortableHeader(headerRow, SHOT_ZONE_COLUMNS, shotZoneSort, renderShotZonePanel);
+  // The Mix column is purely visual (a stacked bar has no single sortable number), so it's
+  // appended after renderSortableHeader builds the real sortable headers rather than being one
+  // of them.
+  const mixTh = document.createElement("th");
+  mixTh.textContent = "Mix";
+  headerRow.appendChild(mixTh);
 
-// Where each player's shots actually come from, as a share of their own attempts — not how well
-// they shoot from a zone (the Shot Distance panel already covers that), but how much of their
-// offense leans on each zone. Same 4 bands as Shot Distance, reusing the same computeLeaderboard()
-// shooting totals. Sorted by total marked attempts descending so the players with the most signal
-// show up first.
-const SHOT_SELECTION_ZONES = [
-  { key: "close", label: "Close", cssClass: "shot-seg-close", attempts: r => r.shooting.closeA },
-  { key: "mid", label: "Midrange", cssClass: "shot-seg-mid", attempts: r => r.shooting.midA },
-  { key: "line", label: "3PT Line", cssClass: "shot-seg-line", attempts: r => r.shooting.tpArcA },
-  { key: "deep", label: "3PT Deep", cssClass: "shot-seg-deep", attempts: r => r.shooting.tpDeepA }
-];
+  const body = document.getElementById("shotZoneBody");
+  const rows = computeLeaderboard().filter(r => totalBandedAttempts(r) > 0);
+  const sortCol = SHOT_ZONE_COLUMNS.find(c => c.key === shotZoneSort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), shotZoneSort.dir));
 
-function renderShotSelectionChart() {
-  const wrap = document.getElementById("shotSelectionChart");
-  if (!wrap) return;
-  const rows = computeLeaderboard()
-    .map(r => ({ player: r.player, total: SHOT_SELECTION_ZONES.reduce((sum, z) => sum + z.attempts(r), 0), r }))
-    .filter(row => row.total > 0)
-    .sort((a, b) => b.total - a.total);
   if (rows.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">No field goals with a marked shot location yet.</p>';
+    body.innerHTML = `<tr><td colspan="${SHOT_ZONE_COLUMNS.length + 1}" class="empty-state">No field goals with a marked shot location yet.</td></tr>`;
     return;
   }
-  const legendHtml = SHOT_SELECTION_ZONES.map(z => `
-    <span class="legend-item"><span class="legend-swatch ${z.cssClass}"></span>${escapeHtml(z.label)}</span>
-  `).join("");
-  const rowsHtml = rows.map(({ player, total, r }) => {
-    const segsHtml = SHOT_SELECTION_ZONES.map(z => {
+  body.innerHTML = rows.map(r => {
+    const total = totalBandedAttempts(r);
+    const zoneCellsHtml = SHOT_ZONES.map(z => {
+      const a = z.attempts(r);
+      const share = total > 0 ? Math.round((a / total) * 100) : 0;
+      return `<td>${formatShootingSplit(z.makes(r), a)}${a > 0 ? `<br><span class="hint" style="margin:0">${share}% of shots</span>` : ""}</td>`;
+    }).join("");
+    const mixHtml = SHOT_ZONES.map(z => {
       const a = z.attempts(r);
       if (a === 0) return "";
       const share = (a / total) * 100;
-      return `<div class="shot-seg ${z.cssClass}" style="width:${share}%"><title>${escapeHtml(player.name)}: ${a} ${escapeHtml(z.label)} attempt${a === 1 ? "" : "s"} (${Math.round(share)}%)</title></div>`;
+      return `<div class="shot-seg ${z.cssClass}" style="width:${share}%"><title>${escapeHtml(r.player.name)}: ${a} ${escapeHtml(z.label)} attempt${a === 1 ? "" : "s"} (${Math.round(share)}%)</title></div>`;
     }).join("");
-    return `
-      <div class="shot-selection-row">
-        <span class="shot-selection-name">${escapeHtml(player.name)}</span>
-        <div class="shot-selection-bar">${segsHtml}</div>
-        <span class="hint" style="margin:0">${total}</span>
-      </div>
-    `;
+    return `<tr><td>${escapeHtml(r.player.name)}</td>${zoneCellsHtml}<td>${total}</td><td><div class="shot-selection-bar">${mixHtml}</div></td></tr>`;
   }).join("");
-  wrap.innerHTML = `<div class="shot-selection-legend">${legendHtml}</div>${rowsHtml}`;
 }
 
 // League-wide TS% per date, across every player in every reviewed game that day — a single
@@ -3060,7 +3149,7 @@ function renderLeagueTsByZoneChart() {
     const val = z.ts ?? 0;
     const y = yScale(val);
     const h = (PAD_T + plotH) - y;
-    const fill = z.ts === null ? "var(--surface-muted)" : `hsl(${Math.min(120, (val / 100) * 120)}, 65%, 45%)`;
+    const fill = z.ts === null ? "var(--surface-muted)" : `hsl(${Math.min(120, (val / 100) * 120)}, 85%, 42%)`;
     return `
       <rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="${fill}">
         <title>${escapeHtml(z.label)}: ${z.ts === null ? "no data" : `${z.ts}% TS`} (${z.fga} attempt${z.fga === 1 ? "" : "s"})</title>
@@ -3245,6 +3334,65 @@ function renderTeammateSynergy(playerId) {
     : rows.map(r => `<tr><td>${escapeHtml(r.teammate.name)}</td><td>${r.with.gp}</td><td>${r.without.gp}</td><td>${fmt(r.with.gmScorePer20, r.with.gp)}</td><td>${fmt(r.without.gmScorePer20, r.without.gp)}</td><td>${fmt(r.with.twoWayPer20, r.with.gp)}</td><td>${fmt(r.without.twoWayPer20, r.without.gp)}</td></tr>`).join("");
 }
 
+// Per-game Two-Way/20 over the season for one player — the line-graph version of the "Last 5: X
+// vs. season Y" text the Leaderboard's Last 5 column already shows (and what the Most Improved
+// comparison in Awards vs. Stats is built on), since a real trend line makes "up or down lately,
+// and by how much" legible at a glance instead of two numbers to compare by hand. Each point is
+// computeRateSummaryForGames() run on a single game, so it's the same per-20 math as everywhere
+// else, just normalized against that one game's own combined score instead of the season's.
+function computeTwoWayTrend(playerId) {
+  const qualifyingGames = state.games.filter(g => g.scoringEvents.length > 0 && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const points = sorted.map(g => ({ date: g.date, twoWay: computeRateSummaryForGames(playerId, [g]).twoWayPer20 }));
+  const seasonAvg = computeRateSummaryForGames(playerId, qualifyingGames).twoWayPer20;
+  return { points, seasonAvg };
+}
+
+function renderTwoWayTrendChart(playerId) {
+  const wrap = document.getElementById("playerTwoWayTrend");
+  if (!wrap) return;
+  const { points, seasonAvg } = computeTwoWayTrend(playerId);
+  if (points.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games logged yet.</p>';
+    return;
+  }
+  const W = 560, H = 220, PAD_L = 40, PAD_R = 16, PAD_T = 16, PAD_B = 34;
+  const plotW = W - PAD_L - PAD_R, plotH = H - PAD_T - PAD_B;
+  const values = [...points.map(p => p.twoWay), seasonAvg];
+  const rawMin = Math.min(...values), rawMax = Math.max(...values);
+  const span = Math.max(1, rawMax - rawMin);
+  const yMin = rawMin - span * 0.15;
+  const yMax = rawMax + span * 0.15;
+  const xScale = i => points.length === 1 ? PAD_L + plotW / 2 : PAD_L + (i / (points.length - 1)) * plotW;
+  const yScale = v => PAD_T + plotH - ((v - yMin) / (yMax - yMin || 1)) * plotH;
+
+  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${xScale(i)},${yScale(p.twoWay)}`).join(" ");
+  const dotsSvg = points.map((p, i) => `
+    <circle cx="${xScale(i)}" cy="${yScale(p.twoWay)}" r="3.5" class="ts-line-dot">
+      <title>${escapeHtml(formatDateDisplay(p.date))}: ${p.twoWay.toFixed(1)} Two-Way/20</title>
+    </circle>
+  `).join("");
+  const labelEvery = Math.max(1, Math.ceil(points.length / 6));
+  const xLabelsSvg = points.map((p, i) => (i % labelEvery !== 0 && i !== points.length - 1) ? "" : `
+    <text x="${xScale(i)}" y="${H - PAD_B + 16}" text-anchor="middle" class="ts-line-axis-label">${escapeHtml(formatDateDisplay(p.date))}</text>
+  `).join("");
+  const seasonY = yScale(seasonAvg);
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" class="ts-line-svg">
+      <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${H - PAD_B}" class="ts-line-axis" />
+      <line x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" class="ts-line-axis" />
+      <line x1="${PAD_L}" y1="${seasonY}" x2="${W - PAD_R}" y2="${seasonY}" class="ts-line-ref">
+        <title>Season average: ${seasonAvg.toFixed(1)} Two-Way/20</title>
+      </line>
+      <text x="${W - PAD_R}" y="${seasonY - 4}" text-anchor="end" class="ts-line-axis-label">season avg ${seasonAvg.toFixed(1)}</text>
+      <path d="${pathD}" class="ts-line-path" />
+      ${dotsSvg}
+      ${xLabelsSvg}
+    </svg>
+  `;
+}
+
 function formatShootingSplitRate(m, a) {
   return a > 0 ? `${m.toFixed(1)}/${a.toFixed(1)} (${pct(m, a)}%)` : "—";
 }
@@ -3350,10 +3498,10 @@ function renderLeaderboard() {
   renderVolumeEfficiencyChart();
   renderLeagueHeatmap();
   renderMatchupGrid();
+  renderWideOpenShootingPanel();
   renderAssistSynergy();
   renderTeammateLiftMatrix();
-  renderThreePtDistancePanel();
-  renderShotSelectionChart();
+  renderShotZonePanel();
   renderLeagueTsChart();
   renderLeagueTsByZoneChart();
   renderOutOfBoundsPanel();
@@ -3419,8 +3567,10 @@ function renderPlayerDetail() {
     ? `${row.wins}-${row.losses}${row.ties ? `-${row.ties}` : ""} · ${row.rate.pts.toFixed(1)} PTS/20 · ${row.gameScorePer20.toFixed(1)} GmSc/20 · ${row.twoWayPer20.toFixed(1)} Two-Way/20`
     : "No games yet";
 
+  renderTwoWayTrendChart(player.id);
   renderPlayerShotChart(player.id);
   renderPlayerHeatmap(player.id);
+  renderPlayerDefensiveHeatmap(player.id);
   renderPlayerReel(player.id);
   renderPlayerGameLog(player.id);
   renderHeadToHead(player.id);

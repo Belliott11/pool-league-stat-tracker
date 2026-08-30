@@ -169,11 +169,12 @@ individual player, not a team.
    average Two-Way/20 lift that player gives their actual teammates (each teammate's own
    With/Without split, same source as the Teammate Synergy panel on Player Detail) — a duo award
    also shows how many assists actually happened between that pair. **Clutch** compares
-   **Game-Winning Buckets** (see below) rather than being left blank — worth reading with a
-   grain of salt, though: in a race-to-target format the game literally ends on the winning
-   basket, so GWB tracks "who tends to close games out" more than it tracks rare late-game
-   heroics specifically. It's the closest tracked stat to Clutch this tool has, not a precise
-   match for what the award is actually asking. Every number here is computed live from whatever games are
+   **Close-Game Shooting** (see below) — TS% scoped to attempts from games decided by 5 points
+   or fewer — rather than **Game-Winning Buckets**, which sounds like the obvious match but
+   isn't: in a race-to-target format the game literally ends on the winning basket, so GWB tracks
+   "who tends to close games out" more than it tracks performance under real pressure, and grows
+   by exactly one per decided game regardless of how the rest of that game went. Close-Game
+   Shooting is the sharper read for what Clutch is actually asking. Every number here is computed live from whatever games are
    actually logged in this browser, so it's only ever as complete as your Shot Log is — a vote
    sitting outside the top of its column isn't a bug, the vote and the numbers are allowed to
    disagree, that's the whole point of comparing them. A voted player who isn't in your current
@@ -201,7 +202,10 @@ individual player, not a team.
    instead of pre-summed, so "who's good" splits into "good at what." The quadrant lines cross at
    zero on each axis rather than at this roster's own median, since zero is already the meaningful
    boundary each stat uses on its own — a median split would just be an arbitrary line drawn
-   through wherever this particular group happens to cluster.
+   through wherever this particular group happens to cluster. Each player gets their own distinct
+   dot color (an 8-color colorblind-safe palette, cycling if there are more players than colors)
+   instead of one uniform accent color — with a real roster this matters, since a wall of
+   identically-colored dots is only distinguishable by tiny, easily-overlapping text labels.
    Right below that, **Volume vs. Efficiency** is a separate scatter, offense only — pure shot
    volume (FGA/20) on the x-axis against season TS% on the y-axis, so a high-volume/low-efficiency
    player and a low-volume/high-efficiency player show up as mirror opposites directly instead of
@@ -214,10 +218,10 @@ individual player, not a team.
    preference: a game logged without timestamps (or with just a few) will never contribute here,
    even if you're certain from memory which shot actually won it. A season count, not a rate,
    since a rate would round a rare, memorable thing down to an unreadable decimal.
-   Right below that, **Close-Game Shooting** is a margin-aware alternative for reading the Clutch
-   comparison above, next to GWB rather than instead of it — GWB is explicitly non-scarce by
-   construction (the last basket of every decided game belongs to the winning team, full stop), so
-   it measures "who tends to close games out," not performance under real pressure. This one is
+   Right below that, **Close-Game Shooting** is the tracked stat behind the Clutch comparison
+   above, not Game-Winning Buckets — GWB is explicitly non-scarce by construction (the last
+   basket of every decided game belongs to the winning team, full stop), so it measures "who
+   tends to close games out," not performance under real pressure. This one is
    plain TS%, but scoped to attempts from games that actually finished close: decided by 5 points
    or fewer (`CLUTCH_MARGIN_THRESHOLD` in `app.js` — a starting guess against Poolean's 16/21-point
    targets, not a value backed by real season margin data yet, same provisional-constant treatment
@@ -245,7 +249,13 @@ individual player, not a team.
    means that exact pairing has never been tagged. Rows and columns are both sorted by total
    attempts, most data first. A double-teamed shot counts once per tagged defender, same rule the
    Head-to-Head tables already use — and like those tables, this isn't filtered to field goals
-   only. Below that, **Assist
+   only. Right below that, **Wide-Open Shooting** is the opposite cut: every field goal with
+   *no* tagged defender at all, not who beat whom but how a player shoots when nobody's tagged
+   as guarding them. Free throws are excluded entirely — they're uncontested by rule, not by
+   circumstance, so counting them would trivially inflate the numbers with a shot type that was
+   never a real read on defensive pressure. Share of FGA (how much of a player's own shot diet
+   was untagged) sits next to TS%, since a high TS% off 2 wide-open looks means something very
+   different than the same number off 20. Click any column header to sort. Below that, **Assist
    Connections** lists every passer-to-scorer pairing, league-wide, with how many times each has
    happened — directional (Alice assisting Bob is a separate row from Bob assisting Alice) — a
    straight readout of the Shot Log's assist tags, sorted by count. Right below that, a
@@ -271,16 +281,15 @@ individual player, not a team.
    one, both in `app.js`) — the 3PT threshold drawn from an early season sample, the 2PT one a
    rougher starting guess with no shot volume behind it yet, so treat it as even more
    provisional than the 3PT one. Only field goals with a marked shot location count (see
-   **Export → Backfill Shot Locations** to fill in the rest); kept in its own panel rather than
-   as more columns on the main table above, since it's a cut most people only need occasionally.
-   Click any column header to sort by it (a zone with zero attempts always sorts last, same as
-   an empty stat anywhere else on this page).
-   Right below that, **Shot Selection** shows the same four bands as a share of each player's own
-   attempts instead of an accuracy split — not "how well do they shoot from here" but "how much of
-   their offense leans on this zone," one horizontal stacked bar per player, sorted by total marked
-   attempts. Bar segment colors intentionally track typical shot quality (green close range, amber
-   midrange, teal at the line, red deep — same association as the League Shot Heatmap's FG%
-   coloring), so a bar leaning red reads as a warning sign at a glance.
+   **Export → Backfill Shot Locations** to fill in the rest). Each zone column shows FG% (click
+   to sort) with that zone's share of the player's own attempts printed underneath it — how well
+   they shoot from there, and how much they lean on it, in one cell rather than two separate
+   panels (this table used to be split into "Shot Distance" and "Shot Selection"; they were
+   merged since both were the same per-player, same-four-zone breakdown, just two different
+   numbers). The **Mix** column at the end is the same shot-selection breakdown as a compact
+   visual instead of text — one stacked bar per player, colors tracking typical shot quality
+   (green close, amber midrange, teal line, red deep, same association as the heatmaps' FG%
+   coloring) — not itself sortable, since a bar has no single number to sort by.
    Below that, **League TS% Over Time** pools True Shooting % across every player, one point per
    date with at least one reviewed game — a single league-wide efficiency line rather than a
    per-player stat, meant for watching the whole league drift over a season or for checking whether
@@ -322,6 +331,12 @@ individual player, not a team.
    gets a row, even a quiet one. On a thin season the two lists (Best and Worst) are capped so
    they never end up showing the same handful of games twice, just reversed. Click a player's name to
    open their **Player Detail** page:
+   - **Two-Way Trend** — Two-Way/20 for every reviewed game this player's played, in chronological
+     order, with a dashed season-average reference line. This is the line-graph version of the
+     "Last 5: X vs. season Y" text the Leaderboard's Last 5 column already shows (and what the
+     Most Improved comparison in Awards vs. Stats is built on) — seeing whether the recent points
+     sit above or below the dashed line is instantly legible in a way two numbers to compare by
+     hand aren't.
    - **Shot Chart** — every marked field goal this player has taken, plotted at its actual spot
      on the court, green for a make and red for a miss (semi-transparent, so overlapping shots
      read as a visibly denser cluster instead of just stacking invisibly). This shows the
@@ -330,6 +345,12 @@ individual player, not a team.
      zone percentages shows directly.
    - **Shot Heatmap** — the same grid, scoped to just this player's marked field goals across
      every game.
+   - **Defensive Heatmap** — the same grid again, but keyed on every shot this player was tagged
+     *defending* instead of shots they took, colored by opponent FG% allowed and inverted (low is
+     good defense here, so it's green, not red). This is what actually answers whether a player's
+     overall Opp FG% holds up at every distance or collapses somewhere specific — a single season
+     number on its own can't say that. A double-teamed shot counts toward every tagged defender,
+     same rule the Head-to-Head — As Defender table below uses.
    - **Highlights & Lowlights** — every clip tagged to this player, across every game, pulled
      from the "Player" dropdown on each clip in the Highlight/Lowlight Reel table in Stat Entry.
      A "Go to game" button jumps to that game so you can load/rewatch it.

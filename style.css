@@ -1027,8 +1027,8 @@ button:disabled {
   margin: 4px auto 0;
 }
 .quadrant-axis {
-  stroke: var(--border);
-  stroke-width: 1;
+  stroke: var(--muted);
+  stroke-width: 1.4;
 }
 .quadrant-dot {
   fill: var(--accent);
@@ -1036,21 +1036,23 @@ button:disabled {
   stroke-width: 1.5;
 }
 .quadrant-label {
-  font-size: 7px;
+  font-size: 10px;
+  font-weight: 600;
   fill: var(--text);
   font-family: var(--font-body);
 }
 .quadrant-axis-label {
-  font-size: 7px;
-  fill: var(--muted);
+  font-size: 10px;
+  fill: var(--text);
   font-family: var(--font-mono);
 }
 .quadrant-corner-label {
-  font-size: 6.5px;
+  font-size: 8px;
   fill: var(--muted);
   font-family: var(--font-body);
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 }
 
 /* Shot Selection — one horizontal stacked bar per player, share of their own attempts by zone.
@@ -1116,13 +1118,13 @@ button:disabled {
   margin: 4px auto 0;
 }
 .ts-line-axis {
-  stroke: var(--border);
-  stroke-width: 1;
+  stroke: var(--muted);
+  stroke-width: 1.4;
 }
 .ts-line-path {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 2;
+  stroke-width: 2.5;
 }
 .ts-line-dot {
   fill: var(--accent);
@@ -1130,9 +1132,19 @@ button:disabled {
   stroke-width: 1;
 }
 .ts-line-axis-label {
-  font-size: 7px;
-  fill: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--text);
   font-family: var(--font-mono);
+}
+/* Season-average reference line on the Two-Way Trend chart — dashed so it reads as a backdrop to
+   compare the real line against, not another data series, but still text-strength so it doesn't
+   disappear the way the old --border-colored axis lines did. */
+.ts-line-ref {
+  stroke: var(--text);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+  opacity: 0.55;
 }
 
 /* Head-to-Head Matchup Grid — reuses .matchup-table/.sticky-col, cell fill color is generated
@@ -1157,13 +1169,14 @@ button:disabled {
   margin: 4px auto 0;
 }
 .ts-zone-value-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   fill: var(--text);
   font-family: var(--font-mono);
 }
 .ts-zone-axis-label {
-  font-size: 8px;
-  fill: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--text);
   font-family: var(--font-body);
 }
