@@ -1134,3 +1134,36 @@ button:disabled {
   fill: var(--muted);
   font-family: var(--font-mono);
 }
+
+/* Head-to-Head Matchup Grid — reuses .matchup-table/.sticky-col, cell fill color is generated
+   inline per-cell (same red-to-green FG% hue as the heatmap), since it's data-driven. */
+.matchup-grid-cell {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+}
+.matchup-grid-empty {
+  color: var(--muted);
+  background: var(--surface-muted);
+}
+
+/* TS% by Shot Distance — a plain 4-bar chart, bar fill following the same red-to-green FG% hue
+   as everywhere else color encodes shooting quality in this app. */
+.ts-zone-svg {
+  width: 100%;
+  max-width: 420px;
+  display: block;
+  margin: 4px auto 0;
+}
+.ts-zone-value-label {
+  font-size: 9px;
+  font-weight: 700;
+  fill: var(--text);
+  font-family: var(--font-mono);
+}
+.ts-zone-axis-label {
+  font-size: 8px;
+  fill: var(--muted);
+  font-family: var(--font-body);
+}

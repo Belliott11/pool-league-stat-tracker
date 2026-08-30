@@ -249,6 +249,12 @@
     </div>
 
     <div class="panel">
+      <h2>Head-to-Head Matchup Grid</h2>
+      <p class="hint">Every scorer down one axis, every defender across the other — the league-wide extension of the per-player Head-to-Head tables on Player Detail, which only ever show one player's matchups at a time. Each cell is that scorer's FG% against that specific defender (color follows the same red-low/green-high scale as the heatmap above, opacity ramping up with sample size). A blank cell means that pairing has never been tagged. Rows and columns are sorted by attempts, most data first. Not filtered to field goals only — same behavior as the Head-to-Head tables it extends.</p>
+      <div id="matchupGrid"></div>
+    </div>
+
+    <div class="panel">
       <h2>Assist Connections</h2>
       <p class="hint">Every passer-to-scorer connection, league-wide — who set up whom, and how often. Directional: Alice assisting Bob is a separate row from Bob assisting Alice, since those are different facts. Sorted by assist count. Only connections with at least one assist are listed.</p>
       <div class="table-scroll">
@@ -280,6 +286,12 @@
       <h2>League TS% Over Time</h2>
       <p class="hint">True Shooting % pooled across every player, per date with a reviewed game — a single league-wide efficiency line, useful for spotting drift over the season or checking the effect of a future rule change. Not a player-comparison stat.</p>
       <div id="leagueTsChart"></div>
+    </div>
+
+    <div class="panel">
+      <h2>TS% by Shot Distance</h2>
+      <p class="hint">True Shooting %, league-wide, for each of the four Shot Distance bands — the same numbers as the Shot Distance table above, laid out so "shooting gets worse with distance" (or wherever it actually breaks down) lands in one glance instead of a table someone has to compare in their head. Free throws have no shot location, so this excludes them (unlike the over-time chart above) — each bar is just that zone's own points-per-attempt. Only field goals with a marked shot location count.</p>
+      <div id="leagueTsByZoneChart"></div>
     </div>
 
     <div class="panel">

@@ -2554,6 +2554,75 @@ function renderQuadrantChart() {
   `;
 }
 
+// League-wide head-to-head matchup grid — every scorer down one axis, every defender across the
+// other, one cell per pairing. The natural league-wide extension of the per-player Head-to-Head
+// tables on Player Detail (headToHeadAsScorer/headToHeadAsDefender): those only ever surface one
+// player's matchups at a time, so a strong or weak pairing between two OTHER players stays
+// invisible until someone happens to check that specific player's tab. Same underlying data and
+// counting rule as those tables — an event with multiple tagged defenders (a double-team) counts
+// once per defender, not once total — just pivoted into a full grid instead of two single-column
+// lists. Not filtered to field goals only, matching those tables' existing behavior exactly.
+function computeMatchupGrid() {
+  const cellTotals = {}; // "scorerId|defenderId" -> { fgm, fga }
+  const scorerTotals = {}; // scorerId -> attempts, for sorting rows by sample size
+  const defenderTotals = {}; // defenderId -> attempts, for sorting columns by sample size
+  state.games.forEach(g => {
+    g.scoringEvents.forEach(ev => {
+      (ev.defenderIds || []).forEach(defenderId => {
+        const key = `${ev.scorerId}|${defenderId}`;
+        const cell = cellTotals[key] = cellTotals[key] || { fgm: 0, fga: 0 };
+        cell.fga++;
+        if (ev.made !== false) cell.fgm++;
+        scorerTotals[ev.scorerId] = (scorerTotals[ev.scorerId] || 0) + 1;
+        defenderTotals[defenderId] = (defenderTotals[defenderId] || 0) + 1;
+      });
+    });
+  });
+  const scorers = Object.keys(scorerTotals)
+    .map(id => state.players.find(p => p.id === id))
+    .filter(Boolean)
+    .sort((a, b) => scorerTotals[b.id] - scorerTotals[a.id]);
+  const defenders = Object.keys(defenderTotals)
+    .map(id => state.players.find(p => p.id === id))
+    .filter(Boolean)
+    .sort((a, b) => defenderTotals[b.id] - defenderTotals[a.id]);
+  return {
+    scorers,
+    defenders,
+    cellFor: (scorerId, defenderId) => cellTotals[`${scorerId}|${defenderId}`] || null
+  };
+}
+
+function renderMatchupGrid() {
+  const wrap = document.getElementById("matchupGrid");
+  if (!wrap) return;
+  const { scorers, defenders, cellFor } = computeMatchupGrid();
+  if (scorers.length === 0 || defenders.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No shots with a tagged defender yet.</p>';
+    return;
+  }
+  const headerHtml = defenders.map(d => `<th>${escapeHtml(d.name)}</th>`).join("");
+  const rowsHtml = scorers.map(scorer => {
+    const cellsHtml = defenders.map(defender => {
+      const cell = cellFor(scorer.id, defender.id);
+      if (!cell) return `<td class="matchup-grid-cell matchup-grid-empty">&#8212;</td>`;
+      const fgPct = pct(cell.fgm, cell.fga);
+      const hue = (fgPct / 100) * 120;
+      const opacity = Math.min(0.85, 0.32 + cell.fga * 0.08);
+      return `<td class="matchup-grid-cell" style="background: hsla(${hue}, 70%, 45%, ${opacity})" title="${escapeHtml(scorer.name)} vs. ${escapeHtml(defender.name)}: ${cell.fgm}/${cell.fga}">${fgPct}%</td>`;
+    }).join("");
+    return `<tr><td class="sticky-col">${escapeHtml(scorer.name)}</td>${cellsHtml}</tr>`;
+  }).join("");
+  wrap.innerHTML = `
+    <div class="table-scroll">
+      <table class="matchup-table matchup-grid-table">
+        <thead><tr><th class="sticky-col">Scorer &#8595; / Defender &#8594;</th>${headerHtml}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 function renderAssistSynergy() {
   const body = document.getElementById("assistSynergyBody");
   const rows = computeAssistConnections();
@@ -2699,6 +2768,81 @@ function renderLeagueTsChart() {
       <path d="${pathD}" class="ts-line-path" />
       ${dotsSvg}
       ${xLabelsSvg}
+    </svg>
+  `;
+}
+
+// TS% by shot-distance zone, league-wide — same four bands as Shot Distance/Shot Selection, meant
+// to make "shooting gets worse with distance" (or wherever it actually breaks down) readable in
+// one glance instead of requiring someone to read the Shot Distance table and compare percentages
+// in their head. Free throws have no shot location, so unlike the over-time TS% line above, this
+// is computed with fta always 0 — pts/(2*fga) restricted to that zone's own attempts, not the
+// full TS formula. Only field goals with a marked shot location count, same as every other
+// distance-banded panel.
+const LEAGUE_TS_ZONES = [
+  { key: "close", label: "Close" },
+  { key: "mid", label: "Midrange" },
+  { key: "arc", label: "3PT Line" },
+  { key: "deep", label: "3PT Deep" }
+];
+
+function computeLeagueTsByZone() {
+  const totals = {};
+  LEAGUE_TS_ZONES.forEach(z => totals[z.key] = { pts: 0, fga: 0 });
+  state.games.forEach(game => {
+    game.scoringEvents.forEach(ev => {
+      if (!ev.shotLocation || (ev.points !== 2 && ev.points !== 3)) return;
+      const bucket = totals[shotBand(ev.shotLocation, ev.points)];
+      if (!bucket) return;
+      bucket.fga++;
+      if (ev.made !== false) bucket.pts += ev.points;
+    });
+  });
+  return LEAGUE_TS_ZONES.map(z => ({
+    key: z.key,
+    label: z.label,
+    fga: totals[z.key].fga,
+    ts: totals[z.key].fga > 0 ? trueShootingPct(totals[z.key].pts, totals[z.key].fga, 0) : null
+  }));
+}
+
+function renderLeagueTsByZoneChart() {
+  const wrap = document.getElementById("leagueTsByZoneChart");
+  if (!wrap) return;
+  const zones = computeLeagueTsByZone();
+  if (zones.every(z => z.fga === 0)) {
+    wrap.innerHTML = '<p class="empty-state">No field goals with a marked shot location yet.</p>';
+    return;
+  }
+  const W = 420, H = 220, PAD_L = 16, PAD_R = 16, PAD_T = 26, PAD_B = 32;
+  const plotW = W - PAD_L - PAD_R, plotH = H - PAD_T - PAD_B;
+  const gap = 18;
+  const barW = (plotW - gap * (zones.length - 1)) / zones.length;
+  // TS% is mathematically uncapped at 100 — a small, hot-from-three sample can clear it (e.g. 1
+  // make on 1 three-point attempt is pts/(2*fga) = 3/2 = 150%). The ceiling scales up to fit
+  // whatever the data actually produced instead of assuming 100 is always the max.
+  const ceiling = Math.max(100, ...zones.map(z => z.ts ?? 0)) * 1.08;
+  const yScale = v => PAD_T + plotH - (v / ceiling) * plotH;
+
+  const barsSvg = zones.map((z, i) => {
+    const x = PAD_L + i * (barW + gap);
+    const val = z.ts ?? 0;
+    const y = yScale(val);
+    const h = (PAD_T + plotH) - y;
+    const fill = z.ts === null ? "var(--surface-muted)" : `hsl(${Math.min(120, (val / 100) * 120)}, 65%, 45%)`;
+    return `
+      <rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="${fill}">
+        <title>${escapeHtml(z.label)}: ${z.ts === null ? "no data" : `${z.ts}% TS`} (${z.fga} attempt${z.fga === 1 ? "" : "s"})</title>
+      </rect>
+      <text x="${x + barW / 2}" y="${y - 6}" text-anchor="middle" class="ts-zone-value-label">${z.ts === null ? "&#8212;" : `${z.ts}%`}</text>
+      <text x="${x + barW / 2}" y="${PAD_T + plotH + 16}" text-anchor="middle" class="ts-zone-axis-label">${escapeHtml(z.label)}</text>
+    `;
+  }).join("");
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" class="ts-zone-svg">
+      <line x1="${PAD_L}" y1="${PAD_T + plotH}" x2="${W - PAD_R}" y2="${PAD_T + plotH}" class="ts-line-axis" />
+      ${barsSvg}
     </svg>
   `;
 }
@@ -2973,10 +3117,12 @@ function renderLeaderboard() {
   renderPowerRankingVsPerformance();
   renderQuadrantChart();
   renderLeagueHeatmap();
+  renderMatchupGrid();
   renderAssistSynergy();
   renderThreePtDistancePanel();
   renderShotSelectionChart();
   renderLeagueTsChart();
+  renderLeagueTsByZoneChart();
   renderOutOfBoundsPanel();
   renderSecondChancePanel();
   renderGameWinningBucketsPanel();

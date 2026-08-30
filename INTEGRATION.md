@@ -419,6 +419,20 @@ equivalent view, two behaviors worth replicating exactly:
   it, matching where shot volume actually concentrates. If you resize the grid, keep a boundary
   on 60 rather than going back to uniform rows.
 
+**The Head-to-Head Matchup Grid on the Leaderboard is also purely computed, nothing stored.** It's
+the league-wide pivot of the exact same query the per-player Head-to-Head tables on Player Detail
+already run (`headToHeadAsScorer()` / `headToHeadAsDefender()` in `app.js`) — `computeMatchupGrid()`
+just runs that counting logic for every scorer against every defender in one pass instead of one
+player at a time, keyed on `` `${scorerId}|${defenderId}` ``. Same counting rule as those two
+existing functions, worth replicating exactly if you port this: a scoring event with multiple
+`defenders` (a double-team) increments **every** tagged defender's cell against that scorer, not
+just one — this is not filtered to `points === 2 || 3` either, matching those functions' existing
+(not-FG-only) behavior. Cell color reuses the same red-to-green FG% hue as the heatmap, with an
+opacity ramp identical in spirit to `heatmapCellColor()` (more attempts = more opaque = more
+confident), so a 1-for-1 cell visually reads as far less certain than a well-sampled one even
+though both would show 100%. Rows and columns are sorted independently, each by that scorer's or
+defender's own total tagged attempts — the two orderings are unrelated to each other.
+
 **The Two-Way Quadrant chart on the Leaderboard is also purely computed, nothing stored.**
 `computeQuadrantData()` (`app.js`) is a thin wrapper over `computeLeaderboard()` — one point per
 player with `gp > 0`, x = `gameScorePer20`, y = `defensiveImpact(rateDefense)`. No new fields, no
@@ -443,6 +457,20 @@ groups by `date` (summing across every game on that date before computing one `t
 per date) — because this is deliberately a single league-wide line, not a per-player stat, meant
 for eyeballing efficiency drift over a season. A date with no attempts (or where `fga`/`fta` net to
 a zero denominator) is dropped from the series rather than plotted as a 0%.
+
+**TS% by Shot Distance on the Leaderboard is also purely computed, nothing stored.** A 4-bar
+version of the same Close/Midrange/Line/Deep split as the Shot Distance table and Shot Selection
+chart above it — `computeLeagueTsByZone()` (`app.js`) buckets every field goal with a marked
+`shot_x`/`shot_y` by `shotBand()`, then runs `trueShootingPct(pts, fga, 0)` per zone. The `0` for
+`fta` is deliberate, not a bug: free throws have no shot location, so they're excluded from every
+zone's denominator here, unlike the over-time TS% line above (which does include them, pooled
+league-wide rather than per-zone). One thing worth knowing if you port the visualization, not just
+the number: **zone TS% is not capped at 100%.** A small, all-made three-point sample for a zone
+clears it trivially (`pts / (2 × fga)` with `pts = 3`, `fga = 1` is 150%) — real season volume
+makes this rare but not impossible early in a season or for a thin zone, so a bar chart needs a
+dynamic y-axis ceiling (`Math.max(100, ...values) * some headroom factor`, not a fixed 0–100
+scale) or a value like this renders as a bar clipped off the top of the chart. This was caught in
+testing against exactly that case, not a hypothetical.
 
 **Assist Connections on the Leaderboard, and Teammate Synergy on Player Detail, are also purely
 computed, nothing stored.** Deliberately *not* a win/loss duo table — the real site already has

@@ -221,7 +221,17 @@ individual player, not a team.
    exact FG% underneath, blank until at least one shot lands in it (the hoop marker itself draws
    behind the grid, so it only shows through an empty zone — it never covers a number). Only
    shots with a marked location count
-   (see **Export → Backfill Shot Locations** to fill in the rest). Below that, **Assist
+   (see **Export → Backfill Shot Locations** to fill in the rest). Right below that, a
+   **Head-to-Head Matchup Grid** puts every scorer down one axis and every defender across the
+   other — the league-wide version of the per-player Head-to-Head tables on Player Detail, which
+   only ever show one player's matchups at a time and so hide any strong or weak pairing between
+   two *other* players until someone happens to look. Each cell is that scorer's FG% against that
+   specific defender, colored the same red-low/green-high way as the heatmap, opacity ramping up
+   with sample size so a 1-for-1 cell reads as less certain than a well-sampled one. A blank cell
+   means that exact pairing has never been tagged. Rows and columns are both sorted by total
+   attempts, most data first. A double-teamed shot counts once per tagged defender, same rule the
+   Head-to-Head tables already use — and like those tables, this isn't filtered to field goals
+   only. Below that, **Assist
    Connections** lists every passer-to-scorer pairing, league-wide, with how many times each has
    happened — directional (Alice assisting Bob is a separate row from Bob assisting Alice) — a
    straight readout of the Shot Log's assist tags, sorted by count. (There's deliberately no
@@ -251,6 +261,15 @@ individual player, not a team.
    date with at least one reviewed game — a single league-wide efficiency line rather than a
    per-player stat, meant for watching the whole league drift over a season or for checking whether
    some future rule change actually moved the needle.
+   Right below that, **TS% by Shot Distance** is a plain 4-bar chart of the same Close/Midrange/
+   Line/Deep split as the Shot Distance table above, meant to make a "shooting gets worse with
+   distance" story (or wherever it actually breaks down) land in one glance instead of requiring
+   someone to read that table and compare percentages in their head. Free throws have no shot
+   location, so unlike the line chart just above it, this one excludes them entirely — each bar is
+   just that zone's own points scored per attempt in that zone. Worth knowing: TS% for a single
+   zone isn't capped at 100% the way whole-game TS% effectively is in practice — a small,
+   hot-from-three sample can clear it (one make on one three-point attempt is 3 points on 1 FGA,
+   which is 150% by the formula), so don't read a bar taller than the others as a data error.
    Below that, **Out-of-Bounds Misses**
    shows how often a player's own missed shot ends up out of bounds — per Poolean's actual rule,
    whoever last touched the ball loses possession, so this is really "how often does the ball
