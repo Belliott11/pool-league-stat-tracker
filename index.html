@@ -213,6 +213,7 @@
 
   <!-- LEADERBOARD -->
   <section id="tab-leaderboard" class="tab-panel">
+    <!-- Overview -->
     <div class="panel">
       <h2>Season Rates (Individual)</h2>
       <p class="hint">Every counting stat here (PTS, OREB, DREB, AST, STL, BLK, TOV, PF, Pts Allowed, Beaten, Stops, Def Impact) is a rate per 20 combined points scored in the game, not a season total or a per-game average — only games with real shots logged count toward these at all, so a game that's just been rostered but not reviewed yet doesn't drag anyone's numbers down. Games are capped at different totals (16 or 21), so a plain per-game average isn't a fair comparison between a player who mostly plays 16-point games and one who mostly plays 21s — the game's combined final score stands in for "how much game happened," since possessions aren't tracked. Includes shooting splits and defensive/advanced numbers derived from each game's Shot Log — see the Game Stats table in Stat Entry for what each one means. <strong>Def Impact</strong> is Stops minus Beaten minus 0.4×Pts Allowed — 0 for anyone never tagged as a defender, not a penalty for conservative tagging. <strong>Two-Way</strong> is GmSc plus Def Impact. Click a player's name for their full game log and head-to-head history. Click a column header to sort by it (click again to flip direction).</p>
@@ -236,6 +237,7 @@
       <div id="powerRankingVsPerformance"></div>
     </div>
 
+    <!-- Player Comparison Charts -->
     <div class="panel">
       <h2>Two-Way Quadrant</h2>
       <p class="hint">GmSc/20 (offense) vs. Def Impact/20 for every player who's played, plotted separately instead of pre-summed into Two-Way Score — so "who's good" splits into "good at what." Quadrant lines are drawn at zero on each axis.</p>
@@ -248,44 +250,11 @@
       <div id="volumeEfficiencyChart"></div>
     </div>
 
+    <!-- Shot Location & Efficiency -->
     <div class="panel">
       <h2>League Shot Heatmap</h2>
       <p class="hint">Every marked field goal, league-wide, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. A zone stays blank until at least one shot lands in it. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
       <div id="leagueHeatmap"></div>
-    </div>
-
-    <div class="panel">
-      <h2>Head-to-Head Matchup Grid</h2>
-      <p class="hint">Every scorer down one axis, every defender across the other — the league-wide extension of the per-player Head-to-Head tables on Player Detail, which only ever show one player's matchups at a time. Each cell is that scorer's FG% against that specific defender (color follows the same red-low/green-high scale as the heatmap above, opacity ramping up with sample size). A blank cell means that pairing has never been tagged. Rows and columns are sorted by attempts, most data first. Not filtered to field goals only — same behavior as the Head-to-Head tables it extends.</p>
-      <div id="matchupGrid"></div>
-    </div>
-
-    <div class="panel">
-      <h2>Wide-Open Shooting</h2>
-      <p class="hint">Every field goal attempt with <strong>no</strong> tagged defender at all — the opposite end of the Matchup Grid above. Free throws are excluded entirely (they're uncontested by rule, not by circumstance, so folding them in would trivially inflate the numbers). Share of FGA is how much of a player's own shot diet was untagged, for context on how much signal the TS% column actually carries. Click any column header to sort.</p>
-      <div class="table-scroll">
-        <table class="matchup-table" id="wideOpenTable">
-          <thead><tr id="wideOpenHeaderRow"></tr></thead>
-          <tbody id="wideOpenBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>Assist Connections</h2>
-      <p class="hint">Every passer-to-scorer connection, league-wide — who set up whom, and how often. Directional: Alice assisting Bob is a separate row from Bob assisting Alice, since those are different facts. Sorted by assist count. Only connections with at least one assist are listed.</p>
-      <div class="table-scroll">
-        <table class="matchup-table" id="assistSynergyTable">
-          <thead><tr><th>Passer</th><th>Scorer</th><th>Assists</th></tr></thead>
-          <tbody id="assistSynergyBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>Teammate Lift Matrix</h2>
-      <p class="hint">The pairwise With/Without comparison the Best Teammate award's Average Teammate Lift boils into one number per player — here as a full grid instead: row player on the team, column player's own Two-Way/20 change as a result (green = boosts them, red = drags them down; opacity tracks how large the swing is relative to the biggest one on the grid). A blank cell means that pairing hasn't logged games both with and without each other yet. This grid is <strong>not symmetric</strong> — row A / column B ("does A help B") and row B / column A ("does B help A") are two different facts about two different people's games, not mirror images of each other.</p>
-      <div id="teammateLiftMatrix"></div>
     </div>
 
     <div class="panel">
@@ -306,17 +275,53 @@
     </div>
 
     <div class="panel">
-      <h2>League TS% Over Time</h2>
-      <p class="hint">True Shooting % pooled across every player, per date with a reviewed game — a single league-wide efficiency line, useful for spotting drift over the season or checking the effect of a future rule change. Not a player-comparison stat.</p>
-      <div id="leagueTsChart"></div>
-    </div>
-
-    <div class="panel">
       <h2>TS% by Shot Distance</h2>
       <p class="hint">True Shooting %, league-wide, for each of the four Shot Distance bands — the same numbers as the Shot Distance table above, laid out so "shooting gets worse with distance" (or wherever it actually breaks down) lands in one glance instead of a table someone has to compare in their head. Free throws have no shot location, so this excludes them (unlike the over-time chart above) — each bar is just that zone's own points-per-attempt. Only field goals with a marked shot location count.</p>
       <div id="leagueTsByZoneChart"></div>
     </div>
 
+    <div class="panel">
+      <h2>Wide-Open Shooting</h2>
+      <p class="hint">Every field goal attempt with <strong>no</strong> tagged defender at all — the opposite end of the Matchup Grid above. Free throws are excluded entirely (they're uncontested by rule, not by circumstance, so folding them in would trivially inflate the numbers). Share of FGA is how much of a player's own shot diet was untagged, for context on how much signal the TS% column actually carries. Click any column header to sort.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="wideOpenTable">
+          <thead><tr id="wideOpenHeaderRow"></tr></thead>
+          <tbody id="wideOpenBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>League TS% Over Time</h2>
+      <p class="hint">True Shooting % pooled across every player, per date with a reviewed game — a single league-wide efficiency line, useful for spotting drift over the season or checking the effect of a future rule change. Not a player-comparison stat.</p>
+      <div id="leagueTsChart"></div>
+    </div>
+
+    <!-- Matchups & Chemistry -->
+    <div class="panel">
+      <h2>Head-to-Head Matchup Grid</h2>
+      <p class="hint">Every scorer down one axis, every defender across the other — the league-wide extension of the per-player Head-to-Head tables on Player Detail, which only ever show one player's matchups at a time. Each cell is that scorer's FG% against that specific defender (color follows the same red-low/green-high scale as the heatmap above, opacity ramping up with sample size). A blank cell means that pairing has never been tagged. Rows and columns are sorted by attempts, most data first. Not filtered to field goals only — same behavior as the Head-to-Head tables it extends.</p>
+      <div id="matchupGrid"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Teammate Lift Matrix</h2>
+      <p class="hint">The pairwise With/Without comparison the Best Teammate award's Average Teammate Lift boils into one number per player — here as a full grid instead: row player on the team, column player's own Two-Way/20 change as a result (green = boosts them, red = drags them down; opacity tracks how large the swing is relative to the biggest one on the grid). A blank cell means that pairing hasn't logged games both with and without each other yet. This grid is <strong>not symmetric</strong> — row A / column B ("does A help B") and row B / column A ("does B help A") are two different facts about two different people's games, not mirror images of each other.</p>
+      <div id="teammateLiftMatrix"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Assist Connections</h2>
+      <p class="hint">Every passer-to-scorer connection, league-wide — who set up whom, and how often. Directional: Alice assisting Bob is a separate row from Bob assisting Alice, since those are different facts. Sorted by assist count. Only connections with at least one assist are listed.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="assistSynergyTable">
+          <thead><tr><th>Passer</th><th>Scorer</th><th>Assists</th></tr></thead>
+          <tbody id="assistSynergyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Situational & Moments -->
     <div class="panel">
       <h2>Out-of-Bounds Misses</h2>
       <p class="hint">How often a player's own missed shot ends up out of bounds — per Poolean's rule, whoever last touched the ball loses possession, so this is really a "how often does the ball leave their hands for good on a miss" read, not a shooting-accuracy stat. Only misses count as the denominator (a make can't go out of bounds). Sorted by number of misses.</p>
@@ -368,6 +373,17 @@
       <p class="hint">Every player-game ranked by that single game's actual Two-Way score (Game Score + Defensive Impact) — deliberately not a per-20 rate or a season total, since the rest of this page normalizes for fair player-to-player comparison and that averages away exactly the thing this panel exists to surface: one specific night's story, buried otherwise inside that game's own box score. Every player on either roster for a reviewed game gets a row, even a quiet one. On a thin season the two lists are capped so they never show the same handful of games twice, just reversed.</p>
       <div id="individualGamePerformances"></div>
     </div>
+
+    <div class="panel">
+      <h2>Highlights &amp; Lowlights (League)</h2>
+      <p class="hint">Every clip tagged to any player, across every game, most recent first — the league-wide version of the Highlights &amp; Lowlights table on each player's own profile, which only ever shows one player's clips at a time. Same source: the Highlight / Lowlight Reel table in Stat Entry.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="leagueHighlightsTable">
+          <thead><tr><th>Date</th><th>Player</th><th>Type</th><th>Time</th><th>Note</th><th></th></tr></thead>
+          <tbody id="leagueHighlightsBody"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
 
   <!-- PLAYER DETAIL -->
@@ -378,39 +394,11 @@
       <div id="playerDetailSummary" class="score-display"></div>
     </div>
 
+    <!-- Overview -->
     <div class="panel">
       <h2>Two-Way Trend</h2>
       <p class="hint">Two-Way/20 for every reviewed game this player's played, in order — the line-graph version of the "Last 5" number and arrow already shown elsewhere (feeding the Most Improved comparison on the Leaderboard), since a real trend line makes "up or down lately, and by how much" legible at a glance instead of two numbers to compare in your head. The dashed line is the season average — where the recent points sit relative to it is the whole read.</p>
       <div id="playerTwoWayTrend"></div>
-    </div>
-
-    <div class="panel">
-      <h2>Shot Chart</h2>
-      <p class="hint">Every marked field goal this player has taken, plotted at its actual spot on the court — green for a make, red for a miss. The individual-shot pattern the zone-bucketed heatmap below necessarily smooths over: a cluster, a gap, a lean to one side, is visible here in a way no table of percentages shows directly. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
-      <div id="playerShotChart"></div>
-    </div>
-
-    <div class="panel">
-      <h2>Shot Heatmap</h2>
-      <p class="hint">Every marked field goal this player has taken, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. Only shots with a marked location are included.</p>
-      <div id="playerHeatmap"></div>
-    </div>
-
-    <div class="panel">
-      <h2>Defensive Heatmap</h2>
-      <p class="hint">Every shot this player was tagged defending, bucketed by court zone — color is <strong>opponent</strong> FG% allowed there (red high, green low — inverted from the offensive heatmap above, since a low percentage is good defense). This is what actually answers whether this player's overall Opp FG% holds up at every distance or collapses somewhere specific — a single season number can't say that on its own. A double-teamed shot counts toward every tagged defender, same rule the Head-to-Head — As Defender table below uses.</p>
-      <div id="playerDefensiveHeatmap"></div>
-    </div>
-
-    <div class="panel">
-      <h2>Highlights &amp; Lowlights</h2>
-      <p class="hint">Every clip tagged to this player, across all games — tag a clip to a player from the Highlight / Lowlight Reel table in Stat Entry.</p>
-      <div class="table-scroll">
-        <table class="matchup-table" id="playerReelTable">
-          <thead><tr><th>Date</th><th>Type</th><th>Time</th><th>Note</th><th></th></tr></thead>
-          <tbody id="playerReelBody"></tbody>
-        </table>
-      </div>
     </div>
 
     <div class="panel">
@@ -426,6 +414,19 @@
       </div>
     </div>
 
+    <!-- Offense Detail -->
+    <div class="panel">
+      <h2>Shot Chart</h2>
+      <p class="hint">Every marked field goal this player has taken, plotted at its actual spot on the court — green for a make, red for a miss. The individual-shot pattern the zone-bucketed heatmap below necessarily smooths over: a cluster, a gap, a lean to one side, is visible here in a way no table of percentages shows directly. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
+      <div id="playerShotChart"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Shot Heatmap</h2>
+      <p class="hint">Every marked field goal this player has taken, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. Only shots with a marked location are included.</p>
+      <div id="playerHeatmap"></div>
+    </div>
+
     <div class="panel">
       <h2>Head-to-Head — As Scorer</h2>
       <p class="hint">Shooting against each defender who has been tagged guarding this player's shots, across the season.</p>
@@ -435,6 +436,13 @@
           <tbody id="h2hScorerBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Defense Detail -->
+    <div class="panel">
+      <h2>Defensive Heatmap</h2>
+      <p class="hint">Every shot this player was tagged defending, bucketed by court zone — color is <strong>opponent</strong> FG% allowed there (red high, green low — inverted from the offensive heatmap above, since a low percentage is good defense). This is what actually answers whether this player's overall Opp FG% holds up at every distance or collapses somewhere specific — a single season number can't say that on its own. A double-teamed shot counts toward every tagged defender, same rule the Head-to-Head — As Defender table below uses.</p>
+      <div id="playerDefensiveHeatmap"></div>
     </div>
 
     <div class="panel">
@@ -448,6 +456,7 @@
       </div>
     </div>
 
+    <!-- Team Context -->
     <div class="panel">
       <h2>Teammate Synergy (With/Without)</h2>
       <p class="hint">For each teammate this player has shared a team with, this player's own per-20 numbers in games <strong>with</strong> that teammate on their side vs. games <strong>without</strong> them (opposing team or not playing) — only games with real shots logged count either way. "—" means there's no game in that bucket yet to compare against. A small GP on either side makes the comparison noisy, not a verdict.</p>
@@ -462,7 +471,19 @@
     </div>
   </section>
 
-  <!-- EXPORT -->
+      <!-- Media -->
+    <div class="panel">
+      <h2>Highlights &amp; Lowlights</h2>
+      <p class="hint">Every clip tagged to this player, across all games — tag a clip to a player from the Highlight / Lowlight Reel table in Stat Entry.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="playerReelTable">
+          <thead><tr><th>Date</th><th>Type</th><th>Time</th><th>Note</th><th></th></tr></thead>
+          <tbody id="playerReelBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+<!-- EXPORT -->
   <section id="tab-export" class="tab-panel">
     <div class="panel">
       <h2>Export All Data</h2>

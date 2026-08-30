@@ -3490,6 +3490,9 @@ function renderLeaderboardHeader() {
   });
 }
 
+// Render order follows the panels' actual top-to-bottom order in index.html — overview, then
+// player-comparison scatters, then shot-location/efficiency, then matchup/chemistry grids, then
+// situational stats, capped with the season's best/worst individual games. Keep the two in sync.
 function renderLeaderboard() {
   renderLeaderboardHeader();
   renderAwardsVsStats();
@@ -3497,18 +3500,19 @@ function renderLeaderboard() {
   renderQuadrantChart();
   renderVolumeEfficiencyChart();
   renderLeagueHeatmap();
-  renderMatchupGrid();
-  renderWideOpenShootingPanel();
-  renderAssistSynergy();
-  renderTeammateLiftMatrix();
   renderShotZonePanel();
-  renderLeagueTsChart();
   renderLeagueTsByZoneChart();
+  renderWideOpenShootingPanel();
+  renderLeagueTsChart();
+  renderMatchupGrid();
+  renderTeammateLiftMatrix();
+  renderAssistSynergy();
   renderOutOfBoundsPanel();
   renderSecondChancePanel();
   renderGameWinningBucketsPanel();
   renderCloseGameShootingPanel();
   renderIndividualGamePerformances();
+  renderLeagueHighlights();
   const body = document.getElementById("leaderboardBody");
   body.innerHTML = "";
   // Players with no games yet just clutter the table with a row of dashes.
@@ -3567,14 +3571,17 @@ function renderPlayerDetail() {
     ? `${row.wins}-${row.losses}${row.ties ? `-${row.ties}` : ""} · ${row.rate.pts.toFixed(1)} PTS/20 · ${row.gameScorePer20.toFixed(1)} GmSc/20 · ${row.twoWayPer20.toFixed(1)} Two-Way/20`
     : "No games yet";
 
+  // Render order follows the panels' actual top-to-bottom order in index.html — season overview,
+  // then offense detail (shots, then who defended them), then defense detail (same shape,
+  // mirrored), then team context, then media. Keep the two in sync.
   renderTwoWayTrendChart(player.id);
+  renderPlayerGameLog(player.id);
   renderPlayerShotChart(player.id);
   renderPlayerHeatmap(player.id);
+  renderHeadToHead(player.id); // fills both the As-Scorer and As-Defender tables in one pass
   renderPlayerDefensiveHeatmap(player.id);
-  renderPlayerReel(player.id);
-  renderPlayerGameLog(player.id);
-  renderHeadToHead(player.id);
   renderTeammateSynergy(player.id);
+  renderPlayerReel(player.id);
 }
 
 // Every highlight/lowlight clip tagged to this player, across every game — the per-clip
@@ -3598,6 +3605,51 @@ function renderPlayerReel(playerId) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${formatDateDisplay(clip.gameDate)}</td>
+      <td>${clip.type === "highlight" ? '<span class="badge badge-highlight">🔥 Highlight</span>' : '<span class="badge badge-lowlight">👎 Lowlight</span>'}</td>
+      <td>${formatTime(clip.start)}–${formatTime(clip.end)}</td>
+      <td>${escapeHtml(clip.note || "")}</td>
+    `;
+    const tdBtn = document.createElement("td");
+    const goBtn = document.createElement("button");
+    goBtn.type = "button";
+    goBtn.className = "secondary-btn";
+    goBtn.textContent = "Go to game";
+    goBtn.addEventListener("click", () => openGame(clip.gameId));
+    tdBtn.appendChild(goBtn);
+    tr.appendChild(tdBtn);
+    body.appendChild(tr);
+  });
+}
+
+// League-wide Highlights & Lowlights — every tagged clip across every player and game, not
+// scoped to one player like the Reel above. Same underlying data (game.plays), just pooled with
+// a Player column added, so it reads as a season highlight reel instead of requiring someone to
+// click into each player's own profile to find their clips.
+function computeLeagueHighlights() {
+  const clips = [];
+  state.games.forEach(g => {
+    g.plays.forEach(play => {
+      const player = state.players.find(p => p.id === play.playerId);
+      if (player) clips.push({ ...play, player, gameId: g.id, gameDate: g.date });
+    });
+  });
+  return clips.sort((a, b) => (b.gameDate || "").localeCompare(a.gameDate || ""));
+}
+
+function renderLeagueHighlights() {
+  const body = document.getElementById("leagueHighlightsBody");
+  if (!body) return;
+  const clips = computeLeagueHighlights();
+  body.innerHTML = "";
+  if (clips.length === 0) {
+    body.innerHTML = '<tr><td colspan="6" class="empty-state">No clips tagged yet — mark one from the Highlight / Lowlight Reel table in Stat Entry.</td></tr>';
+    return;
+  }
+  clips.forEach(clip => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${formatDateDisplay(clip.gameDate)}</td>
+      <td>${escapeHtml(clip.player.name)}</td>
       <td>${clip.type === "highlight" ? '<span class="badge badge-highlight">🔥 Highlight</span>' : '<span class="badge badge-lowlight">👎 Lowlight</span>'}</td>
       <td>${formatTime(clip.start)}–${formatTime(clip.end)}</td>
       <td>${escapeHtml(clip.note || "")}</td>

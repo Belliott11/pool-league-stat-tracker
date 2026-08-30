@@ -157,6 +157,13 @@ individual player, not a team.
    last 5 games with real shots logged (fewer if they haven't played 5 yet), with a ▲/▼ showing
    whether that's above or below their season GmSc/20 (within ±0.5 counts as flat, shown as ●
    rather than a dash, since a dash next to a number reads as a minus sign).
+   Everything below this main table is grouped into five loose sections, top to bottom: season
+   **Overview** (Awards vs. Stats, Power Ranking vs. Performance), **Player Comparison Charts**
+   (Two-Way Quadrant, Volume vs. Efficiency), **Shot Location & Efficiency** (the heatmap through
+   League TS% Over Time), **Matchups & Chemistry** (the pairing grids and Assist Connections), and
+   **Situational & Moments** (Out-of-Bounds through the two highlight reels at the very bottom).
+   The grouping is marked with HTML comments in `index.html` if you're looking for a specific
+   panel in the source.
    Below the table, **Awards vs. Stats** lines up Summer 2026's voted awards (MVP, DPOY, Clutch,
    Most Improved, Best Teammate, First/Second Team, Best/Worst Duo — from that season's closed
    ballot, a fixed historical record, not something this tool derives) against whichever tracked
@@ -329,8 +336,16 @@ individual player, not a team.
    averages away exactly what this panel exists to surface: a specific night's story, buried
    otherwise inside that game's own box score. Every player on either roster in a reviewed game
    gets a row, even a quiet one. On a thin season the two lists (Best and Worst) are capped so
-   they never end up showing the same handful of games twice, just reversed. Click a player's name to
-   open their **Player Detail** page:
+   they never end up showing the same handful of games twice, just reversed.
+   The Leaderboard tab's very last panel, **Highlights & Lowlights (League)**, is every tagged
+   clip from every player and game pooled into one list, most recent first — the league-wide
+   version of the per-player Highlights & Lowlights table on Player Detail (see below), which
+   only ever shows one player's clips at a time. Same source (the Highlight/Lowlight Reel table
+   in Stat Entry), just with a Player column added and nothing scoped to one person. Click a player's name to
+   open their **Player Detail** page, which is grouped the same loose way: season **Overview**
+   (Two-Way Trend, Game Log), **Offense Detail** (Shot Chart, Shot Heatmap, Head-to-Head — As
+   Scorer), **Defense Detail** (Defensive Heatmap, Head-to-Head — As Defender), **Team Context**
+   (Teammate Synergy), and **Media** (Highlights & Lowlights) at the very bottom:
    - **Two-Way Trend** — Two-Way/20 for every reviewed game this player's played, in chronological
      order, with a dashed season-average reference line. This is the line-graph version of the
      "Last 5: X vs. season Y" text the Leaderboard's Last 5 column already shows (and what the
@@ -343,31 +358,34 @@ individual player, not a team.
      individual-shot pattern the zone-bucketed heatmap below it necessarily smooths over — a
      lean to one side of the court, a specific gap, a real cluster — none of which a table of
      zone percentages shows directly.
-   - **Shot Heatmap** — the same grid, scoped to just this player's marked field goals across
-     every game.
+   - **Game Log** — every game they've played, most recent first, with the same full stat line
+     (shooting splits, eFG%/TS%, defensive numbers, Game Score, Two-Way) as the Game Stats
+     table, plus that game's W/L/T result. Unlike the Leaderboard, this is per-game actuals, not
+     averaged — one row per game, exactly what happened in it. The literal data behind the
+     Two-Way Trend chart above it.
+   - **Shot Heatmap** — the same court grid as the Shot Chart, scoped to just this player's
+     marked field goals across every game.
+   - **Head-to-Head — As Scorer** — their shooting *against* each defender who's guarded them,
+     across the season. This only reflects shots where a defender was actually tagged —
+     untagged ("No defender") shots don't attribute to anyone.
    - **Defensive Heatmap** — the same grid again, but keyed on every shot this player was tagged
      *defending* instead of shots they took, colored by opponent FG% allowed and inverted (low is
      good defense here, so it's green, not red). This is what actually answers whether a player's
      overall Opp FG% holds up at every distance or collapses somewhere specific — a single season
      number on its own can't say that. A double-teamed shot counts toward every tagged defender,
      same rule the Head-to-Head — As Defender table below uses.
-   - **Highlights & Lowlights** — every clip tagged to this player, across every game, pulled
-     from the "Player" dropdown on each clip in the Highlight/Lowlight Reel table in Stat Entry.
-     A "Go to game" button jumps to that game so you can load/rewatch it.
-   - **Game Log** — every game they've played, most recent first, with the same full stat line
-     (shooting splits, eFG%/TS%, defensive numbers, Game Score, Two-Way) as the Game Stats
-     table, plus that game's W/L/T result. Unlike the Leaderboard, this is per-game actuals, not
-     averaged — one row per game, exactly what happened in it.
-   - **Head-to-Head** — two tables built from the Shot Log across the whole season: their
-     shooting *against* each defender who's guarded them, and the shooting they've *allowed* to
-     each scorer they've defended. This only reflects shots where a defender was actually
-     tagged — untagged ("No defender") shots don't attribute to anyone.
+   - **Head-to-Head — As Defender** — the shooting they've *allowed* to each scorer they've
+     defended, same tagging caveat as As Scorer above.
    - **Teammate Synergy (With/Without)** — for each teammate this player has shared a team with,
      this player's *own* GmSc/20 and Two-Way/20 in games **with** that teammate on their side vs.
      games **without** them (opposing team, or not playing that game). This is about whether this
      player's own output actually changes with a given teammate around — not a shared win/loss
      record — so a teammate they've always played with shows "—" on the without side rather than
      a misleading 0.0, and a small GP on either side is a small sample, not a verdict.
+   - **Highlights & Lowlights** — every clip tagged to this player, across every game, pulled
+     from the "Player" dropdown on each clip in the Highlight/Lowlight Reel table in Stat Entry.
+     A "Go to game" button jumps to that game so you can load/rewatch it. The league-wide version
+     of this table lives on the Leaderboard tab (see above).
 
    How W/L is decided for *one game* (shown per-row in Game Log, and on that game's own
    scoreboard): once real shots are logged (the Shot Log is non-empty), the actual score is

@@ -426,6 +426,15 @@ already uses, just evaluated for one game's raw totals instead of summed/rated a
 (few enough games that the "worst 10" and "best 10" would overlap) doesn't show the same handful
 of games in both lists, just reversed, which would read as a bug rather than a real result.
 
+**Highlights & Lowlights (League) on the Leaderboard is also purely computed, nothing stored.**
+`computeLeagueHighlights()` (`app.js`) is the exact same data Player Detail's own Highlights &
+Lowlights table reads (`game.plays`, one row per tagged clip: `playerId`, `type`
+("highlight"/"lowlight"), `start`, `end`, `note`) — just pooled across every player instead of
+filtered to one, with a `player` object attached to each clip and a `date`/`gameId` carried
+through for the "Go to game" button. No new field, no new query shape versus what
+`renderPlayerReel()` already does; this just drops the `play.playerId === playerId` filter and
+adds a Player column.
+
 **Player Detail's Shot Chart is also purely computed, nothing stored — the ungrouped
 counterpart to the heatmap just below it.** `renderPlayerShotChart()` (`app.js`) plots every one
 of a player's own field goals with a non-null `shot_x`/`shot_y` at its literal coordinates
