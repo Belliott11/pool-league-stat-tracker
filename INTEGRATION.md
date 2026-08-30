@@ -395,6 +395,34 @@ timestamping had all ten games qualify. Both are worth keeping in mind if you bu
 award pairing (like this tool's own Clutch comparison) around this number — it's a real signal,
 just not the "rare and memorable" one the name might suggest.
 
+**Close-Game Shooting is also purely computed, nothing stored — a margin-aware companion to GWB,
+not a replacement for it.** `computeCloseGameShooting()` (`app.js`) filters to games where
+`Math.abs(teamScore(teamA) - teamScore(teamB)) <= CLUTCH_MARGIN_THRESHOLD` (5, a single adjustable
+constant, currently a starting guess with no real season margin data behind it), **including tied
+games** — deliberately different from `gameWinningShot()`'s own filter, which excludes ties
+outright since a tie has no winning shot to credit. There is no winning-shot concept here at all;
+this is plain `trueShootingPct()` pooled across every attempt a player took in a qualifying game,
+regardless of who won. The reasoning for building this as a second panel instead of swapping it
+into the Clutch award's `statKey`: GWB's count is guaranteed to grow by exactly one per
+fully-timestamped decided game (see the note above), which is real but not particularly *scarce*
+signal — this metric is a sharper one for the same question (shooting efficiency specifically
+under real pressure, not just "whoever happened to take the last shot"), offered alongside GWB
+rather than displacing it, since the existing Clutch/GWB pairing in `AWARD_RESULTS` was an
+earlier, deliberate choice this tool's own maintainer asked to leave as-is.
+
+**Best & Worst Individual Games on the Leaderboard is also purely computed, nothing stored.**
+`computeIndividualGamePerformances()` (`app.js`) is the one panel on this page that deliberately
+does *not* normalize to a per-20 rate or a season total — every other panel does that specifically
+so players are comparable across different sample sizes, which is exactly what averages away a
+single game's own story. For every player on either roster in every game with
+`scoring_events.length > 0`, it computes that one game's own `gameScore(stats, shooting) +
+defensiveImpact(gameDefenseStats(game, playerId))` — the same two functions `computeLeaderboard()`
+already uses, just evaluated for one game's raw totals instead of summed/rated across a season.
+`renderIndividualGamePerformances()` sorts all of those rows once, then takes the top and bottom
+`n = min(10, floor(rows.length / 2))` — the floor-by-2 cap exists specifically so a thin season
+(few enough games that the "worst 10" and "best 10" would overlap) doesn't show the same handful
+of games in both lists, just reversed, which would read as a bug rather than a real result.
+
 **Player Detail's Shot Chart is also purely computed, nothing stored — the ungrouped
 counterpart to the heatmap just below it.** `renderPlayerShotChart()` (`app.js`) plots every one
 of a player's own field goals with a non-null `shot_x`/`shot_y` at its literal coordinates
@@ -443,6 +471,17 @@ land at the plot's visual center — worth keeping if you reimplement this, sinc
 instead would put the crossing point wherever this particular roster's data happens to center,
 not at the meaningful zero boundary both stats already use on their own.
 
+**Volume vs. Efficiency on the Leaderboard is also purely computed, nothing stored.** A second
+scatter, deliberately separate from the Two-Way Quadrant above rather than a third axis bolted
+onto it — `computeVolumeEfficiencyData()` (`app.js`) plots x = `rateShooting.fga` (attempts per 20
+combined points — the same volume rate the main table's own FGA column already shows), y =
+`trueShootingPct(totals.pts, shooting.fga, shooting.fta)` (season TS%, the identical calculation
+the main table's TS% column uses, not a new formula). Offense only, no defensive dimension at all.
+Same overflow risk as TS% by Shot Distance above and the same fix: TS% isn't capped at 100% for a
+small enough sample, so `renderVolumeEfficiencyChart()` scales its y-axis to `Math.max(100,
+...values) * 1.08` rather than a fixed range — carry that forward if you port this chart, for the
+same reason.
+
 **The Shot Selection chart on the Leaderboard is also purely computed, nothing stored.** Same four
 shot-distance bands as the Shot Distance table just above it (`shotBand()` / `shootingStats()` in
 `app.js`), same underlying `shot_x`/`shot_y` dependency — it just renders each player's own
@@ -475,6 +514,22 @@ testing against exactly that case, not a hypothetical.
 **Assist Connections on the Leaderboard, and Teammate Synergy on Player Detail, are also purely
 computed, nothing stored.** Deliberately *not* a win/loss duo table — the real site already has
 that.
+
+**The Teammate Lift Matrix on the Leaderboard is also purely computed, nothing stored.** It's the
+grid version of Average Teammate Lift, the Best Teammate award's own stat comparison (see the
+`teammateLift` block in `computeAwardStandings()` above) — same underlying With/Without pairwise
+comparison, laid out as a full row-by-column grid instead of one averaged number per player.
+`computeTeammateLiftMatrix()` (`app.js`) calls `computeTeammateSynergy()` once per player (not
+once per pair — `computeAwardStandings()`'s own `teammateLift` block actually does call it once
+per *pair*, an O(n²) pattern that works fine at this roster's size but isn't the one to copy if
+you're rebuilding this from scratch) and looks the rest up from that cached result. The critical
+thing to get right if you port this: **the grid is not symmetric.** Cell (row A, col B) is "with A
+on the team, how did B's own Two-Way/20 change" — a fact about B's games. Cell (row B, col A) is
+the mirror question about A's games, computed from a completely different set of games (A's
+games, not B's) and can come out very different in practice, not just in principle — this was
+directly observed in testing, not a theoretical caveat (one direction came out near-zero while the
+reverse direction was over 14 points on the exact same synthetic pairing). Don't average the two
+directions together or treat a diagonal-symmetric layout as a bug to fix.
 
 `computeAssistConnections()` walks every `scoring_events` row with a non-null `assist` on a make,
 and tallies `(assister, scorer)` pairs — directional, since Alice assisting Bob is a different

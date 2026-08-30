@@ -202,6 +202,10 @@ individual player, not a team.
    zero on each axis rather than at this roster's own median, since zero is already the meaningful
    boundary each stat uses on its own — a median split would just be an arbitrary line drawn
    through wherever this particular group happens to cluster.
+   Right below that, **Volume vs. Efficiency** is a separate scatter, offense only — pure shot
+   volume (FGA/20) on the x-axis against season TS% on the y-axis, so a high-volume/low-efficiency
+   player and a low-volume/high-efficiency player show up as mirror opposites directly instead of
+   requiring someone to cross-reference the FGA and TS% columns on the main table by hand.
    Below that, **Game-Winning Buckets** counts, per player, how many times their shot actually
    closed out a game their team won — the real game-ending basket in Poolean's race-to-a-target
    format. Credited only when *every* made shot in that game has a real video timestamp — a
@@ -210,6 +214,16 @@ individual player, not a team.
    preference: a game logged without timestamps (or with just a few) will never contribute here,
    even if you're certain from memory which shot actually won it. A season count, not a rate,
    since a rate would round a rare, memorable thing down to an unreadable decimal.
+   Right below that, **Close-Game Shooting** is a margin-aware alternative for reading the Clutch
+   comparison above, next to GWB rather than instead of it — GWB is explicitly non-scarce by
+   construction (the last basket of every decided game belongs to the winning team, full stop), so
+   it measures "who tends to close games out," not performance under real pressure. This one is
+   plain TS%, but scoped to attempts from games that actually finished close: decided by 5 points
+   or fewer (`CLUTCH_MARGIN_THRESHOLD` in `app.js` — a starting guess against Poolean's 16/21-point
+   targets, not a value backed by real season margin data yet, same provisional-constant treatment
+   as every other threshold on this page). Tied games count here even though a tie has no "winning
+   shot" for GWB to credit — a tie is the closest a game can possibly finish. Click any column
+   header to sort.
    Below that, a **League Shot Heatmap** plots
    every marked field goal, league-wide, into a coarse 5×6 grid at the pool's real proportions
    (~30ft by ~15ft, 2:1), hoop at the *bottom* like the shot chart, which reads more naturally
@@ -234,7 +248,17 @@ individual player, not a team.
    only. Below that, **Assist
    Connections** lists every passer-to-scorer pairing, league-wide, with how many times each has
    happened — directional (Alice assisting Bob is a separate row from Bob assisting Alice) — a
-   straight readout of the Shot Log's assist tags, sorted by count. (There's deliberately no
+   straight readout of the Shot Log's assist tags, sorted by count. Right below that, a
+   **Teammate Lift Matrix** does for Average Teammate Lift (the Best Teammate award's stat, see
+   above) what the Matchup Grid does for Head-to-Head: turns one aggregated number per player into
+   a full grid of every specific pairing. Row player on the team, column player's own Two-Way/20
+   change as a result — green for a boost, red for a drag, opacity tracking how large that swing
+   is relative to the biggest one on the grid. A blank cell means that pair hasn't logged games
+   both with and without each other yet. **This grid is not symmetric** — row Alice / column Bob
+   ("does Alice help Bob") and row Bob / column Alice ("does Bob help Alice") are two different
+   facts about two different people's own games, not mirror images of the same number, so don't
+   expect it to look symmetric across the diagonal the way a simple relationship count would.
+   (There's deliberately no
    win/loss duo table here — the real Poolean site already tracks that.) Below that, **Shot
    Distance** splits every field goal further by how far it actually was from the hoop, on both
    sides of the 3pt line: **Close** and **Midrange** split the 2PT zone at its midpoint;
@@ -289,7 +313,14 @@ individual player, not a team.
    `scripts/second-chance-analysis.js`, a standalone read-only script that does the same
    computation against an exported JSON file instead of whatever's loaded in this browser (handy
    for checking someone else's export, or a season that isn't the one currently loaded here) —
-   see that file's own header comment for how to run it. Click a player's name to
+   see that file's own header comment for how to run it. Below that, and after Game-Winning
+   Buckets, **Best & Worst Individual Games** ranks every player-game by that single game's own
+   Two-Way score (Game Score + Defensive Impact) — deliberately not a per-20 rate or a season
+   total, since the rest of the Leaderboard normalizes everything for fair comparison, which
+   averages away exactly what this panel exists to surface: a specific night's story, buried
+   otherwise inside that game's own box score. Every player on either roster in a reviewed game
+   gets a row, even a quiet one. On a thin season the two lists (Best and Worst) are capped so
+   they never end up showing the same handful of games twice, just reversed. Click a player's name to
    open their **Player Detail** page:
    - **Shot Chart** — every marked field goal this player has taken, plotted at its actual spot
      on the court, green for a make and red for a miss (semi-transparent, so overlapping shots

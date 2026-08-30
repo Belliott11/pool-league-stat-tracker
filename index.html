@@ -243,6 +243,12 @@
     </div>
 
     <div class="panel">
+      <h2>Volume vs. Efficiency</h2>
+      <p class="hint">Offense only, separate from the Two-Way Quadrant above — pure shot volume (FGA/20) on the x-axis against season TS% on the y-axis, so a high-volume/low-efficiency player and a low-volume/high-efficiency player show up as mirror opposites directly, instead of needing someone to cross-reference the FGA and TS% columns on the main table by hand.</p>
+      <div id="volumeEfficiencyChart"></div>
+    </div>
+
+    <div class="panel">
       <h2>League Shot Heatmap</h2>
       <p class="hint">Every marked field goal, league-wide, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. A zone stays blank until at least one shot lands in it. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
       <div id="leagueHeatmap"></div>
@@ -263,6 +269,12 @@
           <tbody id="assistSynergyBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <div class="panel">
+      <h2>Teammate Lift Matrix</h2>
+      <p class="hint">The pairwise With/Without comparison the Best Teammate award's Average Teammate Lift boils into one number per player — here as a full grid instead: row player on the team, column player's own Two-Way/20 change as a result (green = boosts them, red = drags them down; opacity tracks how large the swing is relative to the biggest one on the grid). A blank cell means that pairing hasn't logged games both with and without each other yet. This grid is <strong>not symmetric</strong> — row A / column B ("does A help B") and row B / column A ("does B help A") are two different facts about two different people's games, not mirror images of each other.</p>
+      <div id="teammateLiftMatrix"></div>
     </div>
 
     <div class="panel">
@@ -327,6 +339,23 @@
           <tbody id="gameWinningBucketsBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <div class="panel">
+      <h2>Close-Game Shooting</h2>
+      <p class="hint">A margin-aware alternative to Game-Winning Buckets for reading the Clutch comparison above. GWB is explicitly non-scarce by construction — the last basket of every decided game belongs to the winning team, full stop — so it measures "who tends to close games out," not performance under real pressure. This instead is TS%, but only counting attempts from games that actually finished close: decided by 5 points or fewer (`CLUTCH_MARGIN_THRESHOLD` in <code>app.js</code>, a starting guess, not a value backed by real season margin data yet). Tied games count here even though a tie has no "winning shot" for GWB to credit. Click any column header to sort.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="closeGameShootingTable">
+          <thead><tr id="closeGameShootingHeaderRow"></tr></thead>
+          <tbody id="closeGameShootingBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Best &amp; Worst Individual Games</h2>
+      <p class="hint">Every player-game ranked by that single game's actual Two-Way score (Game Score + Defensive Impact) — deliberately not a per-20 rate or a season total, since the rest of this page normalizes for fair player-to-player comparison and that averages away exactly the thing this panel exists to surface: one specific night's story, buried otherwise inside that game's own box score. Every player on either roster for a reviewed game gets a row, even a quiet one. On a thin season the two lists are capped so they never show the same handful of games twice, just reversed.</p>
+      <div id="individualGamePerformances"></div>
     </div>
   </section>
 

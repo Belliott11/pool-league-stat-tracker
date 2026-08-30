@@ -2206,6 +2206,124 @@ function renderGameWinningBucketsPanel() {
     : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${r.count}</td></tr>`).join("");
 }
 
+// Close-Game Shooting — a margin-aware alternative to Game-Winning Buckets for the Clutch
+// comparison above. GWB is explicitly non-scarce by construction (see the comment on
+// gameWinningShot()): the last basket of every decided game is, by definition, the winner's, so
+// it measures "who tends to close games out" rather than performance under real pressure. This
+// instead looks at shooting efficiency specifically in games that actually finished close — TS%
+// across every attempt in a game decided by CLUTCH_MARGIN_THRESHOLD points or fewer. Tied games
+// count here (a tie is the closest a game can finish) even though a tie has no "winning shot" for
+// GWB to credit. Single adjustable constant, same provisional-not-a-setting pattern as every
+// other threshold on this page — 5 points is a starting guess against Poolean's 16/21-point
+// targets, not a value backed by a real season's worth of margin data yet.
+const CLUTCH_MARGIN_THRESHOLD = 5;
+
+function computeCloseGameShooting() {
+  const closeGames = state.games.filter(g => {
+    if (g.scoringEvents.length === 0) return false;
+    return Math.abs(teamScore(g, g.teamA) - teamScore(g, g.teamB)) <= CLUTCH_MARGIN_THRESHOLD;
+  });
+  const totals = {}; // playerId -> { pts, fga, fta, gp }
+  closeGames.forEach(game => {
+    [...game.teamA, ...game.teamB].forEach(playerId => {
+      const sh = shootingStats(game, playerId);
+      if (sh.fga + sh.fta === 0) return;
+      const s = getOrCreatePlayerStats(game, playerId);
+      const t = totals[playerId] = totals[playerId] || { pts: 0, fga: 0, fta: 0, gp: 0 };
+      t.pts += s.pts;
+      t.fga += sh.fga;
+      t.fta += sh.fta;
+      t.gp++;
+    });
+  });
+  return Object.entries(totals)
+    .map(([playerId, v]) => ({
+      player: state.players.find(p => p.id === playerId),
+      gp: v.gp,
+      attempts: v.fga + v.fta,
+      ts: trueShootingPct(v.pts, v.fga, v.fta)
+    }))
+    .filter(r => r.player && r.ts !== null);
+}
+
+const CLOSE_GAME_SHOOTING_COLUMNS = [
+  { key: "player", label: "Player", accessor: r => r.player.name },
+  { key: "gp", label: "Close Games", accessor: r => r.gp },
+  { key: "attempts", label: "FGA+FTA", accessor: r => r.attempts },
+  { key: "ts", label: "TS%", accessor: r => r.ts }
+];
+let closeGameShootingSort = { key: "ts", dir: "desc" };
+
+function renderCloseGameShootingPanel() {
+  const headerRow = document.getElementById("closeGameShootingHeaderRow");
+  if (!headerRow) return;
+  renderSortableHeader(headerRow, CLOSE_GAME_SHOOTING_COLUMNS, closeGameShootingSort, renderCloseGameShootingPanel);
+  const body = document.getElementById("closeGameShootingBody");
+  const rows = computeCloseGameShooting();
+  const sortCol = CLOSE_GAME_SHOOTING_COLUMNS.find(c => c.key === closeGameShootingSort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), closeGameShootingSort.dir));
+  body.innerHTML = rows.length === 0
+    ? `<tr><td colspan="4" class="empty-state">No games decided by ${CLUTCH_MARGIN_THRESHOLD} points or fewer yet.</td></tr>`
+    : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${r.gp}</td><td>${r.attempts}</td><td>${formatPct(r.ts)}</td></tr>`).join("");
+}
+
+// Best & Worst Individual Games — ranks every player-game line by that single game's actual
+// Two-Way score (Game Score + Defensive Impact), not a per-20 rate and not a season total. The
+// rest of the Leaderboard deliberately normalizes everything to per-20 or season-long numbers so
+// players are comparable across different game lengths and sample sizes — this panel is the one
+// exception on purpose, since the whole point is surfacing a specific game's own story (a real
+// 16.7 Two-Way night), which per-20 and season aggregates both average away. Every player on
+// either roster for a reviewed game gets a row, even a quiet one with almost nothing recorded.
+function computeIndividualGamePerformances() {
+  const rows = [];
+  state.games.filter(g => g.scoringEvents.length > 0).forEach(game => {
+    [...game.teamA, ...game.teamB].forEach(playerId => {
+      const player = state.players.find(p => p.id === playerId);
+      if (!player) return;
+      const s = getOrCreatePlayerStats(game, playerId);
+      const sh = shootingStats(game, playerId);
+      const def = gameDefenseStats(game, playerId);
+      const gmsc = gameScore(s, sh);
+      rows.push({ player, game, pts: s.pts, twoWay: gmsc + defensiveImpact(def) });
+    });
+  });
+  return rows;
+}
+
+function renderIndividualGamePerformances() {
+  const wrap = document.getElementById("individualGamePerformances");
+  if (!wrap) return;
+  const rows = computeIndividualGamePerformances();
+  if (rows.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games logged yet.</p>';
+    return;
+  }
+  const sorted = [...rows].sort((a, b) => b.twoWay - a.twoWay);
+  // Capped so best/worst never overlap on a thin season — with few enough rows, showing the same
+  // handful of games in both lists (just reversed) would read as a bug, not a real result.
+  const n = Math.min(10, Math.max(1, Math.floor(sorted.length / 2)));
+  const best = sorted.slice(0, n);
+  const worst = sorted.slice(-n).reverse();
+  const li = r => `
+    <li>
+      <span class="award-standings-name">${escapeHtml(r.player.name)} <span class="hint" style="margin:0">— ${escapeHtml(formatDateDisplay(r.game.date))}</span></span>
+      <span>${r.twoWay >= 0 ? "+" : ""}${r.twoWay.toFixed(1)} Two-Way <span class="hint" style="margin:0">(${r.pts} pts)</span></span>
+    </li>
+  `;
+  wrap.innerHTML = `
+    <div class="award-standings-wrap">
+      <div class="award-standings-col">
+        <h4 class="award-standings-heading">Best</h4>
+        <ol class="award-standings">${best.map(li).join("")}</ol>
+      </div>
+      <div class="award-standings-col">
+        <h4 class="award-standings-heading">Worst</h4>
+        <ol class="award-standings">${worst.map(li).join("")}</ol>
+      </div>
+    </div>
+  `;
+}
+
 // Summer 2026's voted awards, straight from that season's closed ballot (award_results in the
 // original season spreadsheet) — fixed, historical facts, not something this tool derives or
 // could recompute. `winners` are player slugs, which match this tool's own player.id for anyone
@@ -2554,6 +2672,57 @@ function renderQuadrantChart() {
   `;
 }
 
+// Volume vs. Efficiency — offense only, deliberately separate from the Two-Way Quadrant above
+// (which plots GmSc against Def Impact). This one is x = shot volume (FGA/20, "how much they
+// shoot"), y = TS% (season, same formula as the main Leaderboard table's TS% column, "how well
+// they shoot") — the pairing that shows a high-volume/low-efficiency player and a low-volume/
+// high-efficiency player as mirror opposites directly, instead of needing someone to
+// cross-reference the FGA and TS% columns on the main table by hand.
+function computeVolumeEfficiencyData() {
+  return computeLeaderboard()
+    .filter(r => r.gp > 0)
+    .map(r => ({ player: r.player, volume: r.rateShooting.fga, ts: trueShootingPct(r.totals.pts, r.shooting.fga, r.shooting.fta) }))
+    .filter(r => r.ts !== null);
+}
+
+function renderVolumeEfficiencyChart() {
+  const wrap = document.getElementById("volumeEfficiencyChart");
+  if (!wrap) return;
+  const data = computeVolumeEfficiencyData();
+  if (data.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No field goals logged yet.</p>';
+    return;
+  }
+  const W = 380, H = 340, PAD_L = 40, PAD_R = 20, PAD_T = 20, PAD_B = 34;
+  const plotW = W - PAD_L - PAD_R, plotH = H - PAD_T - PAD_B;
+  const maxVolume = Math.max(1, ...data.map(d => d.volume)) * 1.15;
+  // TS% for a small enough sample isn't capped at 100 (see computeLeagueTsByZone's comment) —
+  // scale to whatever the data actually produced rather than assuming a fixed 0-100 range.
+  const maxTs = Math.max(100, ...data.map(d => d.ts)) * 1.08;
+  const xScale = v => PAD_L + (v / maxVolume) * plotW;
+  const yScale = v => PAD_T + plotH - (v / maxTs) * plotH;
+
+  const dotsSvg = data.map(d => {
+    const cx = xScale(d.volume), cy = yScale(d.ts);
+    return `
+      <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot">
+        <title>${escapeHtml(d.player.name)}: ${d.volume.toFixed(1)} FGA/20, ${d.ts}% TS</title>
+      </circle>
+      <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
+    `;
+  }).join("");
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" class="quadrant-svg">
+      <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${H - PAD_B}" class="quadrant-axis" />
+      <line x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" class="quadrant-axis" />
+      ${dotsSvg}
+      <text x="${W - PAD_R}" y="${H - PAD_B + 16}" text-anchor="end" class="quadrant-axis-label">FGA/20 &#8594;</text>
+      <text x="${PAD_L - 10}" y="${PAD_T + 4}" text-anchor="end" class="quadrant-axis-label">&#8593; TS%</text>
+    </svg>
+  `;
+}
+
 // League-wide head-to-head matchup grid — every scorer down one axis, every defender across the
 // other, one cell per pairing. The natural league-wide extension of the per-player Head-to-Head
 // tables on Player Detail (headToHeadAsScorer/headToHeadAsDefender): those only ever surface one
@@ -2629,6 +2798,68 @@ function renderAssistSynergy() {
   body.innerHTML = rows.length === 0
     ? '<tr><td colspan="3" class="empty-state">No assists logged yet.</td></tr>'
     : rows.map(r => `<tr><td>${escapeHtml(r.passer.name)}</td><td>${escapeHtml(r.scorer.name)}</td><td>${r.count}</td></tr>`).join("");
+}
+
+// Teammate Lift Matrix — the same pairwise With/Without comparison Average Teammate Lift (the
+// Best Teammate award's stat) averages into one number per player, laid out as a full grid
+// instead: row player on the team, column player's own Two-Way/20 change as a result. NOT
+// symmetric — row A / col B ("does A help B") and row B / col A ("does B help A") are two
+// different facts about two different people's games, not mirror images of the same number.
+// Reuses computeTeammateSynergy() once per player (not once per pair) and looks the rest up.
+function computeTeammateLiftMatrix() {
+  const synergyByPlayer = {};
+  state.players.forEach(p => { synergyByPlayer[p.id] = computeTeammateSynergy(p.id); });
+  const cells = {}; // "rowId|colId" -> { lift, withGp, withoutGp }
+  const involvedIds = new Set();
+  let maxAbsLift = 0;
+  state.players.forEach(colP => {
+    (synergyByPlayer[colP.id] || []).forEach(s => {
+      if (s.with.gp === 0 || s.without.gp === 0) return;
+      const lift = s.with.twoWayPer20 - s.without.twoWayPer20;
+      cells[`${s.teammate.id}|${colP.id}`] = { lift, withGp: s.with.gp, withoutGp: s.without.gp };
+      involvedIds.add(s.teammate.id);
+      involvedIds.add(colP.id);
+      maxAbsLift = Math.max(maxAbsLift, Math.abs(lift));
+    });
+  });
+  const players = state.players.filter(p => involvedIds.has(p.id)).sort((a, b) => a.name.localeCompare(b.name));
+  return {
+    players,
+    maxAbsLift,
+    cellFor: (rowId, colId) => cells[`${rowId}|${colId}`] || null
+  };
+}
+
+function renderTeammateLiftMatrix() {
+  const wrap = document.getElementById("teammateLiftMatrix");
+  if (!wrap) return;
+  const { players, cellFor, maxAbsLift } = computeTeammateLiftMatrix();
+  if (players.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">Not enough With/Without games logged yet for any pairing.</p>';
+    return;
+  }
+  const headerHtml = players.map(p => `<th>${escapeHtml(p.name)}</th>`).join("");
+  const rowsHtml = players.map(rowP => {
+    const cellsHtml = players.map(colP => {
+      if (rowP.id === colP.id) return '<td class="matchup-grid-cell matchup-grid-empty">&#8212;</td>';
+      const cell = cellFor(rowP.id, colP.id);
+      if (!cell) return '<td class="matchup-grid-cell matchup-grid-empty">&#8212;</td>';
+      const magnitude = maxAbsLift > 0 ? Math.abs(cell.lift) / maxAbsLift : 0;
+      const opacity = 0.18 + magnitude * 0.62;
+      const hue = cell.lift >= 0 ? 120 : 0;
+      const sign = cell.lift >= 0 ? "+" : "";
+      return `<td class="matchup-grid-cell" style="background: hsla(${hue}, 70%, 45%, ${opacity})" title="With ${escapeHtml(rowP.name)} on their team, ${escapeHtml(colP.name)}'s Two-Way/20 is ${sign}${cell.lift.toFixed(1)} (${cell.withGp} with / ${cell.withoutGp} without)">${sign}${cell.lift.toFixed(1)}</td>`;
+    }).join("");
+    return `<tr><td class="sticky-col">${escapeHtml(rowP.name)}</td>${cellsHtml}</tr>`;
+  }).join("");
+  wrap.innerHTML = `
+    <div class="table-scroll">
+      <table class="matchup-table matchup-grid-table">
+        <thead><tr><th class="sticky-col">On team with &#8595; / Stat shown for &#8594;</th>${headerHtml}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 // The Arc/Deep 3PT split, league-wide — kept in its own panel rather than as columns on the
@@ -3116,9 +3347,11 @@ function renderLeaderboard() {
   renderAwardsVsStats();
   renderPowerRankingVsPerformance();
   renderQuadrantChart();
+  renderVolumeEfficiencyChart();
   renderLeagueHeatmap();
   renderMatchupGrid();
   renderAssistSynergy();
+  renderTeammateLiftMatrix();
   renderThreePtDistancePanel();
   renderShotSelectionChart();
   renderLeagueTsChart();
@@ -3126,6 +3359,8 @@ function renderLeaderboard() {
   renderOutOfBoundsPanel();
   renderSecondChancePanel();
   renderGameWinningBucketsPanel();
+  renderCloseGameShootingPanel();
+  renderIndividualGamePerformances();
   const body = document.getElementById("leaderboardBody");
   body.innerHTML = "";
   // Players with no games yet just clutter the table with a row of dashes.
