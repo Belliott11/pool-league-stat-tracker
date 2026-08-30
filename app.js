@@ -623,6 +623,49 @@ function renderPlayerHeatmap(playerId) {
   renderHeatmapInto("playerHeatmap", shots);
 }
 
+// Every individual marked shot, plotted at its real spot rather than bucketed into a zone —
+// the heatmap's coarseness (deliberate, see computeHeatmapCells) necessarily smooths over a
+// cluster or a gap within one zone; this shows exactly where each shot actually was. Reuses the
+// same court background and coordinate transform as everything else (shotChartVbX/Y, hoop
+// drawn before the dots so it never sits on top of one).
+function renderPlayerShotChart(playerId) {
+  const wrap = document.getElementById("playerShotChart");
+  if (!wrap) return;
+  const shots = [];
+  state.games.forEach(g => g.scoringEvents.forEach(ev => {
+    if (ev.scorerId === playerId && (ev.points === 2 || ev.points === 3) && ev.shotLocation) shots.push(ev);
+  }));
+  if (shots.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No shots with a marked location yet.</p>';
+    return;
+  }
+  const makes = shots.filter(ev => ev.made !== false).length;
+  const misses = shots.length - makes;
+  const dotsSvg = shots.map(ev => {
+    const cx = shotChartVbX(ev.shotLocation.x);
+    const cy = shotChartVbY(ev.shotLocation.y);
+    const cls = ev.made !== false ? "shot-dot-make" : "shot-dot-miss";
+    return `<circle cx="${cx}" cy="${cy}" r="2.2" class="${cls}" />`;
+  }).join("");
+  const threePtVbY = shotChartVbY(60);
+  const hoopVbY = shotChartVbY(7);
+  wrap.innerHTML = `
+    <div class="shot-chart-wrap">
+      <svg class="shot-chart heatmap-chart" viewBox="0 0 ${SHOT_CHART_VIEWBOX_W} ${SHOT_CHART_VIEWBOX_H}">
+        <rect x="1" y="1" width="${SHOT_CHART_VIEWBOX_W - 2}" height="${SHOT_CHART_VIEWBOX_H - 2}" rx="4" class="shot-chart-court" />
+        <circle cx="${SHOT_CHART_VIEWBOX_W / 2}" cy="${hoopVbY}" r="4" class="shot-chart-hoop" />
+        ${dotsSvg}
+        <line x1="1" y1="${threePtVbY}" x2="${SHOT_CHART_VIEWBOX_W - 1}" y2="${threePtVbY}" class="shot-chart-3pt-line" />
+        <text x="${SHOT_CHART_VIEWBOX_W - 3}" y="${threePtVbY - 3}" class="shot-chart-label" text-anchor="end">3PT</text>
+      </svg>
+      <div class="shot-chart-legend">
+        <span class="legend-item"><span class="legend-dot legend-dot-make"></span>Make (${makes})</span>
+        <span class="legend-item"><span class="legend-dot legend-dot-miss"></span>Miss (${misses})</span>
+      </div>
+    </div>
+  `;
+}
+
 function renderLeagueHeatmap() {
   const shots = [];
   state.games.forEach(g => g.scoringEvents.forEach(ev => {
@@ -2822,6 +2865,7 @@ function renderPlayerDetail() {
     ? `${row.wins}-${row.losses}${row.ties ? `-${row.ties}` : ""} · ${row.rate.pts.toFixed(1)} PTS/20 · ${row.gameScorePer20.toFixed(1)} GmSc/20 · ${row.twoWayPer20.toFixed(1)} Two-Way/20`
     : "No games yet";
 
+  renderPlayerShotChart(player.id);
   renderPlayerHeatmap(player.id);
   renderPlayerReel(player.id);
   renderPlayerGameLog(player.id);

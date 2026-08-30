@@ -746,6 +746,43 @@ button:disabled {
   stroke-width: 1;
 }
 
+/* Player Shot Chart — every individual marked shot plotted at its real spot (as opposed to the
+   heatmap's zone buckets). Semi-transparent fill so overlapping shots read as a visibly denser
+   cluster rather than just stacking invisibly on top of each other. */
+.shot-dot-make {
+  fill: var(--success);
+  fill-opacity: 0.72;
+  stroke: var(--panel-bg);
+  stroke-width: 0.4;
+}
+.shot-dot-miss {
+  fill: var(--danger);
+  fill-opacity: 0.72;
+  stroke: var(--panel-bg);
+  stroke-width: 0.4;
+}
+.shot-chart-legend {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.legend-dot-make { background: var(--success); }
+.legend-dot-miss { background: var(--danger); }
+
 /* Heatmap (Player Detail + Leaderboard) — reuses the shot-chart court/3pt-line, flipped so the
    hoop renders at the bottom, with a grid of colored cells laid over it. Cell fill color is
    generated inline per-cell (a hue from red to green based on that zone's FG%), since it's

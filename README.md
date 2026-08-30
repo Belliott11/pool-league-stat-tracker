@@ -256,6 +256,12 @@ individual player, not a team.
    for checking someone else's export, or a season that isn't the one currently loaded here) —
    see that file's own header comment for how to run it. Click a player's name to
    open their **Player Detail** page:
+   - **Shot Chart** — every marked field goal this player has taken, plotted at its actual spot
+     on the court, green for a make and red for a miss (semi-transparent, so overlapping shots
+     read as a visibly denser cluster instead of just stacking invisibly). This shows the
+     individual-shot pattern the zone-bucketed heatmap below it necessarily smooths over — a
+     lean to one side of the court, a specific gap, a real cluster — none of which a table of
+     zone percentages shows directly.
    - **Shot Heatmap** — the same grid, scoped to just this player's marked field goals across
      every game.
    - **Highlights & Lowlights** — every clip tagged to this player, across every game, pulled

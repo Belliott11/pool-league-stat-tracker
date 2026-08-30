@@ -395,6 +395,15 @@ timestamping had all ten games qualify. Both are worth keeping in mind if you bu
 award pairing (like this tool's own Clutch comparison) around this number — it's a real signal,
 just not the "rare and memorable" one the name might suggest.
 
+**Player Detail's Shot Chart is also purely computed, nothing stored — the ungrouped
+counterpart to the heatmap just below it.** `renderPlayerShotChart()` (`app.js`) plots every one
+of a player's own field goals with a non-null `shot_x`/`shot_y` at its literal coordinates
+(reusing the same `shotChartVbX`/`shotChartVbY` transform as everything else), one dot per shot,
+green for a make and red for a miss, rather than bucketing into the heatmap's 5×6 zones. Purely
+a presentation choice over the same underlying data — no new field, no new computation beyond
+"is this shot's location marked," and the hoop marker draws before the dots for the same reason
+it draws before the heatmap's cells: so it never sits on top of one.
+
 **The heatmaps on Player Detail and the Leaderboard are also purely computed, nothing stored.**
 They bucket every field goal with a non-null `shot_x`/`shot_y` into a 5×6 grid over the court
 (`computeHeatmapCells()` in `app.js`), color each occupied cell by that zone's FG%, and label it
