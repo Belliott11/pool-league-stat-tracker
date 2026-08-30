@@ -419,6 +419,31 @@ equivalent view, two behaviors worth replicating exactly:
   it, matching where shot volume actually concentrates. If you resize the grid, keep a boundary
   on 60 rather than going back to uniform rows.
 
+**The Two-Way Quadrant chart on the Leaderboard is also purely computed, nothing stored.**
+`computeQuadrantData()` (`app.js`) is a thin wrapper over `computeLeaderboard()` — one point per
+player with `gp > 0`, x = `gameScorePer20`, y = `defensiveImpact(rateDefense)`. No new fields, no
+new computation; it's the existing Two-Way Score inputs plotted separately instead of pre-summed.
+`renderQuadrantChart()` scales both axes symmetrically around zero (`maxAbs * 1.15` in each
+direction) rather than to the data's actual min/max, so the zero-crossing quadrant lines always
+land at the plot's visual center — worth keeping if you reimplement this, since scaling to min/max
+instead would put the crossing point wherever this particular roster's data happens to center,
+not at the meaningful zero boundary both stats already use on their own.
+
+**The Shot Selection chart on the Leaderboard is also purely computed, nothing stored.** Same four
+shot-distance bands as the Shot Distance table just above it (`shotBand()` / `shootingStats()` in
+`app.js`), same underlying `shot_x`/`shot_y` dependency — it just renders each player's own
+`closeA`/`midA`/`tpArcA`/`tpDeepA` as a share of that player's total marked attempts instead of as
+an accuracy split, sorted by total attempts descending. A player with zero marked attempts across
+all four bands is filtered out entirely rather than shown as an empty bar.
+
+**League TS% Over Time on the Leaderboard is also purely computed, nothing stored.** Unlike every
+other panel that reuses `computeLeaderboard()`'s per-player rows, `computeLeagueTsOverTime()`
+walks `scoring_events` directly and pools `pts`/`fga`/`fta` across *every* player in a game, then
+groups by `date` (summing across every game on that date before computing one `trueShootingPct()`
+per date) — because this is deliberately a single league-wide line, not a per-player stat, meant
+for eyeballing efficiency drift over a season. A date with no attempts (or where `fga`/`fta` net to
+a zero denominator) is dropped from the series rather than plotted as a 0%.
+
 **Assist Connections on the Leaderboard, and Teammate Synergy on Player Detail, are also purely
 computed, nothing stored.** Deliberately *not* a win/loss duo table — the real site already has
 that.

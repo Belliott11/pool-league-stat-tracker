@@ -196,6 +196,12 @@ individual player, not a team.
    with footage that just hasn't been reviewed yet is left out too, rather than showing a table
    of nothing but dashes. A player who didn't have a game logged for that particular night still
    shows "—", not a zero — that's a gap in what's been reviewed, not a real 0.0 performance.
+   Right below that, a **Two-Way Quadrant** chart plots one dot per player: GmSc/20 (offense) on
+   the x-axis, Defensive Impact/20 on the y-axis — the two halves of Two-Way Score, kept separate
+   instead of pre-summed, so "who's good" splits into "good at what." The quadrant lines cross at
+   zero on each axis rather than at this roster's own median, since zero is already the meaningful
+   boundary each stat uses on its own — a median split would just be an arbitrary line drawn
+   through wherever this particular group happens to cluster.
    Below that, **Game-Winning Buckets** counts, per player, how many times their shot actually
    closed out a game their team won — the real game-ending basket in Poolean's race-to-a-target
    format. Credited only when *every* made shot in that game has a real video timestamp — a
@@ -235,6 +241,16 @@ individual player, not a team.
    as more columns on the main table above, since it's a cut most people only need occasionally.
    Click any column header to sort by it (a zone with zero attempts always sorts last, same as
    an empty stat anywhere else on this page).
+   Right below that, **Shot Selection** shows the same four bands as a share of each player's own
+   attempts instead of an accuracy split — not "how well do they shoot from here" but "how much of
+   their offense leans on this zone," one horizontal stacked bar per player, sorted by total marked
+   attempts. Bar segment colors intentionally track typical shot quality (green close range, amber
+   midrange, teal at the line, red deep — same association as the League Shot Heatmap's FG%
+   coloring), so a bar leaning red reads as a warning sign at a glance.
+   Below that, **League TS% Over Time** pools True Shooting % across every player, one point per
+   date with at least one reviewed game — a single league-wide efficiency line rather than a
+   per-player stat, meant for watching the whole league drift over a season or for checking whether
+   some future rule change actually moved the needle.
    Below that, **Out-of-Bounds Misses**
    shows how often a player's own missed shot ends up out of bounds — per Poolean's actual rule,
    whoever last touched the ball loses possession, so this is really "how often does the ball

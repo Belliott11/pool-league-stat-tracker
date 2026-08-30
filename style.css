@@ -1016,3 +1016,121 @@ button:disabled {
 .power-ranking-night h4 {
   margin: 0 0 6px;
 }
+
+/* Two-Way Quadrant — GmSc/20 vs. Def Impact/20 scatter, axes crossing at zero on both stats
+   rather than at the data's own midpoint (see the comment above computeQuadrantData() in
+   app.js for why zero is the meaningful line here). */
+.quadrant-svg {
+  width: 100%;
+  max-width: 420px;
+  display: block;
+  margin: 4px auto 0;
+}
+.quadrant-axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.quadrant-dot {
+  fill: var(--accent);
+  stroke: var(--panel-bg);
+  stroke-width: 1.5;
+}
+.quadrant-label {
+  font-size: 7px;
+  fill: var(--text);
+  font-family: var(--font-body);
+}
+.quadrant-axis-label {
+  font-size: 7px;
+  fill: var(--muted);
+  font-family: var(--font-mono);
+}
+.quadrant-corner-label {
+  font-size: 6.5px;
+  fill: var(--muted);
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Shot Selection — one horizontal stacked bar per player, share of their own attempts by zone.
+   Colors intentionally track typical shot quality (green=best, red=worst), same association as
+   the League Shot Heatmap's FG% coloring. */
+.shot-selection-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.shot-selection-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.shot-selection-row:last-child {
+  margin-bottom: 0;
+}
+.shot-selection-name {
+  width: 110px;
+  flex-shrink: 0;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shot-selection-bar {
+  flex: 1;
+  display: flex;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-muted);
+}
+.shot-seg {
+  height: 100%;
+}
+.shot-seg-close { background: var(--success); }
+.shot-seg-mid { background: var(--warning); }
+.shot-seg-line { background: var(--accent); }
+.shot-seg-deep { background: var(--danger); }
+.legend-swatch.shot-seg-close { background: var(--success); }
+.legend-swatch.shot-seg-mid { background: var(--warning); }
+.legend-swatch.shot-seg-line { background: var(--accent); }
+.legend-swatch.shot-seg-deep { background: var(--danger); }
+
+/* League TS% Over Time — one pooled line, not per-player, so this stays a simple line chart
+   rather than reusing any of the multi-series patterns elsewhere in the app. */
+.ts-line-svg {
+  width: 100%;
+  max-width: 560px;
+  display: block;
+  margin: 4px auto 0;
+}
+.ts-line-axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.ts-line-path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.ts-line-dot {
+  fill: var(--accent);
+  stroke: var(--panel-bg);
+  stroke-width: 1;
+}
+.ts-line-axis-label {
+  font-size: 7px;
+  fill: var(--muted);
+  font-family: var(--font-mono);
+}

@@ -237,6 +237,12 @@
     </div>
 
     <div class="panel">
+      <h2>Two-Way Quadrant</h2>
+      <p class="hint">GmSc/20 (offense) vs. Def Impact/20 for every player who's played, plotted separately instead of pre-summed into Two-Way Score — so "who's good" splits into "good at what." Quadrant lines are drawn at zero on each axis.</p>
+      <div id="quadrantChart"></div>
+    </div>
+
+    <div class="panel">
       <h2>League Shot Heatmap</h2>
       <p class="hint">Every marked field goal, league-wide, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. A zone stays blank until at least one shot lands in it. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
       <div id="leagueHeatmap"></div>
@@ -262,6 +268,18 @@
           <tbody id="threePtDistanceBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <div class="panel">
+      <h2>Shot Selection</h2>
+      <p class="hint">Where each player's shots actually come from, as a share of their own attempts — not accuracy by zone (see Shot Distance above), but reliance on each zone. Same four bands, sorted by total marked attempts.</p>
+      <div id="shotSelectionChart"></div>
+    </div>
+
+    <div class="panel">
+      <h2>League TS% Over Time</h2>
+      <p class="hint">True Shooting % pooled across every player, per date with a reviewed game — a single league-wide efficiency line, useful for spotting drift over the season or checking the effect of a future rule change. Not a player-comparison stat.</p>
+      <div id="leagueTsChart"></div>
     </div>
 
     <div class="panel">

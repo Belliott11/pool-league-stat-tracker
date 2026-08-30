@@ -2500,6 +2500,60 @@ function renderPowerRankingVsPerformance() {
   });
 }
 
+// One dot per player: GmSc/20 (offense) on the x-axis, Def Impact/20 on the y-axis — the two
+// halves of Two-Way Score, plotted separately instead of pre-summed, so "who's actually good"
+// splits into "good at what." The quadrant split is at 0 on both axes rather than the data's
+// median, since 0 is already the meaningful boundary each stat uses on its own (0 GmSc/20 is
+// replacement-level offense; 0 Def Impact is "stops minus times beaten minus points allowed,
+// net zero"), not an arbitrary line drawn through wherever this particular roster happens to
+// cluster.
+function computeQuadrantData() {
+  return computeLeaderboard()
+    .filter(r => r.gp > 0)
+    .map(r => ({ player: r.player, gmsc: r.gameScorePer20, defImpact: defensiveImpact(r.rateDefense) }));
+}
+
+function renderQuadrantChart() {
+  const wrap = document.getElementById("quadrantChart");
+  if (!wrap) return;
+  const data = computeQuadrantData();
+  if (data.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games logged yet.</p>';
+    return;
+  }
+  const W = 340, H = 340, PAD = 46;
+  const plotW = W - PAD * 2, plotH = H - PAD * 2;
+  const maxAbsX = Math.max(1, ...data.map(d => Math.abs(d.gmsc))) * 1.15;
+  const maxAbsY = Math.max(1, ...data.map(d => Math.abs(d.defImpact))) * 1.15;
+  const xScale = v => PAD + ((v + maxAbsX) / (2 * maxAbsX)) * plotW;
+  const yScale = v => PAD + plotH - ((v + maxAbsY) / (2 * maxAbsY)) * plotH;
+  const zeroX = xScale(0), zeroY = yScale(0);
+
+  const dotsSvg = data.map(d => {
+    const cx = xScale(d.gmsc), cy = yScale(d.defImpact);
+    return `
+      <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot">
+        <title>${escapeHtml(d.player.name)}: ${d.gmsc.toFixed(1)} GmSc/20, ${d.defImpact.toFixed(1)} Def Impact/20</title>
+      </circle>
+      <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
+    `;
+  }).join("");
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" class="quadrant-svg">
+      <text x="${PAD + 4}" y="${PAD + 14}" class="quadrant-corner-label">Defense-first</text>
+      <text x="${W - PAD - 4}" y="${PAD + 14}" text-anchor="end" class="quadrant-corner-label">Two-way standout</text>
+      <text x="${PAD + 4}" y="${H - PAD - 6}" class="quadrant-corner-label">Below average both</text>
+      <text x="${W - PAD - 4}" y="${H - PAD - 6}" text-anchor="end" class="quadrant-corner-label">Offense-first</text>
+      <line x1="${PAD}" y1="${zeroY}" x2="${W - PAD}" y2="${zeroY}" class="quadrant-axis" />
+      <line x1="${zeroX}" y1="${PAD}" x2="${zeroX}" y2="${H - PAD}" class="quadrant-axis" />
+      ${dotsSvg}
+      <text x="${W - PAD}" y="${H - PAD + 16}" text-anchor="end" class="quadrant-axis-label">GmSc/20 &#8594;</text>
+      <text x="${PAD - 10}" y="${PAD}" text-anchor="end" class="quadrant-axis-label">&#8593; Def Impact/20</text>
+    </svg>
+  `;
+}
+
 function renderAssistSynergy() {
   const body = document.getElementById("assistSynergyBody");
   const rows = computeAssistConnections();
@@ -2531,6 +2585,122 @@ function renderThreePtDistancePanel() {
   body.innerHTML = rows.length === 0
     ? '<tr><td colspan="5" class="empty-state">No field goals with a marked shot location yet.</td></tr>'
     : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${formatShootingSplit(r.shooting.closeM, r.shooting.closeA)}</td><td>${formatShootingSplit(r.shooting.midM, r.shooting.midA)}</td><td>${formatShootingSplit(r.shooting.tpArcM, r.shooting.tpArcA)}</td><td>${formatShootingSplit(r.shooting.tpDeepM, r.shooting.tpDeepA)}</td></tr>`).join("");
+}
+
+// Where each player's shots actually come from, as a share of their own attempts — not how well
+// they shoot from a zone (the Shot Distance panel already covers that), but how much of their
+// offense leans on each zone. Same 4 bands as Shot Distance, reusing the same computeLeaderboard()
+// shooting totals. Sorted by total marked attempts descending so the players with the most signal
+// show up first.
+const SHOT_SELECTION_ZONES = [
+  { key: "close", label: "Close", cssClass: "shot-seg-close", attempts: r => r.shooting.closeA },
+  { key: "mid", label: "Midrange", cssClass: "shot-seg-mid", attempts: r => r.shooting.midA },
+  { key: "line", label: "3PT Line", cssClass: "shot-seg-line", attempts: r => r.shooting.tpArcA },
+  { key: "deep", label: "3PT Deep", cssClass: "shot-seg-deep", attempts: r => r.shooting.tpDeepA }
+];
+
+function renderShotSelectionChart() {
+  const wrap = document.getElementById("shotSelectionChart");
+  if (!wrap) return;
+  const rows = computeLeaderboard()
+    .map(r => ({ player: r.player, total: SHOT_SELECTION_ZONES.reduce((sum, z) => sum + z.attempts(r), 0), r }))
+    .filter(row => row.total > 0)
+    .sort((a, b) => b.total - a.total);
+  if (rows.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No field goals with a marked shot location yet.</p>';
+    return;
+  }
+  const legendHtml = SHOT_SELECTION_ZONES.map(z => `
+    <span class="legend-item"><span class="legend-swatch ${z.cssClass}"></span>${escapeHtml(z.label)}</span>
+  `).join("");
+  const rowsHtml = rows.map(({ player, total, r }) => {
+    const segsHtml = SHOT_SELECTION_ZONES.map(z => {
+      const a = z.attempts(r);
+      if (a === 0) return "";
+      const share = (a / total) * 100;
+      return `<div class="shot-seg ${z.cssClass}" style="width:${share}%"><title>${escapeHtml(player.name)}: ${a} ${escapeHtml(z.label)} attempt${a === 1 ? "" : "s"} (${Math.round(share)}%)</title></div>`;
+    }).join("");
+    return `
+      <div class="shot-selection-row">
+        <span class="shot-selection-name">${escapeHtml(player.name)}</span>
+        <div class="shot-selection-bar">${segsHtml}</div>
+        <span class="hint" style="margin:0">${total}</span>
+      </div>
+    `;
+  }).join("");
+  wrap.innerHTML = `<div class="shot-selection-legend">${legendHtml}</div>${rowsHtml}`;
+}
+
+// League-wide TS% per date, across every player in every reviewed game that day — a single
+// number meant for watching the whole league's scoring efficiency drift over the season (e.g.
+// to see whether a future rule change moves it), not for comparing individual players. Computed
+// directly from scoringEvents rather than via shootingStats(), since that function is scoped to
+// one player at a time and this needs every player's shots pooled together per date.
+function computeLeagueTsOverTime() {
+  const byDate = {};
+  state.games.filter(g => g.scoringEvents.length > 0).forEach(game => {
+    let pts = 0, fga = 0, fta = 0;
+    game.scoringEvents.forEach(ev => {
+      const made = ev.made !== false;
+      if (ev.points === 2 || ev.points === 3) {
+        fga++;
+        if (made) pts += ev.points;
+      } else if (ev.points === 1) {
+        fta++;
+        if (made) pts += 1;
+      }
+    });
+    const bucket = byDate[game.date] = byDate[game.date] || { pts: 0, fga: 0, fta: 0 };
+    bucket.pts += pts;
+    bucket.fga += fga;
+    bucket.fta += fta;
+  });
+  return Object.entries(byDate)
+    .map(([date, v]) => ({ date, ts: trueShootingPct(v.pts, v.fga, v.fta) }))
+    .filter(d => d.ts !== null)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function renderLeagueTsChart() {
+  const wrap = document.getElementById("leagueTsChart");
+  if (!wrap) return;
+  const points = computeLeagueTsOverTime();
+  if (points.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games logged yet.</p>';
+    return;
+  }
+  const W = 560, H = 220, PAD_L = 34, PAD_R = 16, PAD_T = 16, PAD_B = 34;
+  const plotW = W - PAD_L - PAD_R, plotH = H - PAD_T - PAD_B;
+  const values = points.map(p => p.ts);
+  const rawMin = Math.min(...values), rawMax = Math.max(...values);
+  const span = Math.max(1, rawMax - rawMin);
+  const yMin = Math.max(0, rawMin - span * 0.15);
+  const yMax = Math.min(100, rawMax + span * 0.15 || rawMax + 5);
+  const xScale = i => points.length === 1 ? PAD_L + plotW / 2 : PAD_L + (i / (points.length - 1)) * plotW;
+  const yScale = v => PAD_T + plotH - ((v - yMin) / (yMax - yMin || 1)) * plotH;
+
+  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${xScale(i)},${yScale(p.ts)}`).join(" ");
+  const dotsSvg = points.map((p, i) => `
+    <circle cx="${xScale(i)}" cy="${yScale(p.ts)}" r="3.5" class="ts-line-dot">
+      <title>${escapeHtml(formatDateDisplay(p.date))}: ${p.ts}% TS</title>
+    </circle>
+  `).join("");
+  const labelEvery = Math.max(1, Math.ceil(points.length / 6));
+  const xLabelsSvg = points.map((p, i) => (i % labelEvery !== 0 && i !== points.length - 1) ? "" : `
+    <text x="${xScale(i)}" y="${H - PAD_B + 16}" text-anchor="middle" class="ts-line-axis-label">${escapeHtml(formatDateDisplay(p.date))}</text>
+  `).join("");
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" class="ts-line-svg">
+      <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${H - PAD_B}" class="ts-line-axis" />
+      <line x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" class="ts-line-axis" />
+      <text x="${PAD_L - 6}" y="${yScale(yMax) + 4}" text-anchor="end" class="ts-line-axis-label">${Math.round(yMax)}%</text>
+      <text x="${PAD_L - 6}" y="${yScale(yMin) + 4}" text-anchor="end" class="ts-line-axis-label">${Math.round(yMin)}%</text>
+      <path d="${pathD}" class="ts-line-path" />
+      ${dotsSvg}
+      ${xLabelsSvg}
+    </svg>
+  `;
 }
 
 // How often a player's own missed shot ends up out of bounds (a turnover for them, per
@@ -2801,9 +2971,12 @@ function renderLeaderboard() {
   renderLeaderboardHeader();
   renderAwardsVsStats();
   renderPowerRankingVsPerformance();
+  renderQuadrantChart();
   renderLeagueHeatmap();
   renderAssistSynergy();
   renderThreePtDistancePanel();
+  renderShotSelectionChart();
+  renderLeagueTsChart();
   renderOutOfBoundsPanel();
   renderSecondChancePanel();
   renderGameWinningBucketsPanel();
