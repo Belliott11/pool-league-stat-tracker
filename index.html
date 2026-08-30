@@ -157,9 +157,7 @@
       <p class="hint">Everyone in this game at a glance, including shooting splits and defensive/advanced numbers derived from the Shot Log below: <strong>FG/3PT/FT</strong> (made/attempted, %), <strong>eFG%</strong> (FG% weighted for 3s counting extra), <strong>TS%</strong> (true shooting — scoring efficiency across FGs and FTs combined), <strong>A/TO</strong> (assist-to-turnover ratio), <strong>Pts Allowed</strong> and <strong>Beaten</strong> (points scored, and times scored on, while they were the tagged defender on a make), <strong>Opp FG%</strong> (shooting % of everyone they were tagged defending, make or miss), <strong>Stops</strong> (times they were the tagged defender on a miss), <strong>GmSc</strong> (Game Score — a single "how good was this game" number), and <strong>Two-Way</strong> (GmSc plus Defensive Impact — Stops minus Beaten minus 0.4×Pts Allowed — so it's 0 for anyone never tagged as a defender, not a penalty for conservative tagging). STL/BLK are shown as recorded — their sum (Stocks) is in the CSV export if you want it, but isn't repeated here since it's just those two columns added together.</p>
       <div class="table-scroll">
         <table class="matchup-table" id="gameStatsTable">
-          <thead><tr>
-            <th class="sticky-col">Player</th><th>Team</th><th>PTS</th><th>FG</th><th>3PT</th><th>FT</th><th>eFG%</th><th>TS%</th><th>OREB</th><th>DREB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>A/TO</th><th>PF</th><th>Pts Allowed</th><th>Opp FG%</th><th>Beaten</th><th>Stops</th><th>GmSc</th><th>Two-Way</th>
-          </tr></thead>
+          <thead><tr id="gameStatsHeaderRow"></tr></thead>
           <tbody id="gameStatsTableBody"></tbody>
         </table>
       </div>
@@ -406,9 +404,7 @@
       <p class="hint">Every game this player was in, most recent first.</p>
       <div class="table-scroll">
         <table class="matchup-table" id="playerGameLogTable">
-          <thead><tr>
-            <th>Date</th><th>Result</th><th>PTS</th><th>FG</th><th>3PT</th><th>FT</th><th>eFG%</th><th>TS%</th><th>OREB</th><th>DREB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>A/TO</th><th>PF</th><th>Pts Allowed</th><th>Opp FG%</th><th>Beaten</th><th>Stops</th><th>GmSc</th><th>Two-Way</th>
-          </tr></thead>
+          <thead><tr id="playerGameLogHeaderRow"></tr></thead>
           <tbody id="playerGameLogBody"></tbody>
         </table>
       </div>
@@ -432,7 +428,7 @@
       <p class="hint">Shooting against each defender who has been tagged guarding this player's shots, across the season.</p>
       <div class="table-scroll">
         <table class="matchup-table" id="h2hScorerTable">
-          <thead><tr><th>Defender</th><th>FG</th><th>FG%</th></tr></thead>
+          <thead><tr id="h2hScorerHeaderRow"></tr></thead>
           <tbody id="h2hScorerBody"></tbody>
         </table>
       </div>
@@ -450,7 +446,7 @@
       <p class="hint">Shooting allowed to each scorer this player has been tagged defending, across the season.</p>
       <div class="table-scroll">
         <table class="matchup-table" id="h2hDefenderTable">
-          <thead><tr><th>Scorer</th><th>FG Allowed</th><th>FG% Allowed</th></tr></thead>
+          <thead><tr id="h2hDefenderHeaderRow"></tr></thead>
           <tbody id="h2hDefenderBody"></tbody>
         </table>
       </div>
@@ -462,9 +458,7 @@
       <p class="hint">For each teammate this player has shared a team with, this player's own per-20 numbers in games <strong>with</strong> that teammate on their side vs. games <strong>without</strong> them (opposing team or not playing) — only games with real shots logged count either way. "—" means there's no game in that bucket yet to compare against. A small GP on either side makes the comparison noisy, not a verdict.</p>
       <div class="table-scroll">
         <table class="matchup-table" id="teammateSynergyTable">
-          <thead><tr>
-            <th>Teammate</th><th>GP With</th><th>GP W/o</th><th>GmSc/20 With</th><th>GmSc/20 W/o</th><th>Two-Way/20 With</th><th>Two-Way/20 W/o</th>
-          </tr></thead>
+          <thead><tr id="teammateSynergyHeaderRow"></tr></thead>
           <tbody id="teammateSynergyBody"></tbody>
         </table>
       </div>

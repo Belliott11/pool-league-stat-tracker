@@ -136,7 +136,9 @@ individual player, not a team.
      rate per 20 combined points across all games, not a raw season total — see
      `defensiveImpact()`/`twoWayScore()` in `app.js`. STL and BLK are shown as recorded; their
      sum ("Stocks") isn't repeated as its own column in either table since it's just those two
-     added together, but it is in the CSV exports.
+     added together, but it is in the CSV exports. Click any column header to sort by it (defaults
+     to PTS, highest first) — this is one game's own box score, not a season, so it's every
+     player who was on either roster for this specific game, nothing averaged.
    - Add defensive matchup entries (who guarded who, with an optional note like "Q1") as they change.
      This is separate from "scored on" — matchups are about who was generally guarding who,
      while the scoring log is specifically about who got beaten on each made basket.
@@ -360,16 +362,17 @@ individual player, not a team.
      individual-shot pattern the zone-bucketed heatmap below it necessarily smooths over — a
      lean to one side of the court, a specific gap, a real cluster — none of which a table of
      zone percentages shows directly.
-   - **Game Log** — every game they've played, most recent first, with the same full stat line
-     (shooting splits, eFG%/TS%, defensive numbers, Game Score, Two-Way) as the Game Stats
-     table, plus that game's W/L/T result. Unlike the Leaderboard, this is per-game actuals, not
-     averaged — one row per game, exactly what happened in it. The literal data behind the
-     Two-Way Trend chart above it.
+   - **Game Log** — every game they've played, default most recent first (click any column
+     header to sort by something else instead), with the same full stat line (shooting splits,
+     eFG%/TS%, defensive numbers, Game Score, Two-Way) as the Game Stats table, plus that game's
+     W/L/T result. Unlike the Leaderboard, this is per-game actuals, not averaged — one row per
+     game, exactly what happened in it. The literal data behind the Two-Way Trend chart above it.
    - **Shot Heatmap** — the same court grid as the Shot Chart, scoped to just this player's
      marked field goals across every game.
    - **Head-to-Head — As Scorer** — their shooting *against* each defender who's guarded them,
-     across the season. This only reflects shots where a defender was actually tagged —
-     untagged ("No defender") shots don't attribute to anyone.
+     across the season, sortable, defaulting to most-guarded-by first. This only reflects shots
+     where a defender was actually tagged — untagged ("No defender") shots don't attribute to
+     anyone.
    - **Defensive Heatmap** — the same grid again, but keyed on every shot this player was tagged
      *defending* instead of shots they took, colored by opponent FG% allowed and inverted (low is
      good defense here, so it's green, not red). This is what actually answers whether a player's
@@ -377,13 +380,14 @@ individual player, not a team.
      number on its own can't say that. A double-teamed shot counts toward every tagged defender,
      same rule the Head-to-Head — As Defender table below uses.
    - **Head-to-Head — As Defender** — the shooting they've *allowed* to each scorer they've
-     defended, same tagging caveat as As Scorer above.
+     defended, same tagging caveat and sortability as As Scorer above.
    - **Teammate Synergy (With/Without)** — for each teammate this player has shared a team with,
      this player's *own* GmSc/20 and Two-Way/20 in games **with** that teammate on their side vs.
      games **without** them (opposing team, or not playing that game). This is about whether this
      player's own output actually changes with a given teammate around — not a shared win/loss
      record — so a teammate they've always played with shows "—" on the without side rather than
-     a misleading 0.0, and a small GP on either side is a small sample, not a verdict.
+     a misleading 0.0, and a small GP on either side is a small sample, not a verdict. Sortable —
+     a "—" always sorts last regardless of direction, same as anywhere else on this page.
    - **Highlights & Lowlights** — every clip tagged to this player, across every game, pulled
      from the "Player" dropdown on each clip in the Highlight/Lowlight Reel table in Stat Entry.
      A "Go to game" button jumps to that game so you can load/rewatch it. The league-wide version

@@ -547,6 +547,24 @@ sort by, so it isn't one of `SHOT_ZONE_COLUMNS`). If you already ported the two 
 this is a straightforward one-table consolidation, not a data or formula change — every number in
 the merged table is identical to what the two old panels showed.
 
+**Five more tables became sortable via `renderSortableHeader()`, pure UI, no computation
+changed.** The per-game **Game Stats** table (`GAME_STATS_COLUMNS`/`renderGameStatsTable()`) and
+Player Detail's **Game Log** (`PLAYER_GAME_LOG_COLUMNS`/`renderPlayerGameLog()`) both went from a
+static `<thead>` to the same sortable-column pattern the Leaderboard and Shot Distance already
+use — rows are built into a plain array first (`{player, team, s, def, sh, gmsc, twoWay}` for Game
+Stats; `{game, s, sh, def, result, gmsc, twoWay}` for Game Log), sorted once by whichever column's
+`accessor` is active, then rendered. Head-to-Head — As Scorer/As Defender
+(`H2H_SCORER_COLUMNS`/`H2H_DEFENDER_COLUMNS`) and Teammate Synergy
+(`TEAMMATE_SYNERGY_COLUMNS`) got the same treatment on top of their existing compute functions —
+no change to `headToHeadAsScorer()`/`headToHeadAsDefender()`/`computeTeammateSynergy()`
+themselves, just a sort step inserted between computing the rows and rendering them. Two small
+things worth replicating if you build equivalent sortable tables: Teammate Synergy's With/Without
+columns return `null` (not `0`) from their accessor when that side has zero games, since
+`compareForSort()` already sorts `null` last regardless of direction — a real 0 would sort as a
+legitimate (and misleadingly bad) value instead. And Game Stats' Player column keeps its
+`sticky-col` CSS class by adding it back onto the header cell after `renderSortableHeader()`
+rebuilds the row, since the shared helper doesn't know about that class.
+
 **League TS% Over Time on the Leaderboard is also purely computed, nothing stored.** Unlike every
 other panel that reuses `computeLeaderboard()`'s per-player rows, `computeLeagueTsOverTime()`
 walks `scoring_events` directly and pools `pts`/`fga`/`fta` across *every* player in a game, then

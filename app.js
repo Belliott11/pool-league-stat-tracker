@@ -1826,45 +1826,82 @@ function foulCellHtml(pf) {
     : String(pf);
 }
 
+// Same {key, label, accessor} shape as LEADERBOARD_COLUMNS, sortable via the shared
+// renderSortableHeader() — this table is one game's box score, not a season, so accessors read
+// off a precomputed {player, team, s, def, sh, gmsc, twoWay} row instead of computeLeaderboard().
+const GAME_STATS_COLUMNS = [
+  { key: "player", label: "Player", accessor: r => r.player.name },
+  { key: "team", label: "Team", accessor: r => r.team },
+  { key: "pts", label: "PTS", accessor: r => r.s.pts },
+  { key: "fg", label: "FG", accessor: r => r.sh.fga },
+  { key: "tpt", label: "3PT", accessor: r => r.sh.tpa },
+  { key: "ft", label: "FT", accessor: r => r.sh.fta },
+  { key: "efg", label: "eFG%", accessor: r => effectiveFgPct(r.sh.fgm, r.sh.tpm, r.sh.fga) },
+  { key: "ts", label: "TS%", accessor: r => trueShootingPct(r.s.pts, r.sh.fga, r.sh.fta) },
+  { key: "oreb", label: "OREB", accessor: r => r.s.oreb },
+  { key: "dreb", label: "DREB", accessor: r => r.s.dreb },
+  { key: "ast", label: "AST", accessor: r => r.s.ast },
+  { key: "stl", label: "STL", accessor: r => r.s.stl },
+  { key: "blk", label: "BLK", accessor: r => r.s.blk },
+  { key: "tov", label: "TOV", accessor: r => r.s.tov },
+  { key: "atov", label: "A/TO", accessor: r => r.s.tov === 0 ? (r.s.ast === 0 ? 0 : Infinity) : r.s.ast / r.s.tov },
+  { key: "pf", label: "PF", accessor: r => r.s.pf },
+  { key: "ptsAllowed", label: "Pts Allowed", accessor: r => r.def.ptsAllowed },
+  { key: "oppfg", label: "Opp FG%", accessor: r => r.def.oppFgPct },
+  { key: "beaten", label: "Beaten", accessor: r => r.def.timesBeaten },
+  { key: "stops", label: "Stops", accessor: r => r.def.stops },
+  { key: "gmsc", label: "GmSc", accessor: r => r.gmsc },
+  { key: "twoway", label: "Two-Way", accessor: r => r.twoWay }
+];
+let gameStatsSort = { key: "pts", dir: "desc" };
+
 function renderGameStatsTable(game) {
+  const headerRow = document.getElementById("gameStatsHeaderRow");
   const body = document.getElementById("gameStatsTableBody");
   if (!body) return;
+  renderSortableHeader(headerRow, GAME_STATS_COLUMNS, gameStatsSort, () => renderGameStatsTable(game));
+  headerRow.firstElementChild.classList.add("sticky-col");
   body.innerHTML = "";
-  const rows = [...game.teamA.map(id => ({ id, team: "A" })), ...game.teamB.map(id => ({ id, team: "B" }))];
+  const roster = [...game.teamA.map(id => ({ id, team: "A" })), ...game.teamB.map(id => ({ id, team: "B" }))];
+  const rows = roster.map(({ id, team }) => {
+    const player = state.players.find(pl => pl.id === id);
+    if (!player) return null;
+    const s = getOrCreatePlayerStats(game, id);
+    const def = gameDefenseStats(game, id);
+    const sh = shootingStats(game, id);
+    return { player, team, s, def, sh, gmsc: gameScore(s, sh), twoWay: twoWayScore(s, sh, def) };
+  }).filter(Boolean);
   if (rows.length === 0) {
     body.innerHTML = '<tr><td colspan="22" class="empty-state">No players assigned yet.</td></tr>';
     return;
   }
-  rows.forEach(({ id, team }) => {
-    const p = state.players.find(pl => pl.id === id);
-    if (!p) return;
-    const s = getOrCreatePlayerStats(game, id);
-    const def = gameDefenseStats(game, id);
-    const sh = shootingStats(game, id);
+  const sortCol = GAME_STATS_COLUMNS.find(c => c.key === gameStatsSort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), gameStatsSort.dir));
+  rows.forEach(r => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="sticky-col">${escapeHtml(p.name)}</td>
-      <td>${team}</td>
-      <td>${s.pts}</td>
-      <td>${formatShootingSplit(sh.fgm, sh.fga)}</td>
-      <td>${formatShootingSplit(sh.tpm, sh.tpa)}</td>
-      <td>${formatShootingSplit(sh.ftm, sh.fta)}</td>
-      <td>${formatPct(effectiveFgPct(sh.fgm, sh.tpm, sh.fga))}</td>
-      <td>${formatPct(trueShootingPct(s.pts, sh.fga, sh.fta))}</td>
-      <td>${s.oreb}</td>
-      <td>${s.dreb}</td>
-      <td>${s.ast}</td>
-      <td>${s.stl}</td>
-      <td>${s.blk}</td>
-      <td>${s.tov}</td>
-      <td>${formatAstTov(s.ast, s.tov)}</td>
-      <td>${foulCellHtml(s.pf)}</td>
-      <td>${def.ptsAllowed}</td>
-      <td>${formatPct(def.oppFgPct)}</td>
-      <td>${def.timesBeaten}</td>
-      <td>${def.stops}</td>
-      <td>${gameScore(s, sh).toFixed(1)}</td>
-      <td>${twoWayScore(s, sh, def).toFixed(1)}</td>
+      <td class="sticky-col">${escapeHtml(r.player.name)}</td>
+      <td>${r.team}</td>
+      <td>${r.s.pts}</td>
+      <td>${formatShootingSplit(r.sh.fgm, r.sh.fga)}</td>
+      <td>${formatShootingSplit(r.sh.tpm, r.sh.tpa)}</td>
+      <td>${formatShootingSplit(r.sh.ftm, r.sh.fta)}</td>
+      <td>${formatPct(effectiveFgPct(r.sh.fgm, r.sh.tpm, r.sh.fga))}</td>
+      <td>${formatPct(trueShootingPct(r.s.pts, r.sh.fga, r.sh.fta))}</td>
+      <td>${r.s.oreb}</td>
+      <td>${r.s.dreb}</td>
+      <td>${r.s.ast}</td>
+      <td>${r.s.stl}</td>
+      <td>${r.s.blk}</td>
+      <td>${r.s.tov}</td>
+      <td>${formatAstTov(r.s.ast, r.s.tov)}</td>
+      <td>${foulCellHtml(r.s.pf)}</td>
+      <td>${r.def.ptsAllowed}</td>
+      <td>${formatPct(r.def.oppFgPct)}</td>
+      <td>${r.def.timesBeaten}</td>
+      <td>${r.def.stops}</td>
+      <td>${r.gmsc.toFixed(1)}</td>
+      <td>${r.twoWay.toFixed(1)}</td>
     `;
     body.appendChild(tr);
   });
@@ -3320,9 +3357,24 @@ function computeTeammateSynergy(playerId) {
   }).filter(r => r.teammate).sort((a, b) => b.with.gp - a.with.gp);
 }
 
+const TEAMMATE_SYNERGY_COLUMNS = [
+  { key: "teammate", label: "Teammate", accessor: r => r.teammate.name },
+  { key: "gpWith", label: "GP With", accessor: r => r.with.gp },
+  { key: "gpWithout", label: "GP W/o", accessor: r => r.without.gp },
+  { key: "gmscWith", label: "GmSc/20 With", accessor: r => r.with.gp > 0 ? r.with.gmScorePer20 : null },
+  { key: "gmscWithout", label: "GmSc/20 W/o", accessor: r => r.without.gp > 0 ? r.without.gmScorePer20 : null },
+  { key: "twoWayWith", label: "Two-Way/20 With", accessor: r => r.with.gp > 0 ? r.with.twoWayPer20 : null },
+  { key: "twoWayWithout", label: "Two-Way/20 W/o", accessor: r => r.without.gp > 0 ? r.without.twoWayPer20 : null }
+];
+let teammateSynergySort = { key: "gpWith", dir: "desc" };
+
 function renderTeammateSynergy(playerId) {
+  const headerRow = document.getElementById("teammateSynergyHeaderRow");
   const body = document.getElementById("teammateSynergyBody");
+  renderSortableHeader(headerRow, TEAMMATE_SYNERGY_COLUMNS, teammateSynergySort, () => renderTeammateSynergy(playerId));
   const rows = computeTeammateSynergy(playerId);
+  const sortCol = TEAMMATE_SYNERGY_COLUMNS.find(c => c.key === teammateSynergySort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), teammateSynergySort.dir));
   const fmt = (v, gp) => gp > 0 ? v.toFixed(1) : "—";
   body.innerHTML = rows.length === 0
     ? '<tr><td colspan="7" class="empty-state">No games with teammates and real shots logged yet.</td></tr>'
@@ -3661,45 +3713,78 @@ function renderLeagueHighlights() {
   });
 }
 
+// Same idea as GAME_STATS_COLUMNS, but each row is one of this player's own games (not another
+// player in the same game) — accessor reads off a precomputed {game, s, def, sh, gmsc, twoWay,
+// result} row.
+const PLAYER_GAME_LOG_COLUMNS = [
+  { key: "date", label: "Date", accessor: r => r.game.date || "" },
+  { key: "result", label: "Result", accessor: r => r.result || "" },
+  { key: "pts", label: "PTS", accessor: r => r.s.pts },
+  { key: "fg", label: "FG", accessor: r => r.sh.fga },
+  { key: "tpt", label: "3PT", accessor: r => r.sh.tpa },
+  { key: "ft", label: "FT", accessor: r => r.sh.fta },
+  { key: "efg", label: "eFG%", accessor: r => effectiveFgPct(r.sh.fgm, r.sh.tpm, r.sh.fga) },
+  { key: "ts", label: "TS%", accessor: r => trueShootingPct(r.s.pts, r.sh.fga, r.sh.fta) },
+  { key: "oreb", label: "OREB", accessor: r => r.s.oreb },
+  { key: "dreb", label: "DREB", accessor: r => r.s.dreb },
+  { key: "ast", label: "AST", accessor: r => r.s.ast },
+  { key: "stl", label: "STL", accessor: r => r.s.stl },
+  { key: "blk", label: "BLK", accessor: r => r.s.blk },
+  { key: "tov", label: "TOV", accessor: r => r.s.tov },
+  { key: "atov", label: "A/TO", accessor: r => r.s.tov === 0 ? (r.s.ast === 0 ? 0 : Infinity) : r.s.ast / r.s.tov },
+  { key: "pf", label: "PF", accessor: r => r.s.pf },
+  { key: "ptsAllowed", label: "Pts Allowed", accessor: r => r.def.ptsAllowed },
+  { key: "oppfg", label: "Opp FG%", accessor: r => r.def.oppFgPct },
+  { key: "beaten", label: "Beaten", accessor: r => r.def.timesBeaten },
+  { key: "stops", label: "Stops", accessor: r => r.def.stops },
+  { key: "gmsc", label: "GmSc", accessor: r => r.gmsc },
+  { key: "twoway", label: "Two-Way", accessor: r => r.twoWay }
+];
+let playerGameLogSort = { key: "date", dir: "desc" };
+
 function renderPlayerGameLog(playerId) {
+  const headerRow = document.getElementById("playerGameLogHeaderRow");
   const body = document.getElementById("playerGameLogBody");
+  renderSortableHeader(headerRow, PLAYER_GAME_LOG_COLUMNS, playerGameLogSort, () => renderPlayerGameLog(playerId));
   body.innerHTML = "";
-  const games = state.games
-    .filter(g => g.teamA.includes(playerId) || g.teamB.includes(playerId))
-    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const games = state.games.filter(g => g.teamA.includes(playerId) || g.teamB.includes(playerId));
   if (games.length === 0) {
     body.innerHTML = '<tr><td colspan="22" class="empty-state">No games recorded for this player yet.</td></tr>';
     return;
   }
-  games.forEach(g => {
-    const s = getOrCreatePlayerStats(g, playerId);
-    const sh = shootingStats(g, playerId);
-    const def = gameDefenseStats(g, playerId);
-    const result = playerGameResult(g, playerId);
+  const rows = games.map(game => {
+    const s = getOrCreatePlayerStats(game, playerId);
+    const sh = shootingStats(game, playerId);
+    const def = gameDefenseStats(game, playerId);
+    return { game, s, sh, def, result: playerGameResult(game, playerId), gmsc: gameScore(s, sh), twoWay: twoWayScore(s, sh, def) };
+  });
+  const sortCol = PLAYER_GAME_LOG_COLUMNS.find(c => c.key === playerGameLogSort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), playerGameLogSort.dir));
+  rows.forEach(r => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${formatDateDisplay(g.date)}</td>
-      <td>${result || "—"}</td>
-      <td>${s.pts}</td>
-      <td>${formatShootingSplit(sh.fgm, sh.fga)}</td>
-      <td>${formatShootingSplit(sh.tpm, sh.tpa)}</td>
-      <td>${formatShootingSplit(sh.ftm, sh.fta)}</td>
-      <td>${formatPct(effectiveFgPct(sh.fgm, sh.tpm, sh.fga))}</td>
-      <td>${formatPct(trueShootingPct(s.pts, sh.fga, sh.fta))}</td>
-      <td>${s.oreb}</td>
-      <td>${s.dreb}</td>
-      <td>${s.ast}</td>
-      <td>${s.stl}</td>
-      <td>${s.blk}</td>
-      <td>${s.tov}</td>
-      <td>${formatAstTov(s.ast, s.tov)}</td>
-      <td>${foulCellHtml(s.pf)}</td>
-      <td>${def.ptsAllowed}</td>
-      <td>${formatPct(def.oppFgPct)}</td>
-      <td>${def.timesBeaten}</td>
-      <td>${def.stops}</td>
-      <td>${gameScore(s, sh).toFixed(1)}</td>
-      <td>${twoWayScore(s, sh, def).toFixed(1)}</td>
+      <td>${formatDateDisplay(r.game.date)}</td>
+      <td>${r.result || "—"}</td>
+      <td>${r.s.pts}</td>
+      <td>${formatShootingSplit(r.sh.fgm, r.sh.fga)}</td>
+      <td>${formatShootingSplit(r.sh.tpm, r.sh.tpa)}</td>
+      <td>${formatShootingSplit(r.sh.ftm, r.sh.fta)}</td>
+      <td>${formatPct(effectiveFgPct(r.sh.fgm, r.sh.tpm, r.sh.fga))}</td>
+      <td>${formatPct(trueShootingPct(r.s.pts, r.sh.fga, r.sh.fta))}</td>
+      <td>${r.s.oreb}</td>
+      <td>${r.s.dreb}</td>
+      <td>${r.s.ast}</td>
+      <td>${r.s.stl}</td>
+      <td>${r.s.blk}</td>
+      <td>${r.s.tov}</td>
+      <td>${formatAstTov(r.s.ast, r.s.tov)}</td>
+      <td>${foulCellHtml(r.s.pf)}</td>
+      <td>${r.def.ptsAllowed}</td>
+      <td>${formatPct(r.def.oppFgPct)}</td>
+      <td>${r.def.timesBeaten}</td>
+      <td>${r.def.stops}</td>
+      <td>${r.gmsc.toFixed(1)}</td>
+      <td>${r.twoWay.toFixed(1)}</td>
     `;
     body.appendChild(tr);
   });
@@ -3739,24 +3824,40 @@ function headToHeadAsDefender(playerId) {
     .sort((a, b) => b.fga - a.fga);
 }
 
+const H2H_SCORER_COLUMNS = [
+  { key: "defender", label: "Defender", accessor: r => r.defender ? r.defender.name : "No defender" },
+  { key: "fg", label: "FG", accessor: r => r.fga },
+  { key: "fgpct", label: "FG%", accessor: r => pct(r.fgm, r.fga) }
+];
+let h2hScorerSort = { key: "fg", dir: "desc" };
+
+const H2H_DEFENDER_COLUMNS = [
+  { key: "scorer", label: "Scorer", accessor: r => r.scorer ? r.scorer.name : "?" },
+  { key: "fg", label: "FG Allowed", accessor: r => r.fga },
+  { key: "fgpct", label: "FG% Allowed", accessor: r => pct(r.fgm, r.fga) }
+];
+let h2hDefenderSort = { key: "fg", dir: "desc" };
+
 function renderHeadToHead(playerId) {
+  const scorerHeaderRow = document.getElementById("h2hScorerHeaderRow");
   const scorerBody = document.getElementById("h2hScorerBody");
-  const scorerRows = headToHeadAsScorer(playerId);
+  renderSortableHeader(scorerHeaderRow, H2H_SCORER_COLUMNS, h2hScorerSort, () => renderHeadToHead(playerId));
+  const scorerRows = headToHeadAsScorer(playerId).map(r => ({ ...r, defender: r.defenderId ? state.players.find(p => p.id === r.defenderId) : null }));
+  const scorerSortCol = H2H_SCORER_COLUMNS.find(c => c.key === h2hScorerSort.key);
+  scorerRows.sort((a, b) => compareForSort(scorerSortCol.accessor(a), scorerSortCol.accessor(b), h2hScorerSort.dir));
   scorerBody.innerHTML = scorerRows.length === 0
     ? '<tr><td colspan="3" class="empty-state">No tagged shots yet.</td></tr>'
-    : scorerRows.map(r => {
-        const defender = r.defenderId ? state.players.find(p => p.id === r.defenderId) : null;
-        return `<tr><td>${defender ? escapeHtml(defender.name) : "No defender"}</td><td>${formatShootingSplit(r.fgm, r.fga)}</td><td>${formatPct(pct(r.fgm, r.fga))}</td></tr>`;
-      }).join("");
+    : scorerRows.map(r => `<tr><td>${r.defender ? escapeHtml(r.defender.name) : "No defender"}</td><td>${formatShootingSplit(r.fgm, r.fga)}</td><td>${formatPct(pct(r.fgm, r.fga))}</td></tr>`).join("");
 
+  const defenderHeaderRow = document.getElementById("h2hDefenderHeaderRow");
   const defenderBody = document.getElementById("h2hDefenderBody");
-  const defenderRows = headToHeadAsDefender(playerId);
+  renderSortableHeader(defenderHeaderRow, H2H_DEFENDER_COLUMNS, h2hDefenderSort, () => renderHeadToHead(playerId));
+  const defenderRows = headToHeadAsDefender(playerId).map(r => ({ ...r, scorer: state.players.find(p => p.id === r.scorerId) }));
+  const defenderSortCol = H2H_DEFENDER_COLUMNS.find(c => c.key === h2hDefenderSort.key);
+  defenderRows.sort((a, b) => compareForSort(defenderSortCol.accessor(a), defenderSortCol.accessor(b), h2hDefenderSort.dir));
   defenderBody.innerHTML = defenderRows.length === 0
     ? '<tr><td colspan="3" class="empty-state">No tagged shots yet.</td></tr>'
-    : defenderRows.map(r => {
-        const scorer = state.players.find(p => p.id === r.scorerId);
-        return `<tr><td>${scorer ? escapeHtml(scorer.name) : "?"}</td><td>${formatShootingSplit(r.fgm, r.fga)}</td><td>${formatPct(pct(r.fgm, r.fga))}</td></tr>`;
-      }).join("");
+    : defenderRows.map(r => `<tr><td>${r.scorer ? escapeHtml(r.scorer.name) : "?"}</td><td>${formatShootingSplit(r.fgm, r.fga)}</td><td>${formatPct(pct(r.fgm, r.fga))}</td></tr>`).join("");
 }
 
 // ---------- Export ----------
