@@ -2046,6 +2046,7 @@ let reelSort = { key: null, dir: "asc" };
 
 function renderReel(game) {
   updateReelButtons();
+  updateReelExportButton(game);
   const headerRow = document.getElementById("reelHeaderRow");
   const body = document.getElementById("reelTableBody");
   if (!body) return;
@@ -2157,6 +2158,175 @@ document.getElementById("reelChronoBtn").addEventListener("click", () => {
   reelSort = { key: null, dir: "asc" };
   const game = state.games.find(g => g.id === currentGameId);
   if (game) renderReel(game);
+});
+
+// ---- Combine Reel clips into one downloadable video ----
+// Plays every clip in this game's Reel back-to-back through the already-loaded <video> element
+// and records the playback live via MediaRecorder — entirely in-browser, no server, no external
+// library, matching everything else in this tool. The real cost of that: it runs in real time (a
+// 5-minute combined reel takes about 5 minutes to produce), and the tab has to stay open and the
+// video actually playing — browsers throttle or drop captureStream() frames on a backgrounded
+// tab. Output is .webm, MediaRecorder's one broadly-supported container; there's no in-browser
+// path to .mp4 without the ffmpeg.wasm dependency this tool deliberately doesn't carry.
+// { cancelled, cancelPromise } while an export is running; null otherwise. cancelPromise is
+// racED against every step below (seeking, playing, waiting for a clip to end) so Cancel can
+// actually break out of a stuck step, not just get checked between steps — a plain boolean flag
+// alone can't interrupt an in-flight `await video.play()` that never settles.
+let reelExportState = null;
+
+// Always chronological by clip start time, regardless of whatever sort the Reel table is
+// currently showing — the combined video should play in the order things actually happened, not
+// in whatever column order someone happens to have the table sorted by. Degenerate clips
+// (end <= start, shouldn't normally exist but a hand-edited start/end could produce one) are
+// skipped rather than recorded as a zero-length freeze.
+function reelClipsChronological(game) {
+  return [...game.plays].filter(p => p.end > p.start).sort((a, b) => a.start - b.start);
+}
+
+function updateReelExportButton(game) {
+  const btn = document.getElementById("exportReelVideoBtn");
+  if (!btn) return;
+  btn.disabled = !!reelExportState || !currentVideoEl || !game || reelClipsChronological(game).length === 0;
+}
+
+function pickRecorderMimeType() {
+  const candidates = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+  return candidates.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || "";
+}
+
+// Resolves once the video has actually reached `time`, not just once currentTime is set —
+// seeking on a real (especially large local-file) video is asynchronous.
+function waitForSeek(video, time) {
+  return new Promise(resolve => {
+    if (Math.abs(video.currentTime - time) < 0.05) { resolve(); return; }
+    const onSeeked = () => { video.removeEventListener("seeked", onSeeked); resolve(); };
+    video.addEventListener("seeked", onSeeked);
+    video.currentTime = time;
+  });
+}
+
+// Polls on a plain interval rather than requestAnimationFrame — rAF callbacks are suspended
+// entirely (not just throttled) on a page that isn't actually visible, which would hang this
+// forever if the tab gets backgrounded mid-export instead of just running late.
+function waitUntilTime(video, endTime) {
+  return new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (video.currentTime >= endTime || video.ended) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 50);
+  });
+}
+
+// Wraps a promise so a cancel click can interrupt it even mid-flight — a video.play() call that
+// never settles (blocked autoplay policy, a stalled/buffering source, whatever the cause)
+// otherwise leaves the whole export stuck with no way out except reloading the page.
+function raceCancel(promise, cancelPromise) {
+  return Promise.race([promise.then(() => "done"), cancelPromise.then(() => "cancelled")]);
+}
+
+async function exportReelVideo(game) {
+  if (!currentVideoEl || reelExportState) return;
+  const clips = reelClipsChronological(game);
+  if (clips.length === 0) return;
+  const mimeType = pickRecorderMimeType();
+  const statusEl = document.getElementById("reelExportStatus");
+  if (!mimeType) {
+    statusEl.textContent = "This browser doesn't support recording video — try a recent Chrome or Firefox.";
+    return;
+  }
+
+  const video = currentVideoEl;
+  const originalTime = video.currentTime;
+  const wasPaused = video.paused;
+  const originalMuted = video.muted;
+  // A muted <video> element's captured audio track is silent on Chrome even though the source
+  // has real audio — unmute for the recording, restore afterward regardless of how it ends.
+  video.muted = false;
+
+  const stream = video.captureStream ? video.captureStream() : video.mozCaptureStream();
+  const recorder = new MediaRecorder(stream, { mimeType });
+  const chunks = [];
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+  let resolveCancel;
+  const cancelPromise = new Promise(resolve => { resolveCancel = resolve; });
+  reelExportState = { cancelled: false, resolveCancel };
+  document.getElementById("exportReelVideoBtn").disabled = true;
+  document.getElementById("cancelReelExportBtn").hidden = false;
+
+  let stoppedEarly = null; // set to a user-facing reason if a step fails/times out mid-export
+
+  // Started paused so only the actual clip playback — not the seeking/loading between clips —
+  // ends up in the recording. pause()/resume() (not stop-and-restart) keeps it one continuous
+  // MediaRecorder session, so the output is one seamless file rather than needing to be stitched
+  // from several.
+  recorder.start();
+  recorder.pause();
+  try {
+    for (let i = 0; i < clips.length; i++) {
+      if (reelExportState.cancelled) break;
+      statusEl.textContent = `Recording clip ${i + 1} of ${clips.length}…`;
+
+      const seekOutcome = await raceCancel(waitForSeek(video, clips[i].start), cancelPromise);
+      if (seekOutcome === "cancelled") break;
+
+      recorder.resume();
+      const playPromise = video.play().catch(() => {}); // a rejected play() still resolves this race with "done" via .catch, handled by the timeout below if it never settles at all
+      const playOutcome = await Promise.race([
+        playPromise.then(() => "played"),
+        cancelPromise.then(() => "cancelled"),
+        new Promise(resolve => setTimeout(() => resolve("timeout"), 8000))
+      ]);
+      if (playOutcome !== "played") {
+        recorder.pause();
+        if (playOutcome === "cancelled") break;
+        stoppedEarly = `Clip ${i + 1} of ${clips.length} didn't start playing — stopped there.`;
+        break;
+      }
+
+      const waitOutcome = await raceCancel(waitUntilTime(video, clips[i].end), cancelPromise);
+      video.pause();
+      recorder.pause();
+      if (waitOutcome === "cancelled") break;
+    }
+  } finally {
+    recorder.stop();
+    await new Promise(resolve => { recorder.onstop = resolve; });
+    video.muted = originalMuted;
+    video.currentTime = originalTime;
+    if (wasPaused) video.pause();
+  }
+
+  const cancelled = reelExportState.cancelled;
+  reelExportState = null;
+  document.getElementById("cancelReelExportBtn").hidden = true;
+  updateReelExportButton(game);
+
+  if (cancelled) {
+    statusEl.textContent = "Cancelled — nothing downloaded.";
+  } else if (chunks.length === 0) {
+    statusEl.textContent = stoppedEarly || "Recording produced no data — try again.";
+  } else {
+    const blob = new Blob(chunks, { type: mimeType });
+    download(`${game.date || "game"}-highlights.webm`, blob, mimeType);
+    const clipWord = clips.length === 1 ? "clip" : "clips";
+    statusEl.textContent = stoppedEarly
+      ? `${stoppedEarly} Downloaded what was recorded before that.`
+      : `Done — ${clips.length} ${clipWord} combined and downloaded.`;
+  }
+}
+
+document.getElementById("exportReelVideoBtn").addEventListener("click", () => {
+  const game = state.games.find(g => g.id === currentGameId);
+  if (game) exportReelVideo(game);
+});
+document.getElementById("cancelReelExportBtn").addEventListener("click", () => {
+  if (reelExportState) {
+    reelExportState.cancelled = true;
+    reelExportState.resolveCancel();
+  }
 });
 
 // ---- Matchups ----

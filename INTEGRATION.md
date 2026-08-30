@@ -435,6 +435,37 @@ through for the "Go to game" button. No new field, no new query shape versus wha
 `renderPlayerReel()` already does; this just drops the `play.playerId === playerId` filter and
 adds a Player column.
 
+**Combine Clips Into One Video (Stat Entry → Reel) is the one feature in this whole document that
+isn't "purely computed, nothing stored" — it's live client-side video processing, not analysis,
+and it's browser-API-dependent in a way nothing else here is, so read this one before deciding
+whether/how to port it.** `exportReelVideo()` (`app.js`) plays every clip in `game.plays`
+(filtered to `end > start`, sorted by `start` ascending — chronological regardless of the Reel
+table's current UI sort) back-to-back through the already-loaded `<video>` element, capturing the
+live playback with `HTMLMediaElement.captureStream()` piped into a `MediaRecorder`. No ffmpeg, no
+server round-trip, no new dependency — but also no fast/batch trim-and-concat: it runs in wall-clock
+real time (recording a clip takes exactly as long as that clip's own duration), and output is
+`.webm`, `MediaRecorder`'s one broadly-supported container — there's no in-browser path to `.mp4`
+without taking on an ffmpeg.wasm-sized dependency, which this tool deliberately doesn't carry.
+
+If you build an equivalent against Poolean's own video infrastructure, the two things worth
+replicating exactly, both hardened after a real bug found in testing:
+- **`MediaRecorder.pause()`/`.resume()` around each clip, not `.start()`/`.stop()` per clip.**
+  Recording only actually captures during the two calls surrounding real playback; the recorder
+  starts paused (`recorder.start(); recorder.pause();`) so the seek/load time *between* clips
+  never ends up in the output, and pause/resume keeps it one continuous session, so the result is
+  one seamless file rather than several to stitch together afterward.
+- **Every awaited step is raced against a cancellation signal, not just checked between steps.**
+  The first version only checked a plain `cancelled` boolean *between* awaits — which meant a
+  hung `video.play()` (blocked autoplay policy, a stalled source, whatever the cause) couldn't be
+  interrupted by the Cancel button at all, since the code was stuck *inside* that one await with
+  no boolean check ever getting a chance to run. Confirmed in testing: a deliberately-hung mock
+  `play()` left the old version stuck with no way out short of reloading the page. The fix races
+  every step (seeking, playing, waiting for a clip to end) against a `cancelPromise` that a Cancel
+  click resolves, plus an 8-second timeout specifically on `video.play()` so an export can't hang
+  forever even if nobody clicks Cancel. If you build your own version of this, whatever you use in
+  place of a boolean cancelled flag needs to be able to interrupt an in-flight await, not just get
+  read after it returns.
+
 **Player Detail's Shot Chart is also purely computed, nothing stored — the ungrouped
 counterpart to the heatmap just below it.** `renderPlayerShotChart()` (`app.js`) plots every one
 of a player's own field goals with a non-null `shot_x`/`shot_y` at its literal coordinates

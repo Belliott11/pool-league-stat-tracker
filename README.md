@@ -152,6 +152,16 @@ individual player, not a team.
      start/end times, tag which player it's about, add a note, jump the video back to it, or
      remove it. This only works with a local video file or a direct video link (the ones that
      load as an actual `<video>` element) — a YouTube embed can't be read for its current time.
+     **🎬 Combine Clips Into One Video**, below the table, plays every clip in this game's reel
+     back-to-back and records the playback live in the browser (via `MediaRecorder`), downloading
+     one combined `.webm` file when it's done — entirely in-browser, no server and no new
+     dependency, matching everything else in this tool, but genuinely different from every other
+     feature here in one real way: it's live video processing, not computed analysis, so it runs
+     in *real time* (a 5-minute combined reel takes about 5 minutes to produce) and needs the tab
+     to stay open, foregrounded, and actually playing the whole time — backgrounding it can stall
+     or degrade the recording. A **Cancel** button appears while it's running. Clips always
+     combine in chronological (video-time) order regardless of how the Reel table above happens
+     to be sorted at the moment.
 4. **Leaderboard** — every counting stat as a season-wide *rate per 20 combined points scored in
    the game*, not a raw total or a per-game average, plus **W-L record and win %** per player (a
    game counts as a win/loss/tie for everyone on the winning/losing/tied team, since teams
