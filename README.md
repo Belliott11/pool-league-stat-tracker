@@ -108,9 +108,11 @@ individual player, not a team.
      anything.
    - Every logged event — shots, turnovers, steals, fouls, and matchup entries — automatically
      captures the video's playback position the moment you log it. Each shows a **Time** column
-     and a **▶ Jump** button in its table (Shot Log, Other Events, Defensive Matchups) that seeks
-     the video right back to that instant, so you can re-watch any specific play later without
-     hunting for it. This needs a local video file or a direct video link loaded (the ones that
+     and a **▶ Jump** button in its table (Shot Log, Other Events, Defensive Matchups, and the
+     Highlight/Lowlight Reel) that seeks the video right back to that instant and scrolls it into
+     view, so you can re-watch any specific play later without hunting for it — including
+     scrolling back up to find the player itself if you'd been scrolled down reading one of these
+     tables. This needs a local video file or a direct video link loaded (the ones that
      play as an actual `<video>` element) — a YouTube embed can't be read for its playback
      position, so events logged against one just won't have a time.
    - The **Game Stats** table (between the box score and the Shot Log) rolls all of this up per

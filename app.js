@@ -1883,7 +1883,11 @@ function formatVideoTime(videoTime) {
 }
 
 // A small "▶ Jump" button for any logged event's timestamp — disabled when there's no video
-// loaded right now, or the event predates timestamp capture and has no time to jump to.
+// loaded right now, or the event predates timestamp capture and has no time to jump to. Scrolls
+// the video into view on click, not just seeks/plays it — these buttons live in tables (Shot Log,
+// Other Events, Matchups, the Reel) further down the page than the video player itself, so
+// without the scroll, clicking "Jump" starts playback somewhere off-screen the user has to go
+// find manually.
 function createJumpButton(videoTime) {
   const btn = document.createElement("button");
   btn.type = "button";
@@ -1894,6 +1898,7 @@ function createJumpButton(videoTime) {
     if (!currentVideoEl || videoTime === null || videoTime === undefined) return;
     currentVideoEl.currentTime = videoTime;
     currentVideoEl.play();
+    currentVideoEl.scrollIntoView({ behavior: "smooth", block: "center" });
   });
   return btn;
 }
@@ -2002,17 +2007,7 @@ function renderReel(game) {
     tr.appendChild(noteTd);
 
     const jumpTd = document.createElement("td");
-    const jumpBtn = document.createElement("button");
-    jumpBtn.type = "button";
-    jumpBtn.className = "secondary-btn";
-    jumpBtn.textContent = "▶ Jump";
-    jumpBtn.disabled = !currentVideoEl;
-    jumpBtn.addEventListener("click", () => {
-      if (!currentVideoEl) return;
-      currentVideoEl.currentTime = play.start;
-      currentVideoEl.play();
-    });
-    jumpTd.appendChild(jumpBtn);
+    jumpTd.appendChild(createJumpButton(play.start));
     tr.appendChild(jumpTd);
 
     const delTd = document.createElement("td");
