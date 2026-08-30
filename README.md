@@ -114,7 +114,11 @@ individual player, not a team.
      scrolling back up to find the player itself if you'd been scrolled down reading one of these
      tables. This needs a local video file or a direct video link loaded (the ones that
      play as an actual `<video>` element) — a YouTube embed can't be read for its playback
-     position, so events logged against one just won't have a time.
+     position, so events logged against one just won't have a time. Click any column header on
+     these four tables to sort by it — a **↺ Chronological** button next to each puts it back
+     the way it opened (most-recently-logged-first for the Shot Log, actual video-time order for
+     the other three), since sorting these away from their natural order and then losing track of
+     how to get back would make logging a game live genuinely harder, not easier.
    - The **Game Stats** table (between the box score and the Shot Log) rolls all of this up per
      player for the game: FG/3PT/FT splits with %, **eFG%** (FG% weighted so 3s count extra),
      **TS%** (true shooting — overall scoring efficiency across FGs and FTs combined),

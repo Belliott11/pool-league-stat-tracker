@@ -893,36 +893,63 @@ function renderStatEntry() {
   renderReel(game);
 }
 
+// {key, label, accessor} for the sortable header — "time" doubles as the chronological order
+// (see otherEventsSort below), so clicking it while already on it just flips direction; the
+// dedicated ↺ Chronological button is the reliable way back to the original natural order,
+// since a direction flip alone can't distinguish "chronological" from "reverse-chronological."
+const OTHER_EVENTS_COLUMNS = [
+  { key: "type", label: "Type", accessor: r => r.cfg.verb },
+  { key: "player", label: "Player", accessor: r => r.playerName },
+  { key: "opponent", label: "Opponent", accessor: r => r.opponentName },
+  { key: "time", label: "Time", accessor: r => r.videoTime }
+];
+// null key = natural order (chronological by videoTime, nulls last) — the same order this table
+// has always opened with. Only a real column key overrides it.
+let otherEventsSort = { key: null, dir: "asc" };
+
 // TOV/STL/PF, each optionally tagged with the one opponent involved (see TAGGED_STAT_CONFIG).
 function renderOtherEventsLog(game) {
+  const headerRow = document.getElementById("otherEventsHeaderRow");
   const body = document.getElementById("otherEventsBody");
   if (!body) return;
+  renderSortableHeader(headerRow, OTHER_EVENTS_COLUMNS, otherEventsSort, () => renderOtherEventsLog(game));
+  headerRow.appendChild(document.createElement("th"));
+  headerRow.appendChild(document.createElement("th"));
+
   // Merging turnovers/steals/fouls means there's no single natural order (each type is its own
-  // array) — sort by videoTime so the table reads in the order the plays actually happened,
-  // rather than grouped by type. Events with no timestamp (no video loaded when logged) sort
-  // last, since there's nothing to place them by.
-  const rows = TAGGED_STAT_CONFIG.flatMap(cfg =>
-    game[cfg.eventsKey].map(ev => ({ ...ev, cfg }))
-  ).sort((a, b) => {
-    if (a.videoTime === null) return b.videoTime === null ? 0 : 1;
-    if (b.videoTime === null) return -1;
-    return a.videoTime - b.videoTime;
-  });
+  // array) — chronological order sorts by videoTime so the table reads in the order the plays
+  // actually happened, rather than grouped by type. Events with no timestamp (no video loaded
+  // when logged) sort last, since there's nothing to place them by.
+  let rows = TAGGED_STAT_CONFIG.flatMap(cfg =>
+    game[cfg.eventsKey].map(ev => {
+      const player = state.players.find(p => p.id === ev.playerId);
+      const opponent = ev.opponentId ? state.players.find(p => p.id === ev.opponentId) : null;
+      return { ...ev, cfg, playerName: player ? player.name : "?", opponentName: opponent ? opponent.name : "" };
+    })
+  );
+  if (otherEventsSort.key === null) {
+    rows.sort((a, b) => {
+      if (a.videoTime === null) return b.videoTime === null ? 0 : 1;
+      if (b.videoTime === null) return -1;
+      return a.videoTime - b.videoTime;
+    });
+  } else {
+    const sortCol = OTHER_EVENTS_COLUMNS.find(c => c.key === otherEventsSort.key);
+    rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), otherEventsSort.dir));
+  }
   if (rows.length === 0) {
     body.innerHTML = '<tr><td colspan="6" class="empty-state">No turnovers, steals, or fouls recorded yet.</td></tr>';
     return;
   }
   body.innerHTML = "";
   rows.forEach(ev => {
-    const player = state.players.find(p => p.id === ev.playerId);
-    const opponent = ev.opponentId ? state.players.find(p => p.id === ev.opponentId) : null;
     const viaSteal = ev.cfg.field === "tov" && ev.stealEventId;
     const viaMiss = ev.cfg.field === "tov" && ev.missEventId;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${ev.cfg.verb}${viaSteal ? ' <span class="hint" style="margin:0">(via steal)</span>' : ""}${viaMiss ? ' <span class="hint" style="margin:0">(shot out of bounds)</span>' : ""}</td>
-      <td>${player ? escapeHtml(player.name) : "?"}</td>
-      <td>${opponent ? escapeHtml(opponent.name) : "—"}</td>
+      <td>${escapeHtml(ev.playerName)}</td>
+      <td>${ev.opponentName ? escapeHtml(ev.opponentName) : "—"}</td>
       <td>${formatVideoTime(ev.videoTime)}</td>
     `;
     const tdJump = document.createElement("td");
@@ -944,6 +971,11 @@ function renderOtherEventsLog(game) {
     body.appendChild(tr);
   });
 }
+document.getElementById("otherEventsChronoBtn").addEventListener("click", () => {
+  otherEventsSort = { key: null, dir: "asc" };
+  const game = state.games.find(g => g.id === currentGameId);
+  if (game) renderOtherEventsLog(game);
+});
 
 // ---- Shot log (every make and miss, with who if anyone was contesting/assisting) ----
 // Editing state for an already-logged shot in the Shot Log — separate from pendingScore/etc.
@@ -1049,15 +1081,43 @@ function renderShotEditRow(game, ev) {
   return tr;
 }
 
+// null key = natural order (most-recently-logged first, the same order this table has always
+// opened with — a plain reverse of insertion order, not a videoTime sort). Only a real column
+// key overrides it; the ↺ Chronological button restores null.
+const SHOT_LOG_COLUMNS = [
+  { key: "shooter", label: "Shooter", accessor: r => r.scorerName },
+  { key: "result", label: "Result", accessor: r => r.made ? "Make" : "Miss" },
+  { key: "value", label: "Value", accessor: r => r.points },
+  { key: "assist", label: "Assist", accessor: r => r.assisterName },
+  { key: "defender", label: "Defender", accessor: r => r.defenderLabel },
+  { key: "time", label: "Time", accessor: r => r.videoTime }
+];
+let shotLogSort = { key: null, dir: "asc" };
+
 function renderScoringLog(game) {
+  const headerRow = document.getElementById("scoringLogHeaderRow");
   const body = document.getElementById("scoringLogBody");
   if (!body) return;
+  renderSortableHeader(headerRow, SHOT_LOG_COLUMNS, shotLogSort, () => renderScoringLog(game));
+  headerRow.appendChild(document.createElement("th"));
+  headerRow.appendChild(document.createElement("th"));
   body.innerHTML = "";
   if (game.scoringEvents.length === 0) {
     body.innerHTML = '<tr><td colspan="8" class="empty-state">No shots recorded yet.</td></tr>';
     return;
   }
-  [...game.scoringEvents].reverse().forEach(ev => {
+  let rows = game.scoringEvents.map(ev => {
+    const scorer = state.players.find(p => p.id === ev.scorerId);
+    const assister = ev.assistId ? state.players.find(p => p.id === ev.assistId) : null;
+    return { ev, scorerName: scorer ? scorer.name : "?", made: ev.made !== false, points: ev.points, assisterName: assister ? assister.name : "", defenderLabel: defenderNames(ev.defenderIds), videoTime: ev.videoTime };
+  });
+  if (shotLogSort.key === null) {
+    rows.reverse();
+  } else {
+    const sortCol = SHOT_LOG_COLUMNS.find(c => c.key === shotLogSort.key);
+    rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), shotLogSort.dir));
+  }
+  rows.forEach(({ ev }) => {
     const scorer = state.players.find(p => p.id === ev.scorerId);
     const made = ev.made !== false;
     const assister = ev.assistId ? state.players.find(p => p.id === ev.assistId) : null;
@@ -1120,6 +1180,11 @@ function renderScoringLog(game) {
     if (editingShotId === ev.id) body.appendChild(renderShotEditRow(game, ev));
   });
 }
+document.getElementById("scoringLogChronoBtn").addEventListener("click", () => {
+  shotLogSort = { key: null, dir: "asc" };
+  const game = state.games.find(g => g.id === currentGameId);
+  if (game) renderScoringLog(game);
+});
 
 // ---- Video ----
 let currentVideoEl = null; // the live <video> element for the open game, when there is one
@@ -1968,10 +2033,25 @@ function markPlay(type) {
 document.getElementById("markHighlightBtn").addEventListener("click", () => markPlay("highlight"));
 document.getElementById("markLowlightBtn").addEventListener("click", () => markPlay("lowlight"));
 
+// null key = natural order (by clip start time, the same order this table has always opened
+// with). Only a real column key overrides it.
+const REEL_COLUMNS = [
+  { key: "type", label: "Type", accessor: r => r.type },
+  { key: "start", label: "Start", accessor: r => r.start },
+  { key: "end", label: "End", accessor: r => r.end },
+  { key: "player", label: "Player", accessor: r => r.playerName },
+  { key: "note", label: "Note", accessor: r => r.note || "" }
+];
+let reelSort = { key: null, dir: "asc" };
+
 function renderReel(game) {
   updateReelButtons();
+  const headerRow = document.getElementById("reelHeaderRow");
   const body = document.getElementById("reelTableBody");
   if (!body) return;
+  renderSortableHeader(headerRow, REEL_COLUMNS, reelSort, () => renderReel(game));
+  headerRow.appendChild(document.createElement("th"));
+  headerRow.appendChild(document.createElement("th"));
   body.innerHTML = "";
   if (game.plays.length === 0) {
     body.innerHTML = '<tr><td colspan="7" class="empty-state">No clips marked yet.</td></tr>';
@@ -1979,7 +2059,17 @@ function renderReel(game) {
   }
   const gamePlayers = [...game.teamA, ...game.teamB].map(id => state.players.find(p => p.id === id)).filter(Boolean);
 
-  [...game.plays].sort((a, b) => a.start - b.start).forEach(play => {
+  let rows = game.plays.map(play => {
+    const player = play.playerId ? state.players.find(p => p.id === play.playerId) : null;
+    return { ...play, play, playerName: player ? player.name : "" };
+  });
+  if (reelSort.key === null) {
+    rows.sort((a, b) => a.start - b.start);
+  } else {
+    const sortCol = REEL_COLUMNS.find(c => c.key === reelSort.key);
+    rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), reelSort.dir));
+  }
+  rows.forEach(({ play }) => {
     const tr = document.createElement("tr");
 
     const typeTd = document.createElement("td");
@@ -2063,6 +2153,11 @@ function renderReel(game) {
     body.appendChild(tr);
   });
 }
+document.getElementById("reelChronoBtn").addEventListener("click", () => {
+  reelSort = { key: null, dir: "asc" };
+  const game = state.games.find(g => g.id === currentGameId);
+  if (game) renderReel(game);
+});
 
 // ---- Matchups ----
 function renderMatchupForm(game) {
@@ -2090,20 +2185,41 @@ document.getElementById("addMatchupForm").addEventListener("submit", e => {
   renderMatchupTable(game);
 });
 
+// null key = natural order (plain insertion order, the same order this table has always opened
+// with — matchups aren't videoTime-sorted by default today). Only a real column key overrides it.
+const MATCHUP_TABLE_COLUMNS = [
+  { key: "defender", label: "Defender", accessor: r => r.defenderName },
+  { key: "guarded", label: "Guarded", accessor: r => r.offenderName },
+  { key: "note", label: "Note", accessor: r => r.m.note || "" },
+  { key: "time", label: "Time", accessor: r => r.m.videoTime }
+];
+let matchupTableSort = { key: null, dir: "asc" };
+
 function renderMatchupTable(game) {
+  const headerRow = document.getElementById("matchupTableHeaderRow");
   const body = document.getElementById("matchupTableBody");
+  renderSortableHeader(headerRow, MATCHUP_TABLE_COLUMNS, matchupTableSort, () => renderMatchupTable(game));
+  headerRow.appendChild(document.createElement("th"));
+  headerRow.appendChild(document.createElement("th"));
   body.innerHTML = "";
   if (game.matchups.length === 0) {
     body.innerHTML = '<tr><td colspan="6" class="empty-state">No matchups recorded yet.</td></tr>';
     return;
   }
-  game.matchups.forEach(m => {
+  let rows = game.matchups.map(m => {
     const defender = state.players.find(p => p.id === m.defenderId);
     const offender = state.players.find(p => p.id === m.offenderId);
+    return { m, defenderName: defender ? defender.name : "?", offenderName: offender ? offender.name : "?" };
+  });
+  if (matchupTableSort.key !== null) {
+    const sortCol = MATCHUP_TABLE_COLUMNS.find(c => c.key === matchupTableSort.key);
+    rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), matchupTableSort.dir));
+  }
+  rows.forEach(({ m, defenderName, offenderName }) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${defender ? escapeHtml(defender.name) : "?"}</td>
-      <td>${offender ? escapeHtml(offender.name) : "?"}</td>
+      <td>${escapeHtml(defenderName)}</td>
+      <td>${escapeHtml(offenderName)}</td>
       <td>${escapeHtml(m.note || "")}</td>
       <td>${formatVideoTime(m.videoTime)}</td>
     `;
@@ -2124,6 +2240,11 @@ function renderMatchupTable(game) {
     body.appendChild(tr);
   });
 }
+document.getElementById("matchupTableChronoBtn").addEventListener("click", () => {
+  matchupTableSort = { key: null, dir: "asc" };
+  const game = state.games.find(g => g.id === currentGameId);
+  if (game) renderMatchupTable(game);
+});
 
 // ---------- Leaderboard ----------
 function computeLeaderboard() {

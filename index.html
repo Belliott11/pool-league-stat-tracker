@@ -165,25 +165,25 @@
 
     <div class="panel">
       <h2>Shot Log</h2>
-      <p class="hint">Every shot attempt, make or miss, with who (if anyone) was contesting it and — for makes — who assisted it. Click +1/+2/+3 (make) or the MISS buttons on a player above to log one. Each entry auto-captures the video's playback position when you logged it, so <strong>Jump</strong> takes you right back to it (needs a local video file or direct link loaded, not a YouTube embed).</p>
+      <p class="hint">Every shot attempt, make or miss, with who (if anyone) was contesting it and — for makes — who assisted it. Click +1/+2/+3 (make) or the MISS buttons on a player above to log one. Each entry auto-captures the video's playback position when you logged it, so <strong>Jump</strong> takes you right back to it (needs a local video file or direct link loaded, not a YouTube embed). Click any column header to sort by it — <button type="button" class="secondary-btn" id="scoringLogChronoBtn">↺ Chronological</button> puts it back the way it opened.</p>
       <table class="matchup-table">
-        <thead><tr><th>Shooter</th><th>Result</th><th>Value</th><th>Assist</th><th>Defender</th><th>Time</th><th></th><th></th></tr></thead>
+        <thead><tr id="scoringLogHeaderRow"></tr></thead>
         <tbody id="scoringLogBody"></tbody>
       </table>
     </div>
 
     <div class="panel">
       <h2>Other Events</h2>
-      <p class="hint">Every turnover, steal, and foul, tagged with the one opponent involved where noted. Click the TOV/STL/PF +1 buttons on a player above to log one.</p>
+      <p class="hint">Every turnover, steal, and foul, tagged with the one opponent involved where noted. Click the TOV/STL/PF +1 buttons on a player above to log one. Click any column header to sort by it — <button type="button" class="secondary-btn" id="otherEventsChronoBtn">↺ Chronological</button> puts it back the way it opened.</p>
       <table class="matchup-table">
-        <thead><tr><th>Type</th><th>Player</th><th>Opponent</th><th>Time</th><th></th><th></th></tr></thead>
+        <thead><tr id="otherEventsHeaderRow"></tr></thead>
         <tbody id="otherEventsBody"></tbody>
       </table>
     </div>
 
     <div class="panel">
       <h2>Defensive Matchups</h2>
-      <p class="hint">Track who was guarding who while you review the video. Add as many entries as the matchup changes.</p>
+      <p class="hint">Track who was guarding who while you review the video. Add as many entries as the matchup changes. Click any column header to sort by it — <button type="button" class="secondary-btn" id="matchupTableChronoBtn">↺ Chronological</button> puts it back the way it opened.</p>
       <form id="addMatchupForm" class="inline-form">
         <select id="defenderSelect" required></select>
         <span>guarded</span>
@@ -192,17 +192,17 @@
         <button type="submit">Add Matchup</button>
       </form>
       <table class="matchup-table">
-        <thead><tr><th>Defender</th><th>Guarded</th><th>Note</th><th>Time</th><th></th><th></th></tr></thead>
+        <thead><tr id="matchupTableHeaderRow"></tr></thead>
         <tbody id="matchupTableBody"></tbody>
       </table>
     </div>
 
     <div class="panel">
       <h2>Highlight / Lowlight Reel</h2>
-      <p class="hint">Every clip you've marked for this game — use the Mark Highlight / Mark Lowlight buttons above to add one.</p>
+      <p class="hint">Every clip you've marked for this game — use the Mark Highlight / Mark Lowlight buttons above to add one. Click any column header to sort by it — <button type="button" class="secondary-btn" id="reelChronoBtn">↺ Chronological</button> puts it back the way it opened.</p>
       <div class="table-scroll">
         <table class="matchup-table" id="reelTable">
-          <thead><tr><th>Type</th><th>Start</th><th>End</th><th>Player</th><th>Note</th><th></th><th></th></tr></thead>
+          <thead><tr id="reelHeaderRow"></tr></thead>
           <tbody id="reelTableBody"></tbody>
         </table>
       </div>
