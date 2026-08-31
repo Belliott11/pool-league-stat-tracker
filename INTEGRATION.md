@@ -221,6 +221,31 @@ both sides of the ratio (`fga` only ever counts `points === 2 || 3`, matching `s
 everywhere else in this tool) — a player who draws a lot of fouls but rarely shoots from the field
 shouldn't show an inflated Shot% because of it.
 
+**AST% (Leaderboard) is the same pattern applied to assists, computed inline the same way** —
+`teamAstTotal` in `computeLeaderboard()`, built per game by summing `g.stats.find(st =>
+st.playerId === id).ast` for every player on the player's own side that game (themselves
+included), then `astPct: pct(totals.ast, teamAstTotal)`. Same season-long share, same
+team-scoped denominator, same reasoning as Shot% above: it's about what fraction of *this team's*
+playmaking on a given night ran through this player, not a share of the league's assists.
+
+**OREB%/DREB% (Leaderboard) are a different case from Shot%/AST% — the real rebound-percentage
+formula, not the team-share pattern, made possible by a Poolean-specific shortcut.** The actual
+Total Rebound % / OREB% / DREB% formulas measure a player's rebounds against every rebound that
+was actually *available*, which for offense means both teams' outcomes on that team's own misses
+(their team's OREB plus the opponent's DREB), and for defense the mirror (their team's DREB plus
+the opponent's OREB on the opponent's misses) — a rebound is contested between both teams on the
+floor, unlike a shot attempt or an assist, which only one side can ever produce. The real-world
+version of this stat normally has to scale by minutes played, to restrict "available" down to
+possessions where the player was actually on the floor — this tool doesn't track minutes at all,
+but Poolean has no substitutions, so every rostered player is on the floor for the entire game,
+and the minutes term real implementations need just drops out algebraically. Computed inline in
+`computeLeaderboard()` as `orebPoolTotal`/`drebPoolTotal`: for each game, sum `oreb`/`dreb` across
+the player's own roster (`teamOreb`/`teamDreb`) and the opposing roster (`oppOreb`/`oppDreb`) from
+`g.stats`, then `orebPoolTotal += teamOreb + oppDreb` and `drebPoolTotal += teamDreb + oppOreb`;
+`orebPct: pct(totals.oreb, orebPoolTotal)`, `drebPct: pct(totals.dreb, drebPoolTotal)`. If you
+port this, don't reuse `teamFgaTotal`/`teamAstTotal`'s pattern (own team only) — this one needs
+both rosters' rebound totals for every game the player played, not just their own team's.
+
 **`scoring_events`** — one row per shot attempt, made or missed (this is what the dashboard
 calls the "Shot Log")
 - `game` → relation to `games`

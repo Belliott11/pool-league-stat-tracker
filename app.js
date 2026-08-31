@@ -2444,7 +2444,7 @@ function computeLeaderboard() {
     const totals = { pts: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, pf: 0 };
     const shooting = { fgm: 0, fga: 0, tpm: 0, tpa: 0, closeM: 0, closeA: 0, midM: 0, midA: 0, tpArcM: 0, tpArcA: 0, tpDeepM: 0, tpDeepA: 0, ftm: 0, fta: 0 };
     const defense = { ptsAllowed: 0, timesBeaten: 0, stops: 0, blocksNotAlreadyStopped: 0 };
-    let wins = 0, losses = 0, ties = 0, combinedPoints = 0, teamFgaTotal = 0;
+    let wins = 0, losses = 0, ties = 0, combinedPoints = 0, teamFgaTotal = 0, teamAstTotal = 0, orebPoolTotal = 0, drebPoolTotal = 0;
     gamesPlayed.forEach(g => {
       const s = g.stats.find(st => st.playerId === p.id);
       if (s) STAT_FIELDS.forEach(f => totals[f] += s[f]);
@@ -2456,12 +2456,27 @@ function computeLeaderboard() {
       defense.stops += def.stops;
       defense.blocksNotAlreadyStopped += def.blocksNotAlreadyStopped;
       combinedPoints += gameTotalPoints(g);
-      // Shot% denominator: every field goal attempt by this player's own team in this game
-      // (themselves included), so "what share of the team's shots were theirs" — not the
-      // league's, since a team's own shot diet is the meaningful comparison for who's actually
-      // taking the shots on a given night.
+      // Shot%/AST% denominators: this player's own team's total in this game (themselves
+      // included), so "what share of the team's shots/assists were theirs" — not the league's,
+      // since a team's own diet in each category is the meaningful comparison for who's actually
+      // doing it on a given night.
       const myTeam = g.teamA.includes(p.id) ? g.teamA : g.teamB;
+      const oppTeam = g.teamA.includes(p.id) ? g.teamB : g.teamA;
       teamFgaTotal += myTeam.reduce((sum, id) => sum + shootingStats(g, id).fga, 0);
+      teamAstTotal += myTeam.reduce((sum, id) => { const ts = g.stats.find(st => st.playerId === id); return sum + (ts ? ts.ast : 0); }, 0);
+      // OREB%/DREB% denominators: the real "available rebounds" pool a rebound percentage is
+      // supposed to be measured against — both teams' rebounds on that category of miss, not
+      // just this player's own team (unlike Shot%/AST% above, since a rebound is contested
+      // between both teams on the floor, not a stat only one side can produce). Normally this
+      // needs minutes played to scope it to when a player was actually on the floor, which this
+      // tool doesn't track — but Poolean has no substitutions, so anyone rostered for a game is
+      // on the floor for the whole thing, and that term drops out on its own.
+      const teamOreb = myTeam.reduce((sum, id) => { const ts = g.stats.find(st => st.playerId === id); return sum + (ts ? ts.oreb : 0); }, 0);
+      const teamDreb = myTeam.reduce((sum, id) => { const ts = g.stats.find(st => st.playerId === id); return sum + (ts ? ts.dreb : 0); }, 0);
+      const oppOreb = oppTeam.reduce((sum, id) => { const ts = g.stats.find(st => st.playerId === id); return sum + (ts ? ts.oreb : 0); }, 0);
+      const oppDreb = oppTeam.reduce((sum, id) => { const ts = g.stats.find(st => st.playerId === id); return sum + (ts ? ts.dreb : 0); }, 0);
+      orebPoolTotal += teamOreb + oppDreb;
+      drebPoolTotal += teamDreb + oppOreb;
       const result = playerGameResult(g, p.id);
       if (result === "W") wins++;
       else if (result === "L") losses++;
@@ -2513,6 +2528,9 @@ function computeLeaderboard() {
       twoWayTotal: totalTwoWay,
       stocks: totals.stl + totals.blk,
       shotPct: pct(shooting.fga, teamFgaTotal),
+      astPct: pct(totals.ast, teamAstTotal),
+      orebPct: pct(totals.oreb, orebPoolTotal),
+      drebPct: pct(totals.dreb, drebPoolTotal),
       astTov: formatAstTov(totals.ast, totals.tov),
       last5Gp: last5.gp, last5OffRatingPer20: last5.offRatingPer20, last5TwoWayPer20: last5.twoWayPer20, last5Trend
     };
@@ -3772,6 +3790,9 @@ const LEADERBOARD_COLUMNS = [
   { key: "pct", label: "PCT", accessor: r => r.winPct, display: r => formatPct(r.winPct), tooltip: "Win percentage: wins / (wins + losses)." },
   { key: "pts", label: "PTS/20", accessor: r => r.rate.pts, display: r => r.rate.pts.toFixed(1), tooltip: "Points, per 20 combined points scored in the game (not per game — see the note above the table)." },
   { key: "shotpct", label: "Shot%", accessor: r => r.shotPct, display: r => formatPct(r.shotPct), tooltip: "Share of their own team's field goal attempts that were theirs, across games they played — not the league's shots, their team's. A season-long share (their FGA / their team's FGA in those same games), not a per-20 rate." },
+  { key: "astpct", label: "AST%", accessor: r => r.astPct, display: r => formatPct(r.astPct), tooltip: "Share of their own team's assists that were theirs, across games they played — not the league's assists, their team's. A season-long share (their AST / their team's AST in those same games), not a per-20 rate." },
+  { key: "orebpct", label: "OREB%", accessor: r => r.orebPct, display: r => formatPct(r.orebPct), tooltip: "Real Total Rebound %-style share: this player's OREB divided by every offensive rebound available on their team's misses that game (their team's OREB plus the opponent's DREB on those same misses) — not just their own team's OREB total like Shot%/AST% above, since a rebound is contested between both teams. Poolean has no substitutions, so a rostered player is on the floor for the whole game — the minutes-played term real rebound rate stats normally need just doesn't apply here. A season-long share, not a per-20 rate." },
+  { key: "drebpct", label: "DREB%", accessor: r => r.drebPct, display: r => formatPct(r.drebPct), tooltip: "Same idea as OREB% for the other side of the ball: this player's DREB divided by every defensive rebound available on the opponent's misses that game (their team's DREB plus the opponent's OREB on those same misses). A season-long share, not a per-20 rate." },
   { key: "fg", label: "FG", accessor: r => pct(r.shooting.fgm, r.shooting.fga), display: r => formatShootingSplitRate(r.rateShooting.fgm, r.rateShooting.fga), tooltip: "Field goals made/attempted (2s and 3s combined), per 20 combined points, with FG%." },
   { key: "tpt", label: "3PT", accessor: r => pct(r.shooting.tpm, r.shooting.tpa), display: r => formatShootingSplitRate(r.rateShooting.tpm, r.rateShooting.tpa), tooltip: "3-pointers made/attempted, per 20 combined points, with 3PT%. See the 3PT Shot Distance panel below for the Arc/Deep breakdown." },
   { key: "ft", label: "FT", accessor: r => pct(r.shooting.ftm, r.shooting.fta), display: r => formatShootingSplitRate(r.rateShooting.ftm, r.rateShooting.fta), tooltip: "Free throws made/attempted, per 20 combined points, with FT%." },
@@ -4493,13 +4514,13 @@ document.getElementById("exportMatchupCsvBtn").addEventListener("click", () => {
 
 document.getElementById("exportLeaderboardCsvBtn").addEventListener("click", () => {
   const rows = [["player", "games_played", ...STAT_FIELDS,
-    "fgm", "fga", "tpm", "tpa", "close_m", "close_a", "mid_m", "mid_a", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "shot_pct", "efg_pct", "ts_pct", "stocks", "ast_tov",
+    "fgm", "fga", "tpm", "tpa", "close_m", "close_a", "mid_m", "mid_a", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "shot_pct", "ast_pct", "oreb_pct", "dreb_pct", "efg_pct", "ts_pct", "stocks", "ast_tov",
     "pts_allowed", "opp_fg_pct", "times_beaten", "stops", "pts_per_20", "off_rating_per_20", "def_rating_per_20", "two_way_per_20"]];
   computeLeaderboard().forEach(r => {
     rows.push([
       r.player.name, r.gp, ...STAT_FIELDS.map(f => r.totals[f]),
       r.shooting.fgm, r.shooting.fga, r.shooting.tpm, r.shooting.tpa, r.shooting.closeM, r.shooting.closeA, r.shooting.midM, r.shooting.midA, r.shooting.tpArcM, r.shooting.tpArcA, r.shooting.tpDeepM, r.shooting.tpDeepA, r.shooting.ftm, r.shooting.fta,
-      r.shotPct, effectiveFgPct(r.shooting.fgm, r.shooting.tpm, r.shooting.fga), trueShootingPct(r.totals.pts, r.shooting.fga, r.shooting.fta),
+      r.shotPct, r.astPct, r.orebPct, r.drebPct, effectiveFgPct(r.shooting.fgm, r.shooting.tpm, r.shooting.fga), trueShootingPct(r.totals.pts, r.shooting.fga, r.shooting.fta),
       r.stocks, r.astTov, r.defense.ptsAllowed,
       pct(r.defense.timesBeaten, r.defense.timesBeaten + r.defense.stops),
       r.defense.timesBeaten, r.defense.stops, r.rate.pts.toFixed(1), r.offRatingPer20.toFixed(1),

@@ -190,7 +190,18 @@ individual player, not a team.
    the field won't show an inflated Shot% from that. This is deliberately about a team's own shot
    diet, not the league's — the meaningful comparison for "who's actually taking the shots on a
    given night" is against the three or four other people on the floor with them, not the whole
-   roster. **Click any column header to sort by it** (click again to flip
+   roster. Right next to it, **AST%** is the same idea for playmaking: what percentage of their
+   own team's total assists were theirs, across the games they played (their AST ÷ their team's
+   AST in those same games) — same season-long share, not a per-20 rate, same team-scoped
+   denominator rather than the league's. **OREB%** and **DREB%**, right after AST%, are the real
+   Total Rebound %-style version rather than a Shot%/AST%-style team share — a rebound is
+   contested between *both* teams on the floor, so the denominator is every rebound actually
+   available on that category of miss: OREB% is their OREB ÷ (their team's OREB + the opponent's
+   DREB on their team's own misses), DREB% is their DREB ÷ (their team's DREB + the opponent's
+   OREB on the opponent's misses). The real version of this stat normally needs minutes played, to
+   scope "available" down to while a player was actually on the floor — this tool doesn't track
+   minutes, but Poolean has no substitutions, so a rostered player is on the floor for the entire
+   game and that term drops out on its own. **Click any column header to sort by it** (click again to flip
    between highest-first and lowest-first) — hover a header for a sentence on what that column
    means, since 25+ columns is a lot to hold in your head while staring at a number. The last
    column, **Last 5**, is a quick "how are they trending lately" read: Off Rating/20 over just their
