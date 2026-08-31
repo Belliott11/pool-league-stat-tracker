@@ -387,6 +387,15 @@
           <tbody id="leagueHighlightsBody"></tbody>
         </table>
       </div>
+      <div class="reel-export-row">
+        <button type="button" class="secondary-btn" id="exportLeagueVideoBtn" disabled>🎬 Combine All Clips Into One Video</button>
+        <button type="button" class="secondary-btn" id="cancelLeagueExportBtn" hidden>Cancel</button>
+        <p class="hint" id="leagueExportStatus" style="margin:0"></p>
+      </div>
+      <p class="hint" style="margin:6px 0 0">Same real-time, in-browser recording as the per-game version in Stat Entry, extended across every game — combines in chronological order (oldest game first), loading each game's video in turn. A game with a YouTube-embedded or otherwise non-direct video link can't be captured this way and is skipped, with a note in the final summary. This can genuinely take a while for a full season's worth of clips — the tab needs to stay open and foregrounded the whole time.</p>
+      <div id="leagueExportPreviewWrap" hidden>
+        <video id="leagueExportVideo" class="league-export-preview" muted playsinline></video>
+      </div>
     </div>
   </section>
 

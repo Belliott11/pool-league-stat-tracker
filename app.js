@@ -3977,6 +3977,7 @@ function computeLeagueHighlights() {
 function renderLeagueHighlights() {
   const body = document.getElementById("leagueHighlightsBody");
   if (!body) return;
+  updateLeagueExportButton();
   const clips = computeLeagueHighlights();
   body.innerHTML = "";
   if (clips.length === 0) {
@@ -4003,6 +4004,207 @@ function renderLeagueHighlights() {
     body.appendChild(tr);
   });
 }
+
+// ---- Combine League Highlights into one downloadable video ----
+// Same real-time, in-browser MediaRecorder approach as the per-game Reel export (see that one's
+// comment in the Stat Entry section for the full reasoning), extended across every game that has
+// a usable video instead of just whichever one happens to be open. The one real architectural
+// difference: this uses its own dedicated <video> element (there may not be a game open at all),
+// whose src gets swapped between games — captureStream() stays bound to that one element the
+// whole time, so pause()/resume() around each game's load keeps this one continuous MediaRecorder
+// session, exactly like the per-game version, instead of needing several files stitched together
+// afterward. Reuses pickRecorderMimeType()/waitForSeek()/waitUntilTime()/raceCancel() from that
+// same section — the per-clip mechanics don't change, only how the video source is supplied.
+let leagueExportState = null; // { cancelled, resolveCancel } while an export is running
+
+// Every clip across the whole league, grouped by game, with both levels sorted ascending (oldest
+// game first, then earliest clip within it) — a combined video should tell the season's story in
+// the order it actually happened, the opposite of computeLeagueHighlights()'s own newest-first
+// sort (that one's built for a reading list, not a video).
+function leagueClipsByGameChronological() {
+  return state.games
+    .map(game => ({ game, clips: reelClipsChronological(game) }))
+    .filter(({ clips }) => clips.length > 0)
+    .sort((a, b) => (a.game.date || "").localeCompare(b.game.date || ""));
+}
+
+function updateLeagueExportButton() {
+  const btn = document.getElementById("exportLeagueVideoBtn");
+  if (!btn) return;
+  const totalClips = leagueClipsByGameChronological().reduce((sum, { clips }) => sum + clips.length, 0);
+  btn.disabled = !!leagueExportState || totalClips === 0;
+}
+
+// Resolves to a playable video src for this specific game (a blob: URL for a locally stored
+// file, or the game's own direct video link) or null if there's nothing captureStream() can use
+// — a YouTube embed or a generic iframe link. Deliberately doesn't touch localVideoBlobUrls'/
+// masterVideoBlobUrls' existing caches or call renderStatEntry() the way loadStoredVideo()/
+// loadStoredMasterVideo() do — those two are wired to "the one currently open game," and this
+// runs across many games that mostly aren't open, so it keeps its own cache instead.
+const leagueExportVideoSrcCache = {};
+async function getGameVideoSrcForExport(game) {
+  const cacheKey = game.masterVideoId || game.id;
+  if (cacheKey in leagueExportVideoSrcCache) return leagueExportVideoSrcCache[cacheKey];
+  let src = null;
+  const file = await getVideoFile(cacheKey);
+  if (file) {
+    src = URL.createObjectURL(file);
+  } else if (game.videoUrl) {
+    const isYouTube = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))/.test(game.videoUrl);
+    const isDirectVideo = /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(game.videoUrl);
+    if (!isYouTube && isDirectVideo) src = game.videoUrl;
+  }
+  leagueExportVideoSrcCache[cacheKey] = src;
+  return src;
+}
+
+// Resolves once `video.src` has actually loaded enough to seek/play — needed since this swaps
+// src on one persistent element rather than creating a new one per game.
+function loadVideoSrc(video, src) {
+  return new Promise((resolve, reject) => {
+    function cleanup() {
+      video.removeEventListener("loadedmetadata", onReady);
+      video.removeEventListener("error", onError);
+    }
+    function onReady() { cleanup(); resolve(); }
+    function onError() { cleanup(); reject(new Error("video load error")); }
+    video.addEventListener("loadedmetadata", onReady, { once: true });
+    video.addEventListener("error", onError, { once: true });
+    video.src = src;
+    video.load();
+  });
+}
+
+async function exportLeagueVideo() {
+  if (leagueExportState) return;
+  const grouped = leagueClipsByGameChronological();
+  if (grouped.length === 0) return;
+  const mimeType = pickRecorderMimeType();
+  const statusEl = document.getElementById("leagueExportStatus");
+  if (!mimeType) {
+    statusEl.textContent = "This browser doesn't support recording video — try a recent Chrome or Firefox.";
+    return;
+  }
+
+  const previewWrap = document.getElementById("leagueExportPreviewWrap");
+  const video = document.getElementById("leagueExportVideo");
+  previewWrap.hidden = false;
+  video.muted = false;
+
+  const stream = video.captureStream ? video.captureStream() : video.mozCaptureStream();
+  const recorder = new MediaRecorder(stream, { mimeType });
+  const chunks = [];
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+  let resolveCancel;
+  const cancelPromise = new Promise(resolve => { resolveCancel = resolve; });
+  leagueExportState = { cancelled: false, resolveCancel };
+  document.getElementById("exportLeagueVideoBtn").disabled = true;
+  document.getElementById("cancelLeagueExportBtn").hidden = false;
+
+  // Resolve every game's video source up front, before any recording starts — this way "which
+  // games got skipped" is known before spending any real recording time, and games sharing the
+  // same source (a shared session video) only ever get fetched once.
+  statusEl.textContent = "Checking video sources…";
+  const queue = []; // flat list of {game, clip, src}, video reloads only happen when src changes
+  let skippedGames = 0, skippedClips = 0;
+  for (const { game, clips } of grouped) {
+    if (leagueExportState.cancelled) break;
+    let src = null;
+    try { src = await getGameVideoSrcForExport(game); } catch (e) { src = null; }
+    if (!src) {
+      skippedGames++;
+      skippedClips += clips.length;
+      continue;
+    }
+    clips.forEach(clip => queue.push({ game, clip, src }));
+  }
+
+  const totalClips = queue.length;
+  let done = 0;
+  let currentSrc = null;
+  let stoppedEarly = null;
+
+  // Started paused so only actual clip playback — not the seeking/loading between clips or
+  // between games — ends up in the recording. pause()/resume() (not stop-and-restart) keeps it
+  // one continuous MediaRecorder session.
+  recorder.start();
+  recorder.pause();
+  try {
+    for (const { game, clip, src } of queue) {
+      if (leagueExportState.cancelled) break;
+
+      if (src !== currentSrc) {
+        statusEl.textContent = `Loading video for ${formatDateDisplay(game.date)}…`;
+        const loadOutcome = await raceCancel(loadVideoSrc(video, src), cancelPromise);
+        if (loadOutcome === "cancelled") break;
+        currentSrc = src;
+      }
+
+      done++;
+      statusEl.textContent = `Recording clip ${done} of ${totalClips} (${formatDateDisplay(game.date)})…`;
+
+      const seekOutcome = await raceCancel(waitForSeek(video, clip.start), cancelPromise);
+      if (seekOutcome === "cancelled") break;
+
+      recorder.resume();
+      const playPromise = video.play().catch(() => {});
+      const playOutcome = await Promise.race([
+        playPromise.then(() => "played"),
+        cancelPromise.then(() => "cancelled"),
+        new Promise(resolve => setTimeout(() => resolve("timeout"), 8000))
+      ]);
+      if (playOutcome !== "played") {
+        recorder.pause();
+        if (playOutcome === "cancelled") break;
+        stoppedEarly = `Clip ${done} of ${totalClips} didn't start playing — stopped there.`;
+        break;
+      }
+
+      const waitOutcome = await raceCancel(waitUntilTime(video, clip.end), cancelPromise);
+      video.pause();
+      recorder.pause();
+      if (waitOutcome === "cancelled") break;
+    }
+  } finally {
+    recorder.stop();
+    await new Promise(resolve => { recorder.onstop = resolve; });
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+    previewWrap.hidden = true;
+  }
+
+  const cancelled = leagueExportState.cancelled;
+  leagueExportState = null;
+  document.getElementById("cancelLeagueExportBtn").hidden = true;
+  updateLeagueExportButton();
+
+  const skipNote = skippedClips > 0
+    ? ` (${skippedClips} clip${skippedClips === 1 ? "" : "s"} across ${skippedGames} game${skippedGames === 1 ? "" : "s"} skipped — no usable video source.)`
+    : "";
+  if (cancelled) {
+    statusEl.textContent = "Cancelled — nothing downloaded.";
+  } else if (chunks.length === 0) {
+    statusEl.textContent = (stoppedEarly || "Recording produced no data — try again.") + skipNote;
+  } else {
+    const blob = new Blob(chunks, { type: mimeType });
+    download("league-highlights.webm", blob, mimeType);
+    statusEl.textContent = stoppedEarly
+      ? `${stoppedEarly} Downloaded what was recorded before that.${skipNote}`
+      : `Done — ${done} clip${done === 1 ? "" : "s"} combined and downloaded.${skipNote}`;
+  }
+}
+
+document.getElementById("exportLeagueVideoBtn").addEventListener("click", () => {
+  exportLeagueVideo();
+});
+document.getElementById("cancelLeagueExportBtn").addEventListener("click", () => {
+  if (leagueExportState) {
+    leagueExportState.cancelled = true;
+    leagueExportState.resolveCancel();
+  }
+});
 
 // Same idea as GAME_STATS_COLUMNS, but each row is one of this player's own games (not another
 // player in the same game) — accessor reads off a precomputed {game, s, def, sh, gmsc, twoWay,

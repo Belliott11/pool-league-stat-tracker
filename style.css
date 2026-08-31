@@ -163,6 +163,18 @@ main {
   margin-top: 10px;
 }
 
+/* Small live preview during the league-wide combine-video export — visible so there's some
+   confirmation something's actually happening during what can be a long real-time recording,
+   not full-size since it's not meant to be watched closely, just glanced at for progress. */
+.league-export-preview {
+  display: block;
+  width: 220px;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  margin-top: 10px;
+  background: #000;
+}
+
 input, select, button {
   font-family: var(--font-body);
   font-size: 0.9rem;

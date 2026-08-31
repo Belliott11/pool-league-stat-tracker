@@ -466,6 +466,37 @@ replicating exactly, both hardened after a real bug found in testing:
   place of a boolean cancelled flag needs to be able to interrupt an in-flight await, not just get
   read after it returns.
 
+**Combine All Clips Into One Video (Leaderboard → Highlights & Lowlights (League)) extends the
+same approach across every game, not just the one currently open — one real architectural
+difference worth knowing if you port this one too.** `exportLeagueVideo()` (`app.js`) reuses
+`pickRecorderMimeType()`/`waitForSeek()`/`waitUntilTime()`/`raceCancel()` unchanged from the
+per-game version above — the per-clip mechanics don't change — but records from its own dedicated
+`<video>` element (`#leagueExportVideo`, a small visible preview player, not `currentVideoEl`,
+since there may be no game open at all) whose `src` gets swapped between games rather than
+creating a new element/stream per game. That's deliberate, not incidental: `captureStream()`
+binds to one element, and swapping that element's `src` keeps the same `MediaStream` (and
+therefore the same `MediaRecorder` session) valid across the whole export, so `pause()`/`resume()`
+around each game's load — same mechanism as around each clip within a game — is what keeps this
+one continuous file instead of one per game to stitch together.
+
+Two things specific to spanning multiple games, not present in the per-game version:
+- **Video source resolution has its own cache and fetch path
+  (`getGameVideoSrcForExport()`/`leagueExportVideoSrcCache`), deliberately not reusing
+  `loadStoredVideo()`/`loadStoredMasterVideo()`.** Those two assume there's exactly one "currently
+  open" game (they gate on `gameId === currentGameId` and call `renderStatEntry()` on success) —
+  correct for the Stat Entry page's own UI, wrong for a batch export touching many games most of
+  which aren't open. The resolution order matches `renderVideoPanel()`'s own priority: a stored
+  master/session video first (`getVideoFile(game.masterVideoId)`), then a stored per-game file
+  (`getVideoFile(game.id)`), then `game.videoUrl` *only* if it's a direct video link and not a
+  YouTube URL — a YouTube embed or generic iframe link resolves to `null`, and that game's clips
+  are counted as skipped rather than attempted.
+- **Every game's video source is resolved up front, before any recording starts, not lazily as
+  each game comes up in the loop.** This means "how many clips/games will be skipped" is known
+  (and reported in the final summary) before spending any real recording time on the games that
+  *do* have video, and a session video shared by several games only gets fetched from IndexedDB
+  once no matter how many of that game's clips end up in the queue, since the fetch is
+  cache-keyed on `masterVideoId || game.id`, not on the clip.
+
 **Player Detail's Shot Chart is also purely computed, nothing stored — the ungrouped
 counterpart to the heatmap just below it.** `renderPlayerShotChart()` (`app.js`) plots every one
 of a player's own field goals with a non-null `shot_x`/`shot_y` at its literal coordinates

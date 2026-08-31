@@ -359,7 +359,21 @@ individual player, not a team.
    clip from every player and game pooled into one list, most recent first — the league-wide
    version of the per-player Highlights & Lowlights table on Player Detail (see below), which
    only ever shows one player's clips at a time. Same source (the Highlight/Lowlight Reel table
-   in Stat Entry), just with a Player column added and nothing scoped to one person. Click a player's name to
+   in Stat Entry), just with a Player column added and nothing scoped to one person.
+   **🎬 Combine All Clips Into One Video**, below that table, is the league-wide version of the
+   per-game combine-video feature in Stat Entry (see above) — same real-time, in-browser
+   `MediaRecorder` approach, extended across every game instead of just the one currently open. It
+   loads each game's video in turn (oldest game first) into its own small preview player, visible
+   while it's running so there's some confirmation something's actually happening. A game whose
+   video is a YouTube embed or a generic iframe link can't be captured this way and gets skipped —
+   the final summary says how many clips and games that affected, if any. This can take a genuinely
+   long time for a full season's worth of clips (it's still real-time, one clip's own duration at
+   a time, now just across every game instead of one), and needs the tab to stay open and
+   foregrounded the whole way through — a **Cancel** button is there if you need to stop, though
+   cancelling discards the whole recording rather than downloading whatever got through, since a
+   silently-truncated "combined" video seemed more likely to be mistaken for the real thing than a
+   clean "nothing downloaded."
+   Click a player's name to
    open their **Player Detail** page, which is grouped the same loose way: season **Overview**
    (Two-Way Trend, Game Log), **Offense Detail** (Shot Chart, Shot Heatmap, Head-to-Head — As
    Scorer), **Defense Detail** (Defensive Heatmap, Head-to-Head — As Defender), **Team Context**
