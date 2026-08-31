@@ -145,35 +145,47 @@ isn't derivable from `scoring_events`/`turnover_events`/`steal_events`/`foul_eve
 - `player` → relation to `players`
 
 Everything below this — shooting splits, eFG%, TS%, Stocks (STL+BLK), Pts Allowed, Opp FG%,
-Beaten, Stops, Game Score, Two-Way Score — is *computed* from `box_score_stats` + `scoring_events`
-(+ the turnover/steal/foul event collections for TOV/STL/PF specifically), not stored anywhere.
-See `shootingStats()`, `gameDefenseStats()`, `trueShootingPct()`, `effectiveFgPct()`,
-`gameScore()`, `defensiveImpact()`, and `twoWayScore()` in `app.js` for the exact formulas if you
-want to replicate them as PocketBase views/queries instead of recomputing client-side.
+Beaten, Stops, Off Rating, Def Rating, Two-Way Score — is *computed* from `box_score_stats` +
+`scoring_events` (+ the turnover/steal/foul event collections for TOV/STL/PF specifically), not
+stored anywhere. See `shootingStats()`, `gameDefenseStats()`, `trueShootingPct()`,
+`effectiveFgPct()`, `offensiveRating()`, `defensiveRating()`, and `twoWayScore()` in `app.js` for
+the exact formulas if you want to replicate them as PocketBase views/queries instead of
+recomputing client-side.
 
-**Two-Way Score is GmSc plus Defensive Rating** (`defensiveImpact()` in the code — the display
-label reads "Def Rating" on the Leaderboard, the function name is unchanged): `Stops − Beaten −
-0.4×Pts Allowed`, using the same per-shot defender tags as Pts Allowed/Beaten/Stops above — no
-new stored data. Stops and Beaten are weighted symmetrically at 1.0 (a stop denies a possession
-the way GmSc weights a steal), Pts Allowed at 0.4 so a 3-point beat scores worse than a 2-point
-beat without double-penalizing the same possession the Beaten count already covers, and Opp FG%
-deliberately isn't its own term since it's just Beaten ÷ (Beaten + Stops) — a separate term
-would double-count that. Worth flagging if you're porting this: it's *not* the NBA's Defensive
-Rating (points allowed per 100 possessions) — this tool doesn't track possessions at all, so it
-reuses the same per-20-combined-points normalization as every other rate stat here instead. Same
-name, different denominator; don't conflate the two if you ever add real possession tracking.
-**A player never tagged as a defender in a game has Stops, Beaten, and
-Pts Allowed all at 0, so Defensive Rating is exactly 0 for them, not a penalty** — this matters
-because Ben's tagging policy is to only tag a defender when it's genuinely clear from the video,
-so conservative tagging should never hurt a Two-Way Score. If you replicate this server-side,
-make sure a "no tagged defensive possessions" player computes to 0, not null/undefined that then
-propagates as NaN or gets treated as a bad defensive game.
+**Off Rating and Def Rating are a deliberate split of what used to be one function** (`gameScore()`
++ `defensiveImpact()`, now `offensiveRating()` + `defensiveRating()`) **— not just a rename, a real
+formula change, so re-port both if you already ported the old pair.** The standard basketball Game
+Score formula bakes in STL and BLK alongside the offensive stats, which meant this tool's old
+"GmSc + Def Impact" combination credited a blocked shot *twice* whenever the blocker was also that
+shot's tagged on-ball defender (the usual case): 0.7 from GmSc's BLK term, plus another 1.0 from
+Def Impact's Stops term, for one defensive possession. `offensiveRating(s, sh)` is the old GmSc
+formula minus its STL and BLK terms — offense only. `defensiveRating(s, def)` is where STL and BLK
+live instead, next to the rest of the defensive numbers: `STL + 0.7×BLK_not_already_stopped +
+Stops − Beaten − 0.4×Pts Allowed`, using the same per-shot defender tags as Pts Allowed/Beaten/
+Stops above — no new stored data. `BLK_not_already_stopped` (see `blocksNotAlreadyStopped` in
+`gameDefenseStats()`) is the count of this player's blocks on shots where they *weren't* also the
+tagged on-ball defender — the block still needs to be genuinely uncovered by the Stops term to earn
+its own 0.7 credit, otherwise it's zero, and the Stops term above already covers that possession at
+full weight. Stops and Beaten are weighted symmetrically at 1.0 (a stop denies a possession the
+same way STL is weighted at 1.0 too), Pts Allowed at 0.4 so a 3-point beat scores worse than a
+2-point beat without double-penalizing the same possession the Beaten count already covers, and
+Opp FG% deliberately isn't its own term since it's just Beaten ÷ (Beaten + Stops) — a separate term
+would double-count that. Worth flagging if you're porting this: Def Rating is *not* the NBA's
+Defensive Rating (points allowed per 100 possessions) — this tool doesn't track possessions at
+all, so it reuses the same per-20-combined-points normalization as every other rate stat here
+instead. Same name, different denominator; don't conflate the two if you ever add real possession
+tracking. **A player never tagged as a defender in a game, with no steals or unstopped blocks, has
+a Def Rating of exactly 0, not a penalty** — this matters because Ben's tagging policy is to only
+tag a defender when it's genuinely clear from the video, so conservative tagging should never hurt
+a Two-Way Score. If you replicate this server-side, make sure a "no tagged defensive possessions,
+no steals, no unstopped blocks" player computes to 0, not null/undefined that then propagates as
+NaN or gets treated as a bad defensive game. **Two-Way Score is Off Rating plus Def Rating.**
 
-**Every counting stat on the Leaderboard page — not just PTS/20 and GmSc/20 — is normalized per
-20 combined points scored in the game, not per game and not a season total**: PTS, OREB, DREB,
-AST, STL, BLK, TOV, PF, Pts Allowed, Beaten, Stops, Def Rating, GmSc, and Two-Way, plus the
+**Every counting stat on the Leaderboard page — not just PTS/20 and Off Rating/20 — is normalized
+per 20 combined points scored in the game, not per game and not a season total**: PTS, OREB, DREB,
+AST, STL, BLK, TOV, PF, Pts Allowed, Beaten, Stops, Def Rating, Off Rating, and Two-Way, plus the
 FG/3PT/FT makes-attempts shown. See `gameTotalPoints()` and the `per20()` closure in
-`computeLeaderboard()` in `app.js`. This matters uniformly, not just for points and Game Score,
+`computeLeaderboard()` in `app.js`. This matters uniformly, not just for points and Off Rating,
 because games are capped at different targets (16 or 21), so a per-game average isn't directly
 comparable across games; the combined final score is used as a stand-in for possessions/pace,
 which this tool doesn't track directly. Keep this normalization if you replicate these stats
@@ -189,7 +201,7 @@ reviewed yet. `computeLeaderboard()` filters on this before computing anything e
 
 The Leaderboard CSV export is a separate code path and still exports raw season totals plus
 `games_played` (over that same stats-logged-only game set) rather than per-20 rates for every
-column — it only computes PTS/20, GmSc/20, and Two-Way/20 directly, same three as before. If
+column — it only computes PTS/20, Off Rating/20, Def Rating/20, and Two-Way/20 directly, same as before. If
 you're pulling from the CSV (or replicating a season-totals collection) rather than scraping the
 rendered page, you have the totals; apply the same per-20 normalization yourself for whatever
 rate you want to show, same as the dashboard's own UI layer does.
@@ -332,7 +344,7 @@ tracked stat `computeAwardsVsStats()` pairs with that award — Two-Way/20 rank 
 **season-long total Two-Way** (not a rate — see `twoWayTotal` on `computeLeaderboard()`'s
 per-player object) specifically for MVP, Def Rating/20 rank for DPOY, Game-Winning Buckets for
 Clutch (see below), the Last 5 trend for Most Improved (`last5TwoWayPer20` vs. `twoWayPer20`,
-same mechanism as the Leaderboard's own Last 5 column but Two-Way instead of GmSc here), or the
+same mechanism as the Leaderboard's own Last 5 column but Two-Way instead of Off Rating here), or the
 average Two-Way/20 lift a "Best Teammate" winner gives their actual teammates, reusing
 `computeTeammateSynergy()` from the section above — same "nothing stored, always current"
 pattern as the rest of this page. If you add a new season's awards, that means editing
@@ -438,9 +450,9 @@ re-sync, not a schema or computation change.
 does *not* normalize to a per-20 rate or a season total — every other panel does that specifically
 so players are comparable across different sample sizes, which is exactly what averages away a
 single game's own story. For every player on either roster in every game with
-`scoring_events.length > 0`, it computes that one game's own `gameScore(stats, shooting) +
-defensiveImpact(gameDefenseStats(game, playerId))` — the same two functions `computeLeaderboard()`
-already uses, just evaluated for one game's raw totals instead of summed/rated across a season.
+`scoring_events.length > 0`, it computes that one game's own `twoWayScore(stats, shooting,
+gameDefenseStats(game, playerId))` — the same function `computeLeaderboard()` already uses, just
+evaluated for one game's raw totals instead of summed/rated across a season.
 `renderIndividualGamePerformances()` sorts all of those rows once, then takes the top and bottom
 `n = min(10, floor(rows.length / 2))` — the floor-by-2 cap exists specifically so a thin season
 (few enough games that the "worst 10" and "best 10" would overlap) doesn't show the same handful
@@ -584,7 +596,7 @@ doesn't read the same as a well-sampled one (20).
 
 **The Two-Way Quadrant chart on the Leaderboard is also purely computed, nothing stored.**
 `computeQuadrantData()` (`app.js`) is a thin wrapper over `computeLeaderboard()` — one point per
-player with `gp > 0`, x = `gameScorePer20`, y = `defensiveImpact(rateDefense)`. No new fields, no
+player with `gp > 0`, x = `offRatingPer20`, y = `defensiveRating(rate, rateDefense)`. No new fields, no
 new computation; it's the existing Two-Way Score inputs plotted separately instead of pre-summed.
 `renderQuadrantChart()` scales both axes symmetrically around zero (`maxAbs * 1.15` in each
 direction) rather than to the data's actual min/max, so the zero-crossing quadrant lines always
@@ -697,7 +709,7 @@ nothing new to store.
 `computeTeammateSynergy(playerId)` is per-player, not league-wide: for each teammate this player
 has shared `teamA`/`teamB` with (in a game with `scoring_events.length > 0`), it splits that
 player's *own* games into "with" that teammate on their side vs. "without" (teammate on the other
-team, or not in that game), and compares GmSc/20 and Two-Way/20 across the split using the same
+team, or not in that game), and compares Off Rating/20 and Two-Way/20 across the split using the same
 per-20 math as `computeLeaderboard()` — see `computeRateSummaryForGames()` in `app.js`. This is
 the closer thing to a real "synergy" signal (does this player's own output change with a given
 teammate on the floor) than a duo's shared win/loss record ever was, but it needs a real sample on
@@ -720,14 +732,14 @@ for all three
   `steal`/`miss` should ever be set on a given row.
 
 **The Leaderboard's "Last 5" column is also purely computed, nothing stored.** It's the same
-per-20 GmSc math as the season column, just scoped to a player's 5 most recent games with
+per-20 Off Rating math as the season column, just scoped to a player's 5 most recent games with
 `scoring_events.length > 0` (by `date`, not insertion order — sort descending and slice first),
 via `computeRateSummaryForGames()` reused from Teammate Synergy above. The ▲/▼/– trend arrow
-compares that windowed GmSc/20 against the player's season GmSc/20, with anything inside ±0.5
-treated as flat (`●`, not a dash — a dash next to a number reads as a minus sign) rather than a
-real trend. Not included in the Leaderboard CSV export,
-matching that export's existing scope (raw season totals plus PTS/GmSc/Two-Way per 20 — see
-above), not a mirror of every UI column.
+compares that windowed Off Rating/20 against the player's season Off Rating/20, with anything
+inside ±0.5 treated as flat (`●`, not a dash — a dash next to a number reads as a minus sign)
+rather than a real trend. Not included in the Leaderboard CSV export, matching that export's
+existing scope (raw season totals plus PTS/Off Rating/Def Rating/Two-Way per 20 — see above), not
+a mirror of every UI column.
 
 **Player Detail's Two-Way Trend chart is also purely computed, nothing stored.** The graphical
 version of the "Last 5" text above: `computeTwoWayTrend()` (`app.js`) sorts this player's

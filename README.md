@@ -126,24 +126,35 @@ individual player, not a team.
      in the Shot Log — **Pts Allowed** and **Beaten** (points scored, and times scored on, while
      they were the defender on a *make*), **Opp FG%** (shooting % of everyone they were tagged
      defending, make or miss — a real "shooting percentage allowed"), and **Stops** (times they
-     were the defender on a *miss*). **GmSc** (Game Score) rolls the whole box score into one
-     "how good was this game" number, adapted from the standard basketball formula. **Two-Way**
-     extends that with defense: it's GmSc plus **Defensive Rating** — `Stops − Beaten −
-     0.4×Pts Allowed` — weighting a Stop the same as GmSc weights a steal, Beaten as its direct
-     negative counterpart, and Pts Allowed lightly (0.4) just so a 3-point beat scores worse than
-     a 2-point beat without double-penalizing the same possession the Beaten count already
+     were the defender on a *miss*). **Off Rating** rolls the offensive half of the box score into
+     one "how good was this game" number — PTS, shooting efficiency, rebounds, assists, TOV, and
+     fouls — adapted from the standard basketball Game Score formula, with its two defensive terms
+     (STL and BLK) pulled out. Those two terms live in **Def Rating** instead, folded in with the
+     rest of the defensive numbers: STL, plus BLK (with one exception below), plus
+     `Stops − Beaten − 0.4×Pts Allowed` — weighting a Stop the same as STL (1.0), Beaten as its
+     direct negative counterpart, and Pts Allowed lightly (0.4) just so a 3-point beat scores worse
+     than a 2-point beat without double-penalizing the same possession the Beaten count already
      covers. Opp FG% isn't its own term in the formula since it's just Beaten ÷ (Beaten + Stops)
      — a separate term would double-count the same information. Named after the NBA stat but not
      the same formula: real Defensive Rating is points allowed per 100 possessions, and this tool
      doesn't track possessions, so it's normalized per 20 combined points like every other rate
-     here instead. A player never tagged as a
-     defender has Stops/Beaten/Pts Allowed all at 0, so their Defensive Rating is 0, not a
-     penalty — conservative tagging (only tag a defender when it's genuinely clear) should never
-     hurt a player's Two-Way Score. The season **Leaderboard** shows every one of these as a
-     rate per 20 combined points across all games, not a raw season total — see
-     `defensiveImpact()`/`twoWayScore()` in `app.js`. STL and BLK are shown as recorded; their
-     sum ("Stocks") isn't repeated as its own column in either table since it's just those two
-     added together, but it is in the CSV exports. Click any column header to sort by it (defaults
+     here instead. A player never tagged as a defender, with no steals or blocks, has a Def Rating
+     of 0, not a penalty — conservative tagging (only tag a defender when it's genuinely clear)
+     should never hurt a player's Two-Way Score.
+     The BLK exception: a block only adds to Def Rating when it *isn't* already one of this
+     player's own tagged Stops on that same shot — the unusual case, since a shot-blocker is
+     almost always also that shot's tagged on-ball defender. When it is (the normal case), the
+     Stops term above already covers that possession at full weight (1.0); adding BLK on top of
+     it would credit the same defensive possession twice. This isn't just a relabeling — it's a
+     real fix: the old combined "GmSc + Def Impact" formula gave a blocked-and-tagged shot credit
+     in *both* places at once (0.7 from GmSc's BLK term, 1.0 from Def Impact's Stops term, 1.7
+     total for one possession), which is exactly what splitting Off Rating out from Def Rating
+     closed. **Two-Way** is Off Rating plus Def Rating. The season **Leaderboard** shows every one
+     of these as a rate per 20 combined points across all games, not a raw season total — see
+     `offensiveRating()`/`defensiveRating()`/`twoWayScore()` in `app.js`. STL and BLK are shown as
+     recorded — they also feed Def Rating — and their sum ("Stocks") isn't repeated as its own
+     column in either table since it's just those two added together, but it is in the CSV
+     exports. Click any column header to sort by it (defaults
      to PTS, highest first) — this is one game's own box score, not a season, so it's every
      player who was on either roster for this specific game, nothing averaged.
    - Add defensive matchup entries (who guarded who, with an optional note like "Q1") as they change.
@@ -182,9 +193,9 @@ individual player, not a team.
    roster. **Click any column header to sort by it** (click again to flip
    between highest-first and lowest-first) — hover a header for a sentence on what that column
    means, since 25+ columns is a lot to hold in your head while staring at a number. The last
-   column, **Last 5**, is a quick "how are they trending lately" read: GmSc/20 over just their
+   column, **Last 5**, is a quick "how are they trending lately" read: Off Rating/20 over just their
    last 5 games with real shots logged (fewer if they haven't played 5 yet), with a ▲/▼ showing
-   whether that's above or below their season GmSc/20 (within ±0.5 counts as flat, shown as ●
+   whether that's above or below their season Off Rating/20 (within ±0.5 counts as flat, shown as ●
    rather than a dash, since a dash next to a number reads as a minus sign).
    Everything below this main table is grouped into five loose sections, top to bottom: season
    **Overview** (Awards vs. Stats, Power Ranking vs. Performance), **Player Comparison Charts**
@@ -201,7 +212,7 @@ individual player, not a team.
    rate over however many games someone happened to play. **Best Player**, **First/Second Team**,
    and the duo awards compare Two-Way/20 rank instead; **DPOY** compares Def Rating/20 rank;
    **Most Improved** compares the Last 5 trend (Two-Way/20, same mechanism as the Leaderboard's
-   own Last 5 column, just using Two-Way instead of GmSc here); **Best Teammate** compares the
+   own Last 5 column, just using Two-Way instead of Off Rating here); **Best Teammate** compares the
    average Two-Way/20 lift that player gives their actual teammates (each teammate's own
    With/Without split, same source as the Teammate Synergy panel on Player Detail) — a duo award
    also shows how many assists actually happened between that pair. **Clutch** compares
@@ -233,7 +244,7 @@ individual player, not a team.
    with footage that just hasn't been reviewed yet is left out too, rather than showing a table
    of nothing but dashes. A player who didn't have a game logged for that particular night still
    shows "—", not a zero — that's a gap in what's been reviewed, not a real 0.0 performance.
-   Right below that, a **Two-Way Quadrant** chart plots one dot per player: GmSc/20 (offense) on
+   Right below that, a **Two-Way Quadrant** chart plots one dot per player: Off Rating/20 (offense) on
    the x-axis, Defensive Rating/20 on the y-axis — the two halves of Two-Way Score, kept separate
    instead of pre-summed, so "who's good" splits into "good at what." The quadrant lines cross at
    zero on each axis rather than at this roster's own median, since zero is already the meaningful
@@ -360,7 +371,7 @@ individual player, not a team.
    for checking someone else's export, or a season that isn't the one currently loaded here) —
    see that file's own header comment for how to run it. Below that, and after Game-Winning
    Buckets, **Best & Worst Individual Games** ranks every player-game by that single game's own
-   Two-Way score (Game Score + Defensive Rating) — deliberately not a per-20 rate or a season
+   Two-Way score (Off Rating + Defensive Rating) — deliberately not a per-20 rate or a season
    total, since the rest of the Leaderboard normalizes everything for fair comparison, which
    averages away exactly what this panel exists to surface: a specific night's story, buried
    otherwise inside that game's own box score. Every player on either roster in a reviewed game
@@ -403,7 +414,7 @@ individual player, not a team.
      zone percentages shows directly.
    - **Game Log** — every game they've played, default most recent first (click any column
      header to sort by something else instead), with the same full stat line (shooting splits,
-     eFG%/TS%, defensive numbers, Game Score, Two-Way) as the Game Stats table, plus that game's
+     eFG%/TS%, defensive numbers, Off Rating, Two-Way) as the Game Stats table, plus that game's
      W/L/T result. Unlike the Leaderboard, this is per-game actuals, not averaged — one row per
      game, exactly what happened in it. The literal data behind the Two-Way Trend chart above it.
    - **Shot Heatmap** — the same court grid as the Shot Chart, scoped to just this player's
@@ -421,7 +432,7 @@ individual player, not a team.
    - **Head-to-Head — As Defender** — the shooting they've *allowed* to each scorer they've
      defended, same tagging caveat and sortability as As Scorer above.
    - **Teammate Synergy (With/Without)** — for each teammate this player has shared a team with,
-     this player's *own* GmSc/20 and Two-Way/20 in games **with** that teammate on their side vs.
+     this player's *own* Off Rating/20 and Two-Way/20 in games **with** that teammate on their side vs.
      games **without** them (opposing team, or not playing that game). This is about whether this
      player's own output actually changes with a given teammate around — not a shared win/loss
      record — so a teammate they've always played with shows "—" on the without side rather than
@@ -443,13 +454,13 @@ individual player, not a team.
    not to the aggregate record shown on the Leaderboard, until it's actually reviewed.
 
    Every counting stat on the Leaderboard — PTS, OREB, DREB, AST, STL, BLK, TOV, PF, Pts
-   Allowed, Beaten, Stops, Def Rating, GmSc, and Two-Way, plus the FG/3PT/FT makes-attempts
+   Allowed, Beaten, Stops, Def Rating, Off Rating, and Two-Way, plus the FG/3PT/FT makes-attempts
    shown — is normalized *per 20 combined points scored in the game*, not per game and not a
    raw season total. Games are capped at different totals (16 or 21), so a simple per-game
    average isn't a fair comparison between a player who mostly plays 16-point games and one who
    mostly plays 21s — normalizing by the game's combined final score (our stand-in for "how much
    game happened," since possessions aren't tracked) fixes that uniformly, not just for points
-   and Game Score. 20 is just a round number near the middle of 16–21, chosen for readability,
+   and Off Rating. 20 is just a round number near the middle of 16–21, chosen for readability,
    not because it's meaningful on its own. A/TO and the shooting percentages (FG%/3PT%/FT%/eFG%/
    TS%/Opp FG%) are untouched by any of this since they're already ratios — dividing both sides
    by the same normalizer cancels out.
@@ -461,7 +472,7 @@ individual player, not a team.
      a session video) — otherwise `fileName` never actually reaches anyone reading just that one
      file.
    - **Box Score CSV** — one row per player per game (with a Team A/B label for that game),
-     including that game's Game Score and Two-Way Score, and the full shot-distance split
+     including that game's Off Rating and Two-Way Score, and the full shot-distance split
      (`close_m`/`close_a`, `mid_m`/`mid_a`, `tp_arc_m`/`tp_arc_a`, `tp_deep_m`/`tp_deep_a`)
      alongside the plain `fgm`/`fga`/`tpm`/`tpa`.
    - **Shot Log CSV** — one row per shot attempt (make or miss), with the shooter, result,
@@ -484,7 +495,8 @@ individual player, not a team.
      from the source video file — the dashboard only marks *where* the clips are, since it can't
      export video itself.
    - **Leaderboard CSV** — season totals per player (across the same stats-logged-only games the
-     page itself counts), including the full shot-distance split, plus PTS/20, GmSc/20, and Two-Way/20.
+     page itself counts), including the full shot-distance split, plus PTS/20, Off Rating/20,
+     Def Rating/20, and Two-Way/20.
      Not the per-20 rates the Leaderboard page displays for every other counting stat — the CSV
      keeps raw totals plus `games_played`, so anyone consuming it can derive whichever rate or
      average they want without losing precision to a pre-divided number.
@@ -492,7 +504,7 @@ individual player, not a team.
      directional, with the assist count.
    - **Teammate Synergy CSV** — one row per (player, teammate) pair across the whole league —
      the same With/Without split as the Player Detail table, for every player at once. GP and
-     GmSc/Two-Way per 20 columns are blank on whichever side (with/without) has zero games.
+     Off Rating/Two-Way per 20 columns are blank on whichever side (with/without) has zero games.
    - **Out-of-Bounds CSV** — one row per player with at least one missed shot, with their miss
      count, how many of those went out of bounds, and the resulting OOB%.
 
@@ -648,10 +660,10 @@ marked; only ever offered (and only ever set) when `points` is 2 or 3, never on 
 since a free throw has no location on the floor. It's purely informational — it doesn't drive
 `points`, and the app never corrects a mismatch between the marked spot and the point value you
 picked, it just flags one with a badge in the Shot Log. Shooting splits (FG/3PT/FT, with %),
-eFG%, TS%, Game Score, Two-Way Score, and the defensive numbers (Pts Allowed, Opp FG%, Beaten,
-Stops) shown in the Game Stats table and Leaderboard are all computed from this array plus
-`stats` — see `shootingStats()`, `gameDefenseStats()`, `trueShootingPct()`, `effectiveFgPct()`,
-`gameScore()`, `defensiveImpact()`, and `twoWayScore()` in `app.js`. None of these are stored as
+eFG%, TS%, Off Rating, Two-Way Score, and the defensive numbers (Pts Allowed, Opp FG%, Beaten,
+Stops, Def Rating) shown in the Game Stats table and Leaderboard are all computed from this array
+plus `stats` — see `shootingStats()`, `gameDefenseStats()`, `trueShootingPct()`, `effectiveFgPct()`,
+`offensiveRating()`, `defensiveRating()`, and `twoWayScore()` in `app.js`. None of these are stored as
 separate fields. Also computed from `shotLocation`, for any 2PT or 3PT attempt: the **Close /
 Midrange / Line / Deep** shot-distance split (`shotBand()` in `app.js` — internally still
 returning `"arc"` for what's displayed as "Line," only the label changed, since a code rename

@@ -1834,11 +1834,20 @@ function gameDefenseStats(game, playerId) {
   const madeAgainst = against.filter(ev => ev.made !== false);
   const timesBeaten = madeAgainst.length;
   const stops = against.filter(ev => ev.made === false).length;
+  // Blocks this player gets extra defensive credit for in defensiveRating(), beyond the Stop
+  // credit above — only counted here when the block ISN'T also one of their own tagged Stops
+  // already (the common case, since a shot-blocker is almost always also the tagged on-ball
+  // defender). Crediting a blocked-and-tagged shot in both places would double-count one
+  // defensive possession.
+  const blocksNotAlreadyStopped = game.scoringEvents.filter(ev =>
+    ev.blockerId === playerId && ev.made === false && !(ev.defenderIds || []).includes(playerId)
+  ).length;
   return {
     ptsAllowed: madeAgainst.reduce((sum, ev) => sum + ev.points, 0),
     timesBeaten,
     stops,
-    oppFgPct: pct(timesBeaten, timesBeaten + stops)
+    oppFgPct: pct(timesBeaten, timesBeaten + stops),
+    blocksNotAlreadyStopped
   };
 }
 
@@ -1859,26 +1868,34 @@ function formatAstTov(ast, tov) {
   return (ast / tov).toFixed(1);
 }
 
-// Hollinger's Game Score — a single-number "how good was this game" read.
-function gameScore(s, sh) {
+// Hollinger's Game Score, minus its two defensive terms (STL and BLK) — the offense-only half
+// of Two-Way Score. STL and BLK aren't dropped, just moved to defensiveRating() below, where
+// they sit next to the rest of this player's defensive numbers instead of being buried in an
+// otherwise-offensive formula.
+function offensiveRating(s, sh) {
   return s.pts + 0.4 * sh.fgm - 0.7 * sh.fga - 0.4 * (sh.fta - sh.ftm)
-    + 0.7 * s.oreb + 0.3 * s.dreb + s.stl + 0.7 * s.ast + 0.7 * s.blk - 0.4 * s.pf - s.tov;
+    + 0.7 * s.oreb + 0.3 * s.dreb + 0.7 * s.ast - 0.4 * s.pf - s.tov;
 }
 
-// GmSc's defensive counterpart, built from the same per-shot defender tagging as Pts
-// Allowed/Beaten/Stops. Stops and Beaten are weighted symmetrically at 1.0 — a stop denies a
-// possession the same way GmSc weights a steal — and Points Allowed at 0.4 so a 3-point beat
-// scores worse than a 2-point beat without double-penalizing the same possession the Beaten
-// count already covers. Opp FG% isn't its own term since it's just Beaten / (Beaten + Stops) —
-// a separate term would double-count the same information. A player never tagged as a
-// defender has stops/timesBeaten/ptsAllowed all at 0, so this is naturally 0 for them rather
-// than penalizing conservative tagging (per Ben's tag-only-when-clear policy).
-function defensiveImpact(def) {
-  return def.stops - def.timesBeaten - 0.4 * def.ptsAllowed;
+// Off Rating's defensive counterpart: Stops/Beaten/Pts Allowed from the same per-shot defender
+// tagging as before, plus STL and BLK pulled out of the old Game Score formula above. BLK only
+// counts here via def.blocksNotAlreadyStopped — a block that's also one of this player's own
+// tagged Stops already got its credit from the Stops term, so adding it again here would
+// double-count that one defensive possession (which the old GmSc + Def Impact combination
+// actually did, for every shot where the blocker was also the tagged defender). Stops and
+// Beaten are weighted symmetrically at 1.0 (a stop denies a possession the same way STL is
+// weighted at 1.0 too), Pts Allowed at 0.4 so a 3-point beat scores worse than a 2-point beat
+// without double-penalizing the same possession the Beaten count already covers, and Opp FG%
+// isn't its own term since it's just Beaten / (Beaten + Stops) — a separate term would
+// double-count that. A player never tagged as a defender, with no steals or unstopped blocks,
+// computes to exactly 0 — not a penalty for conservative tagging (per Ben's tag-only-when-clear
+// policy).
+function defensiveRating(s, def) {
+  return s.stl + 0.7 * def.blocksNotAlreadyStopped + def.stops - def.timesBeaten - 0.4 * def.ptsAllowed;
 }
 
 function twoWayScore(s, sh, def) {
-  return gameScore(s, sh) + defensiveImpact(def);
+  return offensiveRating(s, sh) + defensiveRating(s, def);
 }
 
 // Poolean rule: "If one player has fouled three times in a single game, that player is
@@ -1893,7 +1910,7 @@ function foulCellHtml(pf) {
 
 // Same {key, label, accessor} shape as LEADERBOARD_COLUMNS, sortable via the shared
 // renderSortableHeader() — this table is one game's box score, not a season, so accessors read
-// off a precomputed {player, team, s, def, sh, gmsc, twoWay} row instead of computeLeaderboard().
+// off a precomputed {player, team, s, def, sh, offRtg, twoWay} row instead of computeLeaderboard().
 const GAME_STATS_COLUMNS = [
   { key: "player", label: "Player", accessor: r => r.player.name },
   { key: "team", label: "Team", accessor: r => r.team },
@@ -1915,7 +1932,7 @@ const GAME_STATS_COLUMNS = [
   { key: "oppfg", label: "Opp FG%", accessor: r => r.def.oppFgPct },
   { key: "beaten", label: "Beaten", accessor: r => r.def.timesBeaten },
   { key: "stops", label: "Stops", accessor: r => r.def.stops },
-  { key: "gmsc", label: "GmSc", accessor: r => r.gmsc },
+  { key: "offrtg", label: "Off Rating", accessor: r => r.offRtg },
   { key: "twoway", label: "Two-Way", accessor: r => r.twoWay }
 ];
 let gameStatsSort = { key: "pts", dir: "desc" };
@@ -1934,7 +1951,7 @@ function renderGameStatsTable(game) {
     const s = getOrCreatePlayerStats(game, id);
     const def = gameDefenseStats(game, id);
     const sh = shootingStats(game, id);
-    return { player, team, s, def, sh, gmsc: gameScore(s, sh), twoWay: twoWayScore(s, sh, def) };
+    return { player, team, s, def, sh, offRtg: offensiveRating(s, sh), twoWay: twoWayScore(s, sh, def) };
   }).filter(Boolean);
   if (rows.length === 0) {
     body.innerHTML = '<tr><td colspan="22" class="empty-state">No players assigned yet.</td></tr>';
@@ -1965,7 +1982,7 @@ function renderGameStatsTable(game) {
       <td>${formatPct(r.def.oppFgPct)}</td>
       <td>${r.def.timesBeaten}</td>
       <td>${r.def.stops}</td>
-      <td>${r.gmsc.toFixed(1)}</td>
+      <td>${r.offRtg.toFixed(1)}</td>
       <td>${r.twoWay.toFixed(1)}</td>
     `;
     body.appendChild(tr);
@@ -2426,7 +2443,7 @@ function computeLeaderboard() {
     const gamesPlayed = state.games.filter(g => (g.teamA.includes(p.id) || g.teamB.includes(p.id)) && g.scoringEvents.length > 0);
     const totals = { pts: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, pf: 0 };
     const shooting = { fgm: 0, fga: 0, tpm: 0, tpa: 0, closeM: 0, closeA: 0, midM: 0, midA: 0, tpArcM: 0, tpArcA: 0, tpDeepM: 0, tpDeepA: 0, ftm: 0, fta: 0 };
-    const defense = { ptsAllowed: 0, timesBeaten: 0, stops: 0 };
+    const defense = { ptsAllowed: 0, timesBeaten: 0, stops: 0, blocksNotAlreadyStopped: 0 };
     let wins = 0, losses = 0, ties = 0, combinedPoints = 0, teamFgaTotal = 0;
     gamesPlayed.forEach(g => {
       const s = g.stats.find(st => st.playerId === p.id);
@@ -2437,6 +2454,7 @@ function computeLeaderboard() {
       defense.ptsAllowed += def.ptsAllowed;
       defense.timesBeaten += def.timesBeaten;
       defense.stops += def.stops;
+      defense.blocksNotAlreadyStopped += def.blocksNotAlreadyStopped;
       combinedPoints += gameTotalPoints(g);
       // Shot% denominator: every field goal attempt by this player's own team in this game
       // (themselves included), so "what share of the team's shots were theirs" — not the
@@ -2453,14 +2471,14 @@ function computeLeaderboard() {
     // Both are linear combinations of raw counts, so the season total equals the sum of each
     // game's value — computing once on the summed totals gives the same result as summing
     // per-game numbers would.
-    const totalGameScore = gameScore(totals, shooting);
-    const totalTwoWay = totalGameScore + defensiveImpact(defense);
+    const totalOffRating = offensiveRating(totals, shooting);
+    const totalTwoWay = totalOffRating + defensiveRating(totals, defense);
     // Every counting stat on the Leaderboard is a rate per 20 combined points scored in the
     // game, not a per-game average — games are capped at different totals (16 or 21), so a
     // player who mostly plays 16-point games isn't fairly compared to one who mostly plays
     // 21s by a plain per-game average. The combined final score stands in for "how much game
     // happened," since possessions aren't tracked. This is the same reasoning PTS/20 and
-    // GmSc/20 always used, just applied uniformly instead of singling those two out.
+    // Off Rating/20 always used, just applied uniformly instead of singling those two out.
     const per20 = value => combinedPoints > 0 ? (value / combinedPoints) * 20 : 0;
     const rate = {};
     STAT_FIELDS.forEach(f => { rate[f] = per20(totals[f]); });
@@ -2469,7 +2487,8 @@ function computeLeaderboard() {
     const rateDefense = {
       ptsAllowed: per20(defense.ptsAllowed),
       timesBeaten: per20(defense.timesBeaten),
-      stops: per20(defense.stops)
+      stops: per20(defense.stops),
+      blocksNotAlreadyStopped: per20(defense.blocksNotAlreadyStopped)
     };
     // Last 5 games (by date, not insertion order), same per-20 math as the season — a quick
     // "how are they trending lately" read next to the season number, not a separate stat family.
@@ -2477,8 +2496,8 @@ function computeLeaderboard() {
     // comparison still means something with 2-3 games, just noisier.
     const last5Games = [...gamesPlayed].sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 5);
     const last5 = computeRateSummaryForGames(p.id, last5Games);
-    const seasonGmScPer20 = per20(totalGameScore);
-    const last5Delta = last5.gp > 0 ? last5.gmScorePer20 - seasonGmScPer20 : null;
+    const seasonOffRatingPer20 = per20(totalOffRating);
+    const last5Delta = last5.gp > 0 ? last5.offRatingPer20 - seasonOffRatingPer20 : null;
     // ±0.5 counts as flat rather than a real trend — otherwise a 0.1 wobble reads as a signal.
     // "●" for flat, not "-"/"–" — a dash next to a number reads as a minus sign, not "no change."
     const last5Trend = last5Delta === null ? "" : last5Delta > 0.5 ? "▲" : last5Delta < -0.5 ? "▼" : "●";
@@ -2486,16 +2505,16 @@ function computeLeaderboard() {
       player: p, gp, totals, shooting, defense, rate, rateShooting, rateDefense,
       wins, losses, ties,
       winPct: (wins + losses) > 0 ? pct(wins, wins + losses) : null,
-      gameScorePer20: seasonGmScPer20,
+      offRatingPer20: seasonOffRatingPer20,
       twoWayPer20: per20(totalTwoWay),
       // Season-long sums, not per-20 rates — for the rare comparison (MVP) where "played a lot
       // and contributed a lot" should outweigh a slightly higher rate over fewer games.
-      gameScoreTotal: totalGameScore,
+      offRatingTotal: totalOffRating,
       twoWayTotal: totalTwoWay,
       stocks: totals.stl + totals.blk,
       shotPct: pct(shooting.fga, teamFgaTotal),
       astTov: formatAstTov(totals.ast, totals.tov),
-      last5Gp: last5.gp, last5GmScPer20: last5.gmScorePer20, last5TwoWayPer20: last5.twoWayPer20, last5Trend
+      last5Gp: last5.gp, last5OffRatingPer20: last5.offRatingPer20, last5TwoWayPer20: last5.twoWayPer20, last5Trend
     };
   });
 }
@@ -2630,7 +2649,7 @@ function renderCloseGameShootingPanel() {
 }
 
 // Best & Worst Individual Games — ranks every player-game line by that single game's actual
-// Two-Way score (Game Score + Defensive Rating), not a per-20 rate and not a season total. The
+// Two-Way score (Off Rating + Defensive Rating), not a per-20 rate and not a season total. The
 // rest of the Leaderboard deliberately normalizes everything to per-20 or season-long numbers so
 // players are comparable across different game lengths and sample sizes — this panel is the one
 // exception on purpose, since the whole point is surfacing a specific game's own story (a real
@@ -2645,8 +2664,7 @@ function computeIndividualGamePerformances() {
       const s = getOrCreatePlayerStats(game, playerId);
       const sh = shootingStats(game, playerId);
       const def = gameDefenseStats(game, playerId);
-      const gmsc = gameScore(s, sh);
-      rows.push({ player, game, pts: s.pts, twoWay: gmsc + defensiveImpact(def) });
+      rows.push({ player, game, pts: s.pts, twoWay: twoWayScore(s, sh, def) });
     });
   });
   return rows;
@@ -2713,7 +2731,7 @@ const AWARD_RESULTS = [
     { slug: "evan", name: "Evan", points: 4 }, { slug: "reilly", name: "Reilly", points: 3 },
     { slug: "sean", name: "Sean", points: 2 }, { slug: "kayla", name: "Kayla", points: 1 }
   ] },
-  { key: "dpoy", label: "Defensive Player of the Year", winners: ["adam"], statKey: "defImpact", votedStandings: [
+  { key: "dpoy", label: "Defensive Player of the Year", winners: ["adam"], statKey: "defRating", votedStandings: [
     { slug: "adam", name: "Adam", points: 9 }, { slug: "jason", name: "Jason", points: 9 },
     { slug: "phillip", name: "Phillip", points: 6 }, { slug: "ben", name: "Ben", points: 4 },
     { slug: "logan-hoskins", name: "Logan H", points: 3 }, { slug: "sean", name: "Sean", points: 3 },
@@ -2797,8 +2815,8 @@ function computeAwardStandings() {
       .map(r => ({ player: r.player, value: r.twoWayPer20, display: `${r.twoWayPer20.toFixed(1)} Two-Way/20` })),
     twoWayTotal: [...board].sort((a, b) => b.twoWayTotal - a.twoWayTotal)
       .map(r => ({ player: r.player, value: r.twoWayTotal, display: `${r.twoWayTotal.toFixed(1)} Two-Way (season)` })),
-    defImpact: [...board].sort((a, b) => defensiveImpact(b.rateDefense) - defensiveImpact(a.rateDefense))
-      .map(r => ({ player: r.player, value: defensiveImpact(r.rateDefense), display: `${defensiveImpact(r.rateDefense).toFixed(1)} Def Rating/20` })),
+    defRating: [...board].sort((a, b) => defensiveRating(b.rate, b.rateDefense) - defensiveRating(a.rate, a.rateDefense))
+      .map(r => ({ player: r.player, value: defensiveRating(r.rate, r.rateDefense), display: `${defensiveRating(r.rate, r.rateDefense).toFixed(1)} Def Rating/20` })),
     gwb: computeGameWinningBuckets()
       .map(r => ({ player: r.player, value: r.count, display: `${r.count} game-winning bucket${r.count === 1 ? "" : "s"}` })),
     closeGameTs: [...computeCloseGameShooting()].sort((a, b) => b.ts - a.ts)
@@ -2998,17 +3016,17 @@ function playerChartColor(index) {
   return PLAYER_CHART_COLORS[index % PLAYER_CHART_COLORS.length];
 }
 
-// One dot per player: GmSc/20 (offense) on the x-axis, Def Rating/20 on the y-axis — the two
+// One dot per player: Off Rating/20 on the x-axis, Def Rating/20 on the y-axis — the two
 // halves of Two-Way Score, plotted separately instead of pre-summed, so "who's actually good"
 // splits into "good at what." The quadrant split is at 0 on both axes rather than the data's
-// median, since 0 is already the meaningful boundary each stat uses on its own (0 GmSc/20 is
-// replacement-level offense; 0 Def Rating is "stops minus times beaten minus points allowed,
-// net zero"), not an arbitrary line drawn through wherever this particular roster happens to
-// cluster.
+// median, since 0 is already the meaningful boundary each stat uses on its own (0 Off Rating/20
+// is replacement-level offense; 0 Def Rating is "no steals, no unstopped blocks, and stops
+// minus times beaten minus points allowed net zero"), not an arbitrary line drawn through
+// wherever this particular roster happens to cluster.
 function computeQuadrantData() {
   return computeLeaderboard()
     .filter(r => r.gp > 0)
-    .map(r => ({ player: r.player, gmsc: r.gameScorePer20, defImpact: defensiveImpact(r.rateDefense) }));
+    .map(r => ({ player: r.player, offRtg: r.offRatingPer20, defRtg: defensiveRating(r.rate, r.rateDefense) }));
 }
 
 function renderQuadrantChart() {
@@ -3021,17 +3039,17 @@ function renderQuadrantChart() {
   }
   const W = 340, H = 340, PAD = 46;
   const plotW = W - PAD * 2, plotH = H - PAD * 2;
-  const maxAbsX = Math.max(1, ...data.map(d => Math.abs(d.gmsc))) * 1.15;
-  const maxAbsY = Math.max(1, ...data.map(d => Math.abs(d.defImpact))) * 1.15;
+  const maxAbsX = Math.max(1, ...data.map(d => Math.abs(d.offRtg))) * 1.15;
+  const maxAbsY = Math.max(1, ...data.map(d => Math.abs(d.defRtg))) * 1.15;
   const xScale = v => PAD + ((v + maxAbsX) / (2 * maxAbsX)) * plotW;
   const yScale = v => PAD + plotH - ((v + maxAbsY) / (2 * maxAbsY)) * plotH;
   const zeroX = xScale(0), zeroY = yScale(0);
 
   const dotsSvg = data.map((d, i) => {
-    const cx = xScale(d.gmsc), cy = yScale(d.defImpact);
+    const cx = xScale(d.offRtg), cy = yScale(d.defRtg);
     return `
       <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot" style="fill:${playerChartColor(i)}">
-        <title>${escapeHtml(d.player.name)}: ${d.gmsc.toFixed(1)} GmSc/20, ${d.defImpact.toFixed(1)} Def Rating/20</title>
+        <title>${escapeHtml(d.player.name)}: ${d.offRtg.toFixed(1)} Off Rating/20, ${d.defRtg.toFixed(1)} Def Rating/20</title>
       </circle>
       <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
     `;
@@ -3046,14 +3064,14 @@ function renderQuadrantChart() {
       <line x1="${PAD}" y1="${zeroY}" x2="${W - PAD}" y2="${zeroY}" class="quadrant-axis" />
       <line x1="${zeroX}" y1="${PAD}" x2="${zeroX}" y2="${H - PAD}" class="quadrant-axis" />
       ${dotsSvg}
-      <text x="${W - PAD}" y="${H - PAD + 16}" text-anchor="end" class="quadrant-axis-label">GmSc/20 &#8594;</text>
+      <text x="${W - PAD}" y="${H - PAD + 16}" text-anchor="end" class="quadrant-axis-label">Off Rating/20 &#8594;</text>
       <text x="${PAD - 10}" y="${PAD}" text-anchor="end" class="quadrant-axis-label">&#8593; Def Rating/20</text>
     </svg>
   `;
 }
 
 // Volume vs. Efficiency — offense only, deliberately separate from the Two-Way Quadrant above
-// (which plots GmSc against Def Rating). This one is x = shot volume (FGA/20, "how much they
+// (which plots Off Rating against Def Rating). This one is x = shot volume (FGA/20, "how much they
 // shoot"), y = TS% (season, same formula as the main Leaderboard table's TS% column, "how well
 // they shoot") — the pairing that shows a high-volume/low-efficiency player and a low-volume/
 // high-efficiency player as mirror opposites directly, instead of needing someone to
@@ -3611,7 +3629,7 @@ function renderOutOfBoundsPanel() {
 function computeRateSummaryForGames(playerId, games) {
   const totals = { pts: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, pf: 0 };
   const shooting = { fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0 };
-  const defense = { ptsAllowed: 0, timesBeaten: 0, stops: 0 };
+  const defense = { ptsAllowed: 0, timesBeaten: 0, stops: 0, blocksNotAlreadyStopped: 0 };
   let combinedPoints = 0;
   games.forEach(g => {
     const s = g.stats.find(st => st.playerId === playerId);
@@ -3622,12 +3640,13 @@ function computeRateSummaryForGames(playerId, games) {
     defense.ptsAllowed += def.ptsAllowed;
     defense.timesBeaten += def.timesBeaten;
     defense.stops += def.stops;
+    defense.blocksNotAlreadyStopped += def.blocksNotAlreadyStopped;
     combinedPoints += gameTotalPoints(g);
   });
-  const totalGameScore = gameScore(totals, shooting);
-  const totalTwoWay = totalGameScore + defensiveImpact(defense);
+  const totalOffRating = offensiveRating(totals, shooting);
+  const totalTwoWay = totalOffRating + defensiveRating(totals, defense);
   const per20 = value => combinedPoints > 0 ? (value / combinedPoints) * 20 : 0;
-  return { gp: games.length, gmScorePer20: per20(totalGameScore), twoWayPer20: per20(totalTwoWay) };
+  return { gp: games.length, offRatingPer20: per20(totalOffRating), twoWayPer20: per20(totalTwoWay) };
 }
 
 // For each teammate this player has shared a team with (in a game with real shots logged),
@@ -3659,8 +3678,8 @@ const TEAMMATE_SYNERGY_COLUMNS = [
   { key: "teammate", label: "Teammate", accessor: r => r.teammate.name },
   { key: "gpWith", label: "GP With", accessor: r => r.with.gp },
   { key: "gpWithout", label: "GP W/o", accessor: r => r.without.gp },
-  { key: "gmscWith", label: "GmSc/20 With", accessor: r => r.with.gp > 0 ? r.with.gmScorePer20 : null },
-  { key: "gmscWithout", label: "GmSc/20 W/o", accessor: r => r.without.gp > 0 ? r.without.gmScorePer20 : null },
+  { key: "offRtgWith", label: "Off Rating/20 With", accessor: r => r.with.gp > 0 ? r.with.offRatingPer20 : null },
+  { key: "offRtgWithout", label: "Off Rating/20 W/o", accessor: r => r.without.gp > 0 ? r.without.offRatingPer20 : null },
   { key: "twoWayWith", label: "Two-Way/20 With", accessor: r => r.with.gp > 0 ? r.with.twoWayPer20 : null },
   { key: "twoWayWithout", label: "Two-Way/20 W/o", accessor: r => r.without.gp > 0 ? r.without.twoWayPer20 : null }
 ];
@@ -3676,7 +3695,7 @@ function renderTeammateSynergy(playerId) {
   const fmt = (v, gp) => gp > 0 ? v.toFixed(1) : "—";
   body.innerHTML = rows.length === 0
     ? '<tr><td colspan="7" class="empty-state">No games with teammates and real shots logged yet.</td></tr>'
-    : rows.map(r => `<tr><td>${escapeHtml(r.teammate.name)}</td><td>${r.with.gp}</td><td>${r.without.gp}</td><td>${fmt(r.with.gmScorePer20, r.with.gp)}</td><td>${fmt(r.without.gmScorePer20, r.without.gp)}</td><td>${fmt(r.with.twoWayPer20, r.with.gp)}</td><td>${fmt(r.without.twoWayPer20, r.without.gp)}</td></tr>`).join("");
+    : rows.map(r => `<tr><td>${escapeHtml(r.teammate.name)}</td><td>${r.with.gp}</td><td>${r.without.gp}</td><td>${fmt(r.with.offRatingPer20, r.with.gp)}</td><td>${fmt(r.without.offRatingPer20, r.without.gp)}</td><td>${fmt(r.with.twoWayPer20, r.with.gp)}</td><td>${fmt(r.without.twoWayPer20, r.without.gp)}</td></tr>`).join("");
 }
 
 // Per-game Two-Way/20 over the season for one player — the line-graph version of the "Last 5: X
@@ -3761,8 +3780,8 @@ const LEADERBOARD_COLUMNS = [
   { key: "oreb", label: "OREB/20", accessor: r => r.rate.oreb, display: r => r.rate.oreb.toFixed(1), tooltip: "Offensive rebounds (grabbed by a teammate of the shooter), per 20 combined points." },
   { key: "dreb", label: "DREB/20", accessor: r => r.rate.dreb, display: r => r.rate.dreb.toFixed(1), tooltip: "Defensive rebounds (grabbed by an opponent of the shooter), per 20 combined points." },
   { key: "ast", label: "AST/20", accessor: r => r.rate.ast, display: r => r.rate.ast.toFixed(1), tooltip: "Assists — credited on a made shot when a teammate is tagged as the passer — per 20 combined points." },
-  { key: "stl", label: "STL/20", accessor: r => r.rate.stl, display: r => r.rate.stl.toFixed(1), tooltip: "Steals, per 20 combined points." },
-  { key: "blk", label: "BLK/20", accessor: r => r.rate.blk, display: r => r.rate.blk.toFixed(1), tooltip: "Blocks — credited on a missed shot when this player is tagged as the blocker — per 20 combined points." },
+  { key: "stl", label: "STL/20", accessor: r => r.rate.stl, display: r => r.rate.stl.toFixed(1), tooltip: "Steals, per 20 combined points. Feeds Def Rating below." },
+  { key: "blk", label: "BLK/20", accessor: r => r.rate.blk, display: r => r.rate.blk.toFixed(1), tooltip: "Blocks — credited on a missed shot when this player is tagged as the blocker — per 20 combined points. Feeds Def Rating below, except when the block is already one of this player's own Stops (the usual case) — see Def Rating's own tooltip." },
   { key: "tov", label: "TOV/20", accessor: r => r.rate.tov, display: r => r.rate.tov.toFixed(1), tooltip: "Turnovers (including ones forced by a steal, or a miss ruled out of bounds), per 20 combined points." },
   { key: "atov", label: "A/TO", accessor: r => r.totals.tov === 0 ? (r.totals.ast === 0 ? 0 : Infinity) : r.totals.ast / r.totals.tov, display: r => r.astTov, tooltip: "Assist-to-turnover ratio." },
   { key: "pf", label: "PF/20", accessor: r => r.rate.pf, display: r => r.rate.pf.toFixed(1), tooltip: "Personal fouls, per 20 combined points." },
@@ -3770,10 +3789,10 @@ const LEADERBOARD_COLUMNS = [
   { key: "oppfg", label: "Opp FG%", accessor: r => pct(r.defense.timesBeaten, r.defense.timesBeaten + r.defense.stops), display: r => formatPct(pct(r.defense.timesBeaten, r.defense.timesBeaten + r.defense.stops)), tooltip: "Shooting percentage of everyone this player was tagged defending, make or miss — a real 'shooting percentage allowed.'" },
   { key: "beaten", label: "Beaten/20", accessor: r => r.rateDefense.timesBeaten, display: r => r.rateDefense.timesBeaten.toFixed(1), tooltip: "Times scored on while tagged as the defender on a made shot, per 20 combined points." },
   { key: "stops", label: "Stops/20", accessor: r => r.rateDefense.stops, display: r => r.rateDefense.stops.toFixed(1), tooltip: "Times tagged as the defender on a missed shot, per 20 combined points." },
-  { key: "defimpact", label: "Def Rating/20", accessor: r => defensiveImpact(r.rateDefense), display: r => defensiveImpact(r.rateDefense).toFixed(1), tooltip: "This tool's Defensive Rating: Stops minus Beaten minus 0.4×Pts Allowed, per 20 combined points. Not points-allowed-per-100-possessions like the NBA stat of the same name — possessions aren't tracked here, so combined points stands in as the pace proxy, same as every other per-20 rate on this board. 0 for anyone never tagged as a defender — not a penalty for conservative tagging." },
-  { key: "gmsc20", label: "GmSc/20", accessor: r => r.gameScorePer20, display: r => r.gameScorePer20.toFixed(1), tooltip: "Game Score — a single 'how good was this game' number, adapted from the standard basketball formula — per 20 combined points." },
-  { key: "twoway20", label: "Two-Way/20", accessor: r => r.twoWayPer20, display: r => r.twoWayPer20.toFixed(1), tooltip: "GmSc plus Defensive Rating, per 20 combined points." },
-  { key: "last5", label: "Last 5", accessor: r => r.last5GmScPer20, display: r => r.last5Gp > 0 ? `${r.last5Trend} ${r.last5GmScPer20.toFixed(1)}` : "—", tooltip: "GmSc/20 over their last 5 games with real shots logged (fewer if they haven't played 5 yet). ▲/▼ shows whether that's above or below their season GmSc/20 — within ±0.5 counts as flat (–)." }
+  { key: "defrtg20", label: "Def Rating/20", accessor: r => defensiveRating(r.rate, r.rateDefense), display: r => defensiveRating(r.rate, r.rateDefense).toFixed(1), tooltip: "This tool's Defensive Rating: STL, plus BLK (only when it isn't already one of this player's own Stops, so a blocked-and-tagged shot isn't credited twice), plus Stops minus Beaten minus 0.4×Pts Allowed — all per 20 combined points. Not points-allowed-per-100-possessions like the NBA stat of the same name — possessions aren't tracked here, so combined points stands in as the pace proxy, same as every other per-20 rate on this board. 0 for anyone never tagged as a defender with no steals or blocks — not a penalty for conservative tagging." },
+  { key: "offrtg20", label: "Off Rating/20", accessor: r => r.offRatingPer20, display: r => r.offRatingPer20.toFixed(1), tooltip: "Offense-only Game Score: PTS, shooting efficiency, rebounds, assists, TOV, and fouls — adapted from the standard basketball Game Score formula, minus its STL and BLK terms, which live in Def Rating instead — per 20 combined points." },
+  { key: "twoway20", label: "Two-Way/20", accessor: r => r.twoWayPer20, display: r => r.twoWayPer20.toFixed(1), tooltip: "Off Rating plus Def Rating, per 20 combined points." },
+  { key: "last5", label: "Last 5", accessor: r => r.last5OffRatingPer20, display: r => r.last5Gp > 0 ? `${r.last5Trend} ${r.last5OffRatingPer20.toFixed(1)}` : "—", tooltip: "Off Rating/20 over their last 5 games with real shots logged (fewer if they haven't played 5 yet). ▲/▼ shows whether that's above or below their season Off Rating/20 — within ±0.5 counts as flat (–)." }
 ];
 
 let leaderboardSort = { key: "pts", dir: "desc" };
@@ -3914,7 +3933,7 @@ function renderPlayerDetail() {
   const row = computeLeaderboard().find(r => r.player.id === currentPlayerId);
   document.getElementById("playerDetailTitle").textContent = player.name;
   document.getElementById("playerDetailSummary").textContent = row
-    ? `${row.wins}-${row.losses}${row.ties ? `-${row.ties}` : ""} · ${row.rate.pts.toFixed(1)} PTS/20 · ${row.gameScorePer20.toFixed(1)} GmSc/20 · ${row.twoWayPer20.toFixed(1)} Two-Way/20`
+    ? `${row.wins}-${row.losses}${row.ties ? `-${row.ties}` : ""} · ${row.rate.pts.toFixed(1)} PTS/20 · ${row.offRatingPer20.toFixed(1)} Off Rating/20 · ${row.twoWayPer20.toFixed(1)} Two-Way/20`
     : "No games yet";
 
   // Render order follows the panels' actual top-to-bottom order in index.html — season overview,
@@ -4215,7 +4234,7 @@ document.getElementById("cancelLeagueExportBtn").addEventListener("click", () =>
 });
 
 // Same idea as GAME_STATS_COLUMNS, but each row is one of this player's own games (not another
-// player in the same game) — accessor reads off a precomputed {game, s, def, sh, gmsc, twoWay,
+// player in the same game) — accessor reads off a precomputed {game, s, def, sh, offRtg, twoWay,
 // result} row.
 const PLAYER_GAME_LOG_COLUMNS = [
   { key: "date", label: "Date", accessor: r => r.game.date || "" },
@@ -4238,7 +4257,7 @@ const PLAYER_GAME_LOG_COLUMNS = [
   { key: "oppfg", label: "Opp FG%", accessor: r => r.def.oppFgPct },
   { key: "beaten", label: "Beaten", accessor: r => r.def.timesBeaten },
   { key: "stops", label: "Stops", accessor: r => r.def.stops },
-  { key: "gmsc", label: "GmSc", accessor: r => r.gmsc },
+  { key: "offrtg", label: "Off Rating", accessor: r => r.offRtg },
   { key: "twoway", label: "Two-Way", accessor: r => r.twoWay }
 ];
 let playerGameLogSort = { key: "date", dir: "desc" };
@@ -4257,7 +4276,7 @@ function renderPlayerGameLog(playerId) {
     const s = getOrCreatePlayerStats(game, playerId);
     const sh = shootingStats(game, playerId);
     const def = gameDefenseStats(game, playerId);
-    return { game, s, sh, def, result: playerGameResult(game, playerId), gmsc: gameScore(s, sh), twoWay: twoWayScore(s, sh, def) };
+    return { game, s, sh, def, result: playerGameResult(game, playerId), offRtg: offensiveRating(s, sh), twoWay: twoWayScore(s, sh, def) };
   });
   const sortCol = PLAYER_GAME_LOG_COLUMNS.find(c => c.key === playerGameLogSort.key);
   rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), playerGameLogSort.dir));
@@ -4284,7 +4303,7 @@ function renderPlayerGameLog(playerId) {
       <td>${formatPct(r.def.oppFgPct)}</td>
       <td>${r.def.timesBeaten}</td>
       <td>${r.def.stops}</td>
-      <td>${r.gmsc.toFixed(1)}</td>
+      <td>${r.offRtg.toFixed(1)}</td>
       <td>${r.twoWay.toFixed(1)}</td>
     `;
     body.appendChild(tr);
@@ -4387,7 +4406,7 @@ function csvEscape(val) {
 document.getElementById("exportBoxScoreCsvBtn").addEventListener("click", () => {
   const rows = [["game_id", "date", "team", "player", ...STAT_FIELDS,
     "fgm", "fga", "tpm", "tpa", "close_m", "close_a", "mid_m", "mid_a", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "efg_pct", "ts_pct", "stocks", "ast_tov",
-    "pts_allowed", "opp_fg_pct", "times_beaten", "stops", "game_score", "two_way_score"]];
+    "pts_allowed", "opp_fg_pct", "times_beaten", "stops", "off_rating", "two_way_score"]];
   state.games.forEach(game => {
     game.stats.forEach(s => {
       const player = state.players.find(p => p.id === s.playerId);
@@ -4400,7 +4419,7 @@ document.getElementById("exportBoxScoreCsvBtn").addEventListener("click", () => 
         sh.fgm, sh.fga, sh.tpm, sh.tpa, sh.closeM, sh.closeA, sh.midM, sh.midA, sh.tpArcM, sh.tpArcA, sh.tpDeepM, sh.tpDeepA, sh.ftm, sh.fta,
         effectiveFgPct(sh.fgm, sh.tpm, sh.fga), trueShootingPct(s.pts, sh.fga, sh.fta),
         s.stl + s.blk, formatAstTov(s.ast, s.tov),
-        def.ptsAllowed, def.oppFgPct, def.timesBeaten, def.stops, gameScore(s, sh).toFixed(1), twoWayScore(s, sh, def).toFixed(1)
+        def.ptsAllowed, def.oppFgPct, def.timesBeaten, def.stops, offensiveRating(s, sh).toFixed(1), twoWayScore(s, sh, def).toFixed(1)
       ]);
     });
   });
@@ -4475,7 +4494,7 @@ document.getElementById("exportMatchupCsvBtn").addEventListener("click", () => {
 document.getElementById("exportLeaderboardCsvBtn").addEventListener("click", () => {
   const rows = [["player", "games_played", ...STAT_FIELDS,
     "fgm", "fga", "tpm", "tpa", "close_m", "close_a", "mid_m", "mid_a", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "shot_pct", "efg_pct", "ts_pct", "stocks", "ast_tov",
-    "pts_allowed", "opp_fg_pct", "times_beaten", "stops", "pts_per_20", "game_score_per_20", "two_way_per_20"]];
+    "pts_allowed", "opp_fg_pct", "times_beaten", "stops", "pts_per_20", "off_rating_per_20", "def_rating_per_20", "two_way_per_20"]];
   computeLeaderboard().forEach(r => {
     rows.push([
       r.player.name, r.gp, ...STAT_FIELDS.map(f => r.totals[f]),
@@ -4483,7 +4502,8 @@ document.getElementById("exportLeaderboardCsvBtn").addEventListener("click", () 
       r.shotPct, effectiveFgPct(r.shooting.fgm, r.shooting.tpm, r.shooting.fga), trueShootingPct(r.totals.pts, r.shooting.fga, r.shooting.fta),
       r.stocks, r.astTov, r.defense.ptsAllowed,
       pct(r.defense.timesBeaten, r.defense.timesBeaten + r.defense.stops),
-      r.defense.timesBeaten, r.defense.stops, r.rate.pts.toFixed(1), r.gameScorePer20.toFixed(1), r.twoWayPer20.toFixed(1)
+      r.defense.timesBeaten, r.defense.stops, r.rate.pts.toFixed(1), r.offRatingPer20.toFixed(1),
+      defensiveRating(r.rate, r.rateDefense).toFixed(1), r.twoWayPer20.toFixed(1)
     ]);
   });
   download("leaderboard.csv", rows.map(r => r.map(csvEscape).join(",")).join("\n"), "text/csv");
@@ -4498,13 +4518,13 @@ document.getElementById("exportAssistSynergyCsvBtn").addEventListener("click", (
 });
 
 document.getElementById("exportTeammateSynergyCsvBtn").addEventListener("click", () => {
-  const rows = [["player", "teammate", "gp_with", "gp_without", "gmsc_per20_with", "gmsc_per20_without", "two_way_per20_with", "two_way_per20_without"]];
+  const rows = [["player", "teammate", "gp_with", "gp_without", "off_rating_per20_with", "off_rating_per20_without", "two_way_per20_with", "two_way_per20_without"]];
   state.players.forEach(p => {
     computeTeammateSynergy(p.id).forEach(r => {
       rows.push([
         p.name, r.teammate.name, r.with.gp, r.without.gp,
-        r.with.gp > 0 ? r.with.gmScorePer20.toFixed(1) : "",
-        r.without.gp > 0 ? r.without.gmScorePer20.toFixed(1) : "",
+        r.with.gp > 0 ? r.with.offRatingPer20.toFixed(1) : "",
+        r.without.gp > 0 ? r.without.offRatingPer20.toFixed(1) : "",
         r.with.gp > 0 ? r.with.twoWayPer20.toFixed(1) : "",
         r.without.gp > 0 ? r.without.twoWayPer20.toFixed(1) : ""
       ]);
