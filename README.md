@@ -128,13 +128,16 @@ individual player, not a team.
      defending, make or miss — a real "shooting percentage allowed"), and **Stops** (times they
      were the defender on a *miss*). **GmSc** (Game Score) rolls the whole box score into one
      "how good was this game" number, adapted from the standard basketball formula. **Two-Way**
-     extends that with defense: it's GmSc plus **Defensive Impact** — `Stops − Beaten −
+     extends that with defense: it's GmSc plus **Defensive Rating** — `Stops − Beaten −
      0.4×Pts Allowed` — weighting a Stop the same as GmSc weights a steal, Beaten as its direct
      negative counterpart, and Pts Allowed lightly (0.4) just so a 3-point beat scores worse than
      a 2-point beat without double-penalizing the same possession the Beaten count already
      covers. Opp FG% isn't its own term in the formula since it's just Beaten ÷ (Beaten + Stops)
-     — a separate term would double-count the same information. A player never tagged as a
-     defender has Stops/Beaten/Pts Allowed all at 0, so their Defensive Impact is 0, not a
+     — a separate term would double-count the same information. Named after the NBA stat but not
+     the same formula: real Defensive Rating is points allowed per 100 possessions, and this tool
+     doesn't track possessions, so it's normalized per 20 combined points like every other rate
+     here instead. A player never tagged as a
+     defender has Stops/Beaten/Pts Allowed all at 0, so their Defensive Rating is 0, not a
      penalty — conservative tagging (only tag a defender when it's genuinely clear) should never
      hurt a player's Two-Way Score. The season **Leaderboard** shows every one of these as a
      rate per 20 combined points across all games, not a raw season total — see
@@ -196,7 +199,7 @@ individual player, not a team.
    stat is the closest comparison for that award: **MVP** compares season-long total Two-Way
    Score (not a per-20 rate) — durability and total contribution should count for MVP, not just
    rate over however many games someone happened to play. **Best Player**, **First/Second Team**,
-   and the duo awards compare Two-Way/20 rank instead; **DPOY** compares Def Impact/20 rank;
+   and the duo awards compare Two-Way/20 rank instead; **DPOY** compares Def Rating/20 rank;
    **Most Improved** compares the Last 5 trend (Two-Way/20, same mechanism as the Leaderboard's
    own Last 5 column, just using Two-Way instead of GmSc here); **Best Teammate** compares the
    average Two-Way/20 lift that player gives their actual teammates (each teammate's own
@@ -231,7 +234,7 @@ individual player, not a team.
    of nothing but dashes. A player who didn't have a game logged for that particular night still
    shows "—", not a zero — that's a gap in what's been reviewed, not a real 0.0 performance.
    Right below that, a **Two-Way Quadrant** chart plots one dot per player: GmSc/20 (offense) on
-   the x-axis, Defensive Impact/20 on the y-axis — the two halves of Two-Way Score, kept separate
+   the x-axis, Defensive Rating/20 on the y-axis — the two halves of Two-Way Score, kept separate
    instead of pre-summed, so "who's good" splits into "good at what." The quadrant lines cross at
    zero on each axis rather than at this roster's own median, since zero is already the meaningful
    boundary each stat uses on its own — a median split would just be an arbitrary line drawn
@@ -357,7 +360,7 @@ individual player, not a team.
    for checking someone else's export, or a season that isn't the one currently loaded here) —
    see that file's own header comment for how to run it. Below that, and after Game-Winning
    Buckets, **Best & Worst Individual Games** ranks every player-game by that single game's own
-   Two-Way score (Game Score + Defensive Impact) — deliberately not a per-20 rate or a season
+   Two-Way score (Game Score + Defensive Rating) — deliberately not a per-20 rate or a season
    total, since the rest of the Leaderboard normalizes everything for fair comparison, which
    averages away exactly what this panel exists to surface: a specific night's story, buried
    otherwise inside that game's own box score. Every player on either roster in a reviewed game
@@ -440,7 +443,7 @@ individual player, not a team.
    not to the aggregate record shown on the Leaderboard, until it's actually reviewed.
 
    Every counting stat on the Leaderboard — PTS, OREB, DREB, AST, STL, BLK, TOV, PF, Pts
-   Allowed, Beaten, Stops, Def Impact, GmSc, and Two-Way, plus the FG/3PT/FT makes-attempts
+   Allowed, Beaten, Stops, Def Rating, GmSc, and Two-Way, plus the FG/3PT/FT makes-attempts
    shown — is normalized *per 20 combined points scored in the game*, not per game and not a
    raw season total. Games are capped at different totals (16 or 21), so a simple per-game
    average isn't a fair comparison between a player who mostly plays 16-point games and one who

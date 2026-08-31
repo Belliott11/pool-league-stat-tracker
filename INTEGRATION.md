@@ -151,14 +151,19 @@ See `shootingStats()`, `gameDefenseStats()`, `trueShootingPct()`, `effectiveFgPc
 `gameScore()`, `defensiveImpact()`, and `twoWayScore()` in `app.js` for the exact formulas if you
 want to replicate them as PocketBase views/queries instead of recomputing client-side.
 
-**Two-Way Score is GmSc plus Defensive Impact** (`defensiveImpact()`): `Stops − Beaten −
+**Two-Way Score is GmSc plus Defensive Rating** (`defensiveImpact()` in the code — the display
+label reads "Def Rating" on the Leaderboard, the function name is unchanged): `Stops − Beaten −
 0.4×Pts Allowed`, using the same per-shot defender tags as Pts Allowed/Beaten/Stops above — no
 new stored data. Stops and Beaten are weighted symmetrically at 1.0 (a stop denies a possession
 the way GmSc weights a steal), Pts Allowed at 0.4 so a 3-point beat scores worse than a 2-point
 beat without double-penalizing the same possession the Beaten count already covers, and Opp FG%
 deliberately isn't its own term since it's just Beaten ÷ (Beaten + Stops) — a separate term
-would double-count that. **A player never tagged as a defender in a game has Stops, Beaten, and
-Pts Allowed all at 0, so Defensive Impact is exactly 0 for them, not a penalty** — this matters
+would double-count that. Worth flagging if you're porting this: it's *not* the NBA's Defensive
+Rating (points allowed per 100 possessions) — this tool doesn't track possessions at all, so it
+reuses the same per-20-combined-points normalization as every other rate stat here instead. Same
+name, different denominator; don't conflate the two if you ever add real possession tracking.
+**A player never tagged as a defender in a game has Stops, Beaten, and
+Pts Allowed all at 0, so Defensive Rating is exactly 0 for them, not a penalty** — this matters
 because Ben's tagging policy is to only tag a defender when it's genuinely clear from the video,
 so conservative tagging should never hurt a Two-Way Score. If you replicate this server-side,
 make sure a "no tagged defensive possessions" player computes to 0, not null/undefined that then
@@ -166,7 +171,7 @@ propagates as NaN or gets treated as a bad defensive game.
 
 **Every counting stat on the Leaderboard page — not just PTS/20 and GmSc/20 — is normalized per
 20 combined points scored in the game, not per game and not a season total**: PTS, OREB, DREB,
-AST, STL, BLK, TOV, PF, Pts Allowed, Beaten, Stops, Def Impact, GmSc, and Two-Way, plus the
+AST, STL, BLK, TOV, PF, Pts Allowed, Beaten, Stops, Def Rating, GmSc, and Two-Way, plus the
 FG/3PT/FT makes-attempts shown. See `gameTotalPoints()` and the `per20()` closure in
 `computeLeaderboard()` in `app.js`. This matters uniformly, not just for points and Game Score,
 because games are capped at different targets (16 or 21), so a per-game average isn't directly
@@ -325,7 +330,7 @@ from anything in `state` and won't update itself; it's a historical record of a 
 already happened. What *is* computed live, every render, is each winner's standing on whichever
 tracked stat `computeAwardsVsStats()` pairs with that award — Two-Way/20 rank for most of them,
 **season-long total Two-Way** (not a rate — see `twoWayTotal` on `computeLeaderboard()`'s
-per-player object) specifically for MVP, Def Impact/20 rank for DPOY, Game-Winning Buckets for
+per-player object) specifically for MVP, Def Rating/20 rank for DPOY, Game-Winning Buckets for
 Clutch (see below), the Last 5 trend for Most Improved (`last5TwoWayPer20` vs. `twoWayPer20`,
 same mechanism as the Leaderboard's own Last 5 column but Two-Way instead of GmSc here), or the
 average Two-Way/20 lift a "Best Teammate" winner gives their actual teammates, reusing

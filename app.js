@@ -2630,7 +2630,7 @@ function renderCloseGameShootingPanel() {
 }
 
 // Best & Worst Individual Games — ranks every player-game line by that single game's actual
-// Two-Way score (Game Score + Defensive Impact), not a per-20 rate and not a season total. The
+// Two-Way score (Game Score + Defensive Rating), not a per-20 rate and not a season total. The
 // rest of the Leaderboard deliberately normalizes everything to per-20 or season-long numbers so
 // players are comparable across different game lengths and sample sizes — this panel is the one
 // exception on purpose, since the whole point is surfacing a specific game's own story (a real
@@ -2798,7 +2798,7 @@ function computeAwardStandings() {
     twoWayTotal: [...board].sort((a, b) => b.twoWayTotal - a.twoWayTotal)
       .map(r => ({ player: r.player, value: r.twoWayTotal, display: `${r.twoWayTotal.toFixed(1)} Two-Way (season)` })),
     defImpact: [...board].sort((a, b) => defensiveImpact(b.rateDefense) - defensiveImpact(a.rateDefense))
-      .map(r => ({ player: r.player, value: defensiveImpact(r.rateDefense), display: `${defensiveImpact(r.rateDefense).toFixed(1)} Def Impact/20` })),
+      .map(r => ({ player: r.player, value: defensiveImpact(r.rateDefense), display: `${defensiveImpact(r.rateDefense).toFixed(1)} Def Rating/20` })),
     gwb: computeGameWinningBuckets()
       .map(r => ({ player: r.player, value: r.count, display: `${r.count} game-winning bucket${r.count === 1 ? "" : "s"}` })),
     closeGameTs: [...computeCloseGameShooting()].sort((a, b) => b.ts - a.ts)
@@ -2998,11 +2998,11 @@ function playerChartColor(index) {
   return PLAYER_CHART_COLORS[index % PLAYER_CHART_COLORS.length];
 }
 
-// One dot per player: GmSc/20 (offense) on the x-axis, Def Impact/20 on the y-axis — the two
+// One dot per player: GmSc/20 (offense) on the x-axis, Def Rating/20 on the y-axis — the two
 // halves of Two-Way Score, plotted separately instead of pre-summed, so "who's actually good"
 // splits into "good at what." The quadrant split is at 0 on both axes rather than the data's
 // median, since 0 is already the meaningful boundary each stat uses on its own (0 GmSc/20 is
-// replacement-level offense; 0 Def Impact is "stops minus times beaten minus points allowed,
+// replacement-level offense; 0 Def Rating is "stops minus times beaten minus points allowed,
 // net zero"), not an arbitrary line drawn through wherever this particular roster happens to
 // cluster.
 function computeQuadrantData() {
@@ -3031,7 +3031,7 @@ function renderQuadrantChart() {
     const cx = xScale(d.gmsc), cy = yScale(d.defImpact);
     return `
       <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot" style="fill:${playerChartColor(i)}">
-        <title>${escapeHtml(d.player.name)}: ${d.gmsc.toFixed(1)} GmSc/20, ${d.defImpact.toFixed(1)} Def Impact/20</title>
+        <title>${escapeHtml(d.player.name)}: ${d.gmsc.toFixed(1)} GmSc/20, ${d.defImpact.toFixed(1)} Def Rating/20</title>
       </circle>
       <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
     `;
@@ -3047,13 +3047,13 @@ function renderQuadrantChart() {
       <line x1="${zeroX}" y1="${PAD}" x2="${zeroX}" y2="${H - PAD}" class="quadrant-axis" />
       ${dotsSvg}
       <text x="${W - PAD}" y="${H - PAD + 16}" text-anchor="end" class="quadrant-axis-label">GmSc/20 &#8594;</text>
-      <text x="${PAD - 10}" y="${PAD}" text-anchor="end" class="quadrant-axis-label">&#8593; Def Impact/20</text>
+      <text x="${PAD - 10}" y="${PAD}" text-anchor="end" class="quadrant-axis-label">&#8593; Def Rating/20</text>
     </svg>
   `;
 }
 
 // Volume vs. Efficiency — offense only, deliberately separate from the Two-Way Quadrant above
-// (which plots GmSc against Def Impact). This one is x = shot volume (FGA/20, "how much they
+// (which plots GmSc against Def Rating). This one is x = shot volume (FGA/20, "how much they
 // shoot"), y = TS% (season, same formula as the main Leaderboard table's TS% column, "how well
 // they shoot") — the pairing that shows a high-volume/low-efficiency player and a low-volume/
 // high-efficiency player as mirror opposites directly, instead of needing someone to
@@ -3770,9 +3770,9 @@ const LEADERBOARD_COLUMNS = [
   { key: "oppfg", label: "Opp FG%", accessor: r => pct(r.defense.timesBeaten, r.defense.timesBeaten + r.defense.stops), display: r => formatPct(pct(r.defense.timesBeaten, r.defense.timesBeaten + r.defense.stops)), tooltip: "Shooting percentage of everyone this player was tagged defending, make or miss — a real 'shooting percentage allowed.'" },
   { key: "beaten", label: "Beaten/20", accessor: r => r.rateDefense.timesBeaten, display: r => r.rateDefense.timesBeaten.toFixed(1), tooltip: "Times scored on while tagged as the defender on a made shot, per 20 combined points." },
   { key: "stops", label: "Stops/20", accessor: r => r.rateDefense.stops, display: r => r.rateDefense.stops.toFixed(1), tooltip: "Times tagged as the defender on a missed shot, per 20 combined points." },
-  { key: "defimpact", label: "Def Impact/20", accessor: r => defensiveImpact(r.rateDefense), display: r => defensiveImpact(r.rateDefense).toFixed(1), tooltip: "Stops minus Beaten minus 0.4×Pts Allowed, per 20 combined points. 0 for anyone never tagged as a defender — not a penalty for conservative tagging." },
+  { key: "defimpact", label: "Def Rating/20", accessor: r => defensiveImpact(r.rateDefense), display: r => defensiveImpact(r.rateDefense).toFixed(1), tooltip: "This tool's Defensive Rating: Stops minus Beaten minus 0.4×Pts Allowed, per 20 combined points. Not points-allowed-per-100-possessions like the NBA stat of the same name — possessions aren't tracked here, so combined points stands in as the pace proxy, same as every other per-20 rate on this board. 0 for anyone never tagged as a defender — not a penalty for conservative tagging." },
   { key: "gmsc20", label: "GmSc/20", accessor: r => r.gameScorePer20, display: r => r.gameScorePer20.toFixed(1), tooltip: "Game Score — a single 'how good was this game' number, adapted from the standard basketball formula — per 20 combined points." },
-  { key: "twoway20", label: "Two-Way/20", accessor: r => r.twoWayPer20, display: r => r.twoWayPer20.toFixed(1), tooltip: "GmSc plus Defensive Impact, per 20 combined points." },
+  { key: "twoway20", label: "Two-Way/20", accessor: r => r.twoWayPer20, display: r => r.twoWayPer20.toFixed(1), tooltip: "GmSc plus Defensive Rating, per 20 combined points." },
   { key: "last5", label: "Last 5", accessor: r => r.last5GmScPer20, display: r => r.last5Gp > 0 ? `${r.last5Trend} ${r.last5GmScPer20.toFixed(1)}` : "—", tooltip: "GmSc/20 over their last 5 games with real shots logged (fewer if they haven't played 5 yet). ▲/▼ shows whether that's above or below their season GmSc/20 — within ±0.5 counts as flat (–)." }
 ];
 
