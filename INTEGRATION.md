@@ -246,6 +246,22 @@ the player's own roster (`teamOreb`/`teamDreb`) and the opposing roster (`oppOre
 port this, don't reuse `teamFgaTotal`/`teamAstTotal`'s pattern (own team only) — this one needs
 both rosters' rebound totals for every game the player played, not just their own team's.
 
+**TRB% (Leaderboard) is just OREB%'s and DREB%'s two pools added together — no new
+accumulator.** `trebPct: pct(totals.oreb + totals.dreb, orebPoolTotal + drebPoolTotal)`. This
+works because `orebPoolTotal + drebPoolTotal` already equals total rebounds across both teams and
+both categories for every game the player played (each missed shot contributes to exactly one of
+the two pools), which is exactly what the real TRB% formula's denominator is.
+
+**TOV% (Leaderboard) is a different shape from every other new "%" column — a share of this
+player's own plays, not a share of any team or pool total.** `turnoverPct(tov, fga, fta)` (`app.js`,
+near `trueShootingPct()`) is `TOV / (FGA + 0.44×FTA + TOV)` — the standard formula, reusing the
+same 0.44 FTA-to-possession scaling `trueShootingPct()` already uses, so a free throw trip counts
+as a fraction of a "play" the same way in both places. Unlike Shot%/AST%/OREB%/DREB%, this needs
+no team or opponent roster data at all — it's computed directly off `computeLeaderboard()`'s own
+`totals.tov`/`shooting.fga`/`shooting.fta` for that player, same signature style as
+`trueShootingPct(pts, fga, fta)` so it also works per-game if you ever want it on the Game Stats
+table, not just season-wide on the Leaderboard.
+
 **`scoring_events`** — one row per shot attempt, made or missed (this is what the dashboard
 calls the "Shot Log")
 - `game` → relation to `games`

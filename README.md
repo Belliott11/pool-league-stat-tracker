@@ -201,7 +201,13 @@ individual player, not a team.
    OREB on the opponent's misses). The real version of this stat normally needs minutes played, to
    scope "available" down to while a player was actually on the floor — this tool doesn't track
    minutes, but Poolean has no substitutions, so a rostered player is on the floor for the entire
-   game and that term drops out on its own. **Click any column header to sort by it** (click again to flip
+   game and that term drops out on its own. **TRB%**, right after DREB%, is the two combined:
+   OREB plus DREB against OREB%'s and DREB%'s two pools added together — the overall "how much of
+   the available boards did this player grab" read. **TOV%** is a different shape entirely — not
+   a share of the team's turnovers (a turnover isn't a shared resource the way a shot, assist, or
+   rebound is), but a share of this player's *own* scoring opportunities: `TOV ÷ (FGA + 0.44×FTA
+   + TOV)`, the same free-throw-trip scaling TS% uses. Of the times this player had the ball in a
+   position to score or give it away, how often it was the latter. **Click any column header to sort by it** (click again to flip
    between highest-first and lowest-first) — hover a header for a sentence on what that column
    means, since 25+ columns is a lot to hold in your head while staring at a number. The last
    column, **Last 5**, is a quick "how are they trending lately" read: Off Rating/20 over just their
