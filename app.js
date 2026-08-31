@@ -3800,12 +3800,12 @@ const LEADERBOARD_COLUMNS = [
   { key: "l", label: "L", accessor: r => r.losses, tooltip: "Losses, counted only for games with real shots logged." },
   { key: "pct", label: "PCT", accessor: r => r.winPct, display: r => formatPct(r.winPct), tooltip: "Win percentage: wins / (wins + losses)." },
   { key: "pts", label: "PTS/20", accessor: r => r.rate.pts, display: r => r.rate.pts.toFixed(1), tooltip: "Points, per 20 combined points scored in the game (not per game — see the note above the table)." },
-  { key: "shotpct", label: "Shot%", accessor: r => r.shotPct, display: r => formatPct(r.shotPct), tooltip: "Share of their own team's field goal attempts that were theirs, across games they played — not the league's shots, their team's. A season-long share (their FGA / their team's FGA in those same games), not a per-20 rate." },
-  { key: "astpct", label: "AST%", accessor: r => r.astPct, display: r => formatPct(r.astPct), tooltip: "Share of their own team's assists that were theirs, across games they played — not the league's assists, their team's. A season-long share (their AST / their team's AST in those same games), not a per-20 rate." },
-  { key: "orebpct", label: "OREB%", accessor: r => r.orebPct, display: r => formatPct(r.orebPct), tooltip: "Real Total Rebound %-style share: this player's OREB divided by every offensive rebound available on their team's misses that game (their team's OREB plus the opponent's DREB on those same misses) — not just their own team's OREB total like Shot%/AST% above, since a rebound is contested between both teams. Poolean has no substitutions, so a rostered player is on the floor for the whole game — the minutes-played term real rebound rate stats normally need just doesn't apply here. A season-long share, not a per-20 rate." },
-  { key: "drebpct", label: "DREB%", accessor: r => r.drebPct, display: r => formatPct(r.drebPct), tooltip: "Same idea as OREB% for the other side of the ball: this player's DREB divided by every defensive rebound available on the opponent's misses that game (their team's DREB plus the opponent's OREB on those same misses). A season-long share, not a per-20 rate." },
-  { key: "trebpct", label: "TRB%", accessor: r => r.trebPct, display: r => formatPct(r.trebPct), tooltip: "OREB and DREB combined: this player's total rebounds divided by every rebound actually available across the games they played (OREB% and DREB%'s two pools added together). Same no-substitutions reasoning as OREB%/DREB% above — a season-long share, not a per-20 rate." },
-  { key: "tovpct", label: "TOV%", accessor: r => r.tovPct, display: r => formatPct(r.tovPct), tooltip: "How often this player turned it over relative to their own scoring opportunities — TOV ÷ (FGA + 0.44×FTA + TOV), the same FTA-equivalent scaling True Shooting % uses. Not a share of the team's turnovers like Shot%/AST% above — a turnover isn't a shared resource the way a shot or an assist is, so this measures usage instead: of the times this player had the ball in a position to score or give it away, how often it was the latter." },
+  { key: "shotpct", label: "Shot%", advanced: true, accessor: r => r.shotPct, display: r => formatPct(r.shotPct), tooltip: "Share of their own team's field goal attempts that were theirs, across games they played — not the league's shots, their team's. A season-long share (their FGA / their team's FGA in those same games), not a per-20 rate." },
+  { key: "astpct", label: "AST%", advanced: true, accessor: r => r.astPct, display: r => formatPct(r.astPct), tooltip: "Share of their own team's assists that were theirs, across games they played — not the league's assists, their team's. A season-long share (their AST / their team's AST in those same games), not a per-20 rate." },
+  { key: "orebpct", label: "OREB%", advanced: true, accessor: r => r.orebPct, display: r => formatPct(r.orebPct), tooltip: "Real Total Rebound %-style share: this player's OREB divided by every offensive rebound available on their team's misses that game (their team's OREB plus the opponent's DREB on those same misses) — not just their own team's OREB total like Shot%/AST% above, since a rebound is contested between both teams. Poolean has no substitutions, so a rostered player is on the floor for the whole game — the minutes-played term real rebound rate stats normally need just doesn't apply here. A season-long share, not a per-20 rate." },
+  { key: "drebpct", label: "DREB%", advanced: true, accessor: r => r.drebPct, display: r => formatPct(r.drebPct), tooltip: "Same idea as OREB% for the other side of the ball: this player's DREB divided by every defensive rebound available on the opponent's misses that game (their team's DREB plus the opponent's OREB on those same misses). A season-long share, not a per-20 rate." },
+  { key: "trebpct", label: "TRB%", advanced: true, accessor: r => r.trebPct, display: r => formatPct(r.trebPct), tooltip: "OREB and DREB combined: this player's total rebounds divided by every rebound actually available across the games they played (OREB% and DREB%'s two pools added together). Same no-substitutions reasoning as OREB%/DREB% above — a season-long share, not a per-20 rate." },
+  { key: "tovpct", label: "TOV%", advanced: true, accessor: r => r.tovPct, display: r => formatPct(r.tovPct), tooltip: "How often this player turned it over relative to their own scoring opportunities — TOV ÷ (FGA + 0.44×FTA + TOV), the same FTA-equivalent scaling True Shooting % uses. Not a share of the team's turnovers like Shot%/AST% above — a turnover isn't a shared resource the way a shot or an assist is, so this measures usage instead: of the times this player had the ball in a position to score or give it away, how often it was the latter." },
   { key: "fg", label: "FG", accessor: r => pct(r.shooting.fgm, r.shooting.fga), display: r => formatShootingSplitRate(r.rateShooting.fgm, r.rateShooting.fga), tooltip: "Field goals made/attempted (2s and 3s combined), per 20 combined points, with FG%." },
   { key: "tpt", label: "3PT", accessor: r => pct(r.shooting.tpm, r.shooting.tpa), display: r => formatShootingSplitRate(r.rateShooting.tpm, r.rateShooting.tpa), tooltip: "3-pointers made/attempted, per 20 combined points, with 3PT%. See the 3PT Shot Distance panel below for the Arc/Deep breakdown." },
   { key: "ft", label: "FT", accessor: r => pct(r.shooting.ftm, r.shooting.fta), display: r => formatShootingSplitRate(r.rateShooting.ftm, r.rateShooting.fta), tooltip: "Free throws made/attempted, per 20 combined points, with FT%." },
@@ -3830,6 +3830,32 @@ const LEADERBOARD_COLUMNS = [
 ];
 
 let leaderboardSort = { key: "pts", dir: "desc" };
+
+// The six share-of-team/-pool "%" columns (Shot%/AST%/OREB%/DREB%/TRB%/TOV%) are marked
+// `advanced: true` above and hidden by default — the newest, most niche additions to an
+// already-34-column table, kept a click away instead of always adding to the scroll. Persisted
+// so the choice survives a reload, same pattern as THEME_KEY.
+const SHOW_ADVANCED_COLS_KEY = "poolLeagueShowAdvancedCols";
+let showAdvancedCols = localStorage.getItem(SHOW_ADVANCED_COLS_KEY) === "true";
+function visibleLeaderboardColumns() {
+  return LEADERBOARD_COLUMNS.filter(c => !c.advanced || showAdvancedCols);
+}
+function updateAdvancedColsBtnLabel() {
+  const btn = document.getElementById("toggleAdvancedColsBtn");
+  if (btn) btn.textContent = showAdvancedCols ? "Hide Advanced % Columns" : "Show Advanced % Columns";
+}
+document.getElementById("toggleAdvancedColsBtn").addEventListener("click", () => {
+  showAdvancedCols = !showAdvancedCols;
+  localStorage.setItem(SHOW_ADVANCED_COLS_KEY, String(showAdvancedCols));
+  // A column that just got hidden can't be clicked again to sort by — fall back to the default
+  // rather than leaving the table sorted by a column nobody can see or un-sort.
+  if (!showAdvancedCols) {
+    const advancedKeys = new Set(LEADERBOARD_COLUMNS.filter(c => c.advanced).map(c => c.key));
+    if (advancedKeys.has(leaderboardSort.key)) leaderboardSort = { key: "pts", dir: "desc" };
+  }
+  updateAdvancedColsBtnLabel();
+  renderLeaderboard();
+});
 
 // Nulls (no attempts yet, etc.) always sort last regardless of direction.
 function compareForSort(a, b, dir) {
@@ -3870,7 +3896,7 @@ function renderSortableHeader(headerRowEl, columns, sortState, onChange) {
 function renderLeaderboardHeader() {
   const headerRow = document.getElementById("leaderboardHeaderRow");
   headerRow.innerHTML = "";
-  LEADERBOARD_COLUMNS.forEach(col => {
+  visibleLeaderboardColumns().forEach(col => {
     const th = document.createElement("th");
     th.className = col.key === "player" ? "sortable-th sticky-col" : "sortable-th";
     if (col.tooltip) th.title = col.tooltip;
@@ -3893,6 +3919,7 @@ function renderLeaderboardHeader() {
 // player-comparison scatters, then shot-location/efficiency, then matchup/chemistry grids, then
 // situational stats, capped with the season's best/worst individual games. Keep the two in sync.
 function renderLeaderboard() {
+  updateAdvancedColsBtnLabel();
   renderLeaderboardHeader();
   renderAwardsVsStats();
   renderPowerRankingVsPerformance();
@@ -3916,8 +3943,9 @@ function renderLeaderboard() {
   body.innerHTML = "";
   // Players with no games yet just clutter the table with a row of dashes.
   const rows = computeLeaderboard().filter(r => r.gp > 0);
+  const cols = visibleLeaderboardColumns();
   if (rows.length === 0) {
-    body.innerHTML = `<tr><td colspan="${LEADERBOARD_COLUMNS.length}" class="empty-state">No games with players yet.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="${cols.length}" class="empty-state">No games with players yet.</td></tr>`;
     return;
   }
   const sortCol = LEADERBOARD_COLUMNS.find(c => c.key === leaderboardSort.key);
@@ -3925,7 +3953,7 @@ function renderLeaderboard() {
 
   rows.forEach(r => {
     const tr = document.createElement("tr");
-    LEADERBOARD_COLUMNS.forEach(col => {
+    cols.forEach(col => {
       const td = document.createElement("td");
       if (col.key === "player") {
         td.className = "sticky-col";

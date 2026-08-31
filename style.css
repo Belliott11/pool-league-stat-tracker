@@ -163,6 +163,12 @@ main {
   margin-top: 10px;
 }
 
+.leaderboard-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 10px 0;
+}
+
 /* Small live preview during the league-wide combine-video export — visible so there's some
    confirmation something's actually happening during what can be a long real-time recording,
    not full-size since it's not meant to be watched closely, just glanced at for progress. */

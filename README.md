@@ -207,9 +207,16 @@ individual player, not a team.
    a share of the team's turnovers (a turnover isn't a shared resource the way a shot, assist, or
    rebound is), but a share of this player's *own* scoring opportunities: `TOV ÷ (FGA + 0.44×FTA
    + TOV)`, the same free-throw-trip scaling TS% uses. Of the times this player had the ball in a
-   position to score or give it away, how often it was the latter. **Click any column header to sort by it** (click again to flip
+   position to score or give it away, how often it was the latter. All six of these "%" columns
+   (Shot%/AST%/OREB%/DREB%/TRB%/TOV%) are hidden by default — the table's pushing 35 columns
+   without them, and these are the newest, most niche additions. **Show Advanced % Columns**,
+   above the table, reveals them (and remembers your choice on reload); they're in the Leaderboard
+   CSV export regardless of whether they're shown on screen. If the table happens to be sorted by
+   one of them when you hide them again, sort falls back to PTS/20 rather than leaving the table
+   sorted by a column you can no longer see or click. **Click any column header to sort by it** (click again to flip
    between highest-first and lowest-first) — hover a header for a sentence on what that column
-   means, since 25+ columns is a lot to hold in your head while staring at a number. The last
+   means, since 25+ columns (more with the advanced ones shown) is a lot to hold in your head
+   while staring at a number. The last
    column, **Last 5**, is a quick "how are they trending lately" read: Off Rating/20 over just their
    last 5 games with real shots logged (fewer if they haven't played 5 yet), with a ▲/▼ showing
    whether that's above or below their season Off Rating/20 (within ±0.5 counts as flat, shown as ●

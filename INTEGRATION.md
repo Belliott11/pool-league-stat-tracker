@@ -262,6 +262,19 @@ no team or opponent roster data at all — it's computed directly off `computeLe
 `trueShootingPct(pts, fga, fta)` so it also works per-game if you ever want it on the Game Stats
 table, not just season-wide on the Leaderboard.
 
+**All six "%" columns are hidden by default, client-side only — nothing to port here unless you
+want the same UX.** Each is marked `advanced: true` on its `LEADERBOARD_COLUMNS` entry;
+`visibleLeaderboardColumns()` filters `LEADERBOARD_COLUMNS` down to `!c.advanced ||
+showAdvancedCols` before either the header or body render loop touches it (`renderLeaderboardHeader()`
+and `renderLeaderboard()` in `app.js` both call this instead of using `LEADERBOARD_COLUMNS`
+directly now — if you add a new column, decide whether it belongs in that filtered set the same
+way). `showAdvancedCols` is a plain boolean persisted under `localStorage["poolLeagueShowAdvancedCols"]`,
+same pattern as the theme toggle. Toggling it off resets `leaderboardSort` to the default (`pts`
+desc) if the table happened to be sorted by a column that just got hidden, so nothing gets stuck
+sorted by an uninteractable column. The Leaderboard CSV export (`exportLeaderboardCsvBtn`) is a
+separate code path that always includes all six regardless of `showAdvancedCols` — the toggle is
+purely a display concern for the on-screen table, not a data-scoping one.
+
 **`scoring_events`** — one row per shot attempt, made or missed (this is what the dashboard
 calls the "Shot Log")
 - `game` → relation to `games`
