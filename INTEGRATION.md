@@ -189,6 +189,21 @@ you're pulling from the CSV (or replicating a season-totals collection) rather t
 rendered page, you have the totals; apply the same per-20 normalization yourself for whatever
 rate you want to show, same as the dashboard's own UI layer does.
 
+**Shot% (Leaderboard) is also purely computed, nothing stored — and is deliberately not a per-20
+rate either, same family as A/TO and the shooting percentages above.** It's a season-long share:
+this player's own field goal attempts divided by their *team's* total field goal attempts, summed
+across the games they played (`teamFgaTotal` in `computeLeaderboard()`, `app.js`) — not the
+league's shots, their team's, since "who's actually taking the shots on a given night" is a
+question about the handful of people sharing the floor with them, not the whole roster. The
+denominator is built per game from whichever side (`teamA`/`teamB`) the player was actually on
+that game, summing `shootingStats(game, id).fga` for every player on that side (the player
+themselves included) — this needs the full roster per game, not just this one player's own
+numbers, which is why it's computed inline in `computeLeaderboard()`'s own per-game loop rather
+than reusing a value already being tracked elsewhere. Free throws are deliberately excluded from
+both sides of the ratio (`fga` only ever counts `points === 2 || 3`, matching `shootingStats()`
+everywhere else in this tool) — a player who draws a lot of fouls but rarely shoots from the field
+shouldn't show an inflated Shot% because of it.
+
 **`scoring_events`** — one row per shot attempt, made or missed (this is what the dashboard
 calls the "Shot Log")
 - `game` → relation to `games`

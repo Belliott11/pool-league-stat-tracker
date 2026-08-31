@@ -168,7 +168,15 @@ individual player, not a team.
    reshuffle every game — there's no team standings, just individual record). Only a game with
    real shots logged counts toward a player's row at all — one that's just been rostered but not
    reviewed yet doesn't drag their numbers toward 0, and a player with no such games doesn't
-   clutter the table with a row of dashes. **Click any column header to sort by it** (click again to flip
+   clutter the table with a row of dashes. Right after PTS/20 sits **Shot%** — not a per-20 rate
+   like its neighbors, but a season-long share: what percentage of their own *team's* total field
+   goal attempts were theirs, across the games they played (their FGA ÷ their team's FGA in those
+   same games — teammates included in the denominator, opponents' shots never counted). Free
+   throws aren't field goal attempts, so a player who draws a lot of fouls but shoots little from
+   the field won't show an inflated Shot% from that. This is deliberately about a team's own shot
+   diet, not the league's — the meaningful comparison for "who's actually taking the shots on a
+   given night" is against the three or four other people on the floor with them, not the whole
+   roster. **Click any column header to sort by it** (click again to flip
    between highest-first and lowest-first) — hover a header for a sentence on what that column
    means, since 25+ columns is a lot to hold in your head while staring at a number. The last
    column, **Last 5**, is a quick "how are they trending lately" read: GmSc/20 over just their

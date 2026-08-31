@@ -2427,7 +2427,7 @@ function computeLeaderboard() {
     const totals = { pts: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, pf: 0 };
     const shooting = { fgm: 0, fga: 0, tpm: 0, tpa: 0, closeM: 0, closeA: 0, midM: 0, midA: 0, tpArcM: 0, tpArcA: 0, tpDeepM: 0, tpDeepA: 0, ftm: 0, fta: 0 };
     const defense = { ptsAllowed: 0, timesBeaten: 0, stops: 0 };
-    let wins = 0, losses = 0, ties = 0, combinedPoints = 0;
+    let wins = 0, losses = 0, ties = 0, combinedPoints = 0, teamFgaTotal = 0;
     gamesPlayed.forEach(g => {
       const s = g.stats.find(st => st.playerId === p.id);
       if (s) STAT_FIELDS.forEach(f => totals[f] += s[f]);
@@ -2438,6 +2438,12 @@ function computeLeaderboard() {
       defense.timesBeaten += def.timesBeaten;
       defense.stops += def.stops;
       combinedPoints += gameTotalPoints(g);
+      // Shot% denominator: every field goal attempt by this player's own team in this game
+      // (themselves included), so "what share of the team's shots were theirs" — not the
+      // league's, since a team's own shot diet is the meaningful comparison for who's actually
+      // taking the shots on a given night.
+      const myTeam = g.teamA.includes(p.id) ? g.teamA : g.teamB;
+      teamFgaTotal += myTeam.reduce((sum, id) => sum + shootingStats(g, id).fga, 0);
       const result = playerGameResult(g, p.id);
       if (result === "W") wins++;
       else if (result === "L") losses++;
@@ -2487,6 +2493,7 @@ function computeLeaderboard() {
       gameScoreTotal: totalGameScore,
       twoWayTotal: totalTwoWay,
       stocks: totals.stl + totals.blk,
+      shotPct: pct(shooting.fga, teamFgaTotal),
       astTov: formatAstTov(totals.ast, totals.tov),
       last5Gp: last5.gp, last5GmScPer20: last5.gmScorePer20, last5TwoWayPer20: last5.twoWayPer20, last5Trend
     };
@@ -3745,6 +3752,7 @@ const LEADERBOARD_COLUMNS = [
   { key: "l", label: "L", accessor: r => r.losses, tooltip: "Losses, counted only for games with real shots logged." },
   { key: "pct", label: "PCT", accessor: r => r.winPct, display: r => formatPct(r.winPct), tooltip: "Win percentage: wins / (wins + losses)." },
   { key: "pts", label: "PTS/20", accessor: r => r.rate.pts, display: r => r.rate.pts.toFixed(1), tooltip: "Points, per 20 combined points scored in the game (not per game — see the note above the table)." },
+  { key: "shotpct", label: "Shot%", accessor: r => r.shotPct, display: r => formatPct(r.shotPct), tooltip: "Share of their own team's field goal attempts that were theirs, across games they played — not the league's shots, their team's. A season-long share (their FGA / their team's FGA in those same games), not a per-20 rate." },
   { key: "fg", label: "FG", accessor: r => pct(r.shooting.fgm, r.shooting.fga), display: r => formatShootingSplitRate(r.rateShooting.fgm, r.rateShooting.fga), tooltip: "Field goals made/attempted (2s and 3s combined), per 20 combined points, with FG%." },
   { key: "tpt", label: "3PT", accessor: r => pct(r.shooting.tpm, r.shooting.tpa), display: r => formatShootingSplitRate(r.rateShooting.tpm, r.rateShooting.tpa), tooltip: "3-pointers made/attempted, per 20 combined points, with 3PT%. See the 3PT Shot Distance panel below for the Arc/Deep breakdown." },
   { key: "ft", label: "FT", accessor: r => pct(r.shooting.ftm, r.shooting.fta), display: r => formatShootingSplitRate(r.rateShooting.ftm, r.rateShooting.fta), tooltip: "Free throws made/attempted, per 20 combined points, with FT%." },
@@ -4466,13 +4474,13 @@ document.getElementById("exportMatchupCsvBtn").addEventListener("click", () => {
 
 document.getElementById("exportLeaderboardCsvBtn").addEventListener("click", () => {
   const rows = [["player", "games_played", ...STAT_FIELDS,
-    "fgm", "fga", "tpm", "tpa", "close_m", "close_a", "mid_m", "mid_a", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "efg_pct", "ts_pct", "stocks", "ast_tov",
+    "fgm", "fga", "tpm", "tpa", "close_m", "close_a", "mid_m", "mid_a", "tp_arc_m", "tp_arc_a", "tp_deep_m", "tp_deep_a", "ftm", "fta", "shot_pct", "efg_pct", "ts_pct", "stocks", "ast_tov",
     "pts_allowed", "opp_fg_pct", "times_beaten", "stops", "pts_per_20", "game_score_per_20", "two_way_per_20"]];
   computeLeaderboard().forEach(r => {
     rows.push([
       r.player.name, r.gp, ...STAT_FIELDS.map(f => r.totals[f]),
       r.shooting.fgm, r.shooting.fga, r.shooting.tpm, r.shooting.tpa, r.shooting.closeM, r.shooting.closeA, r.shooting.midM, r.shooting.midA, r.shooting.tpArcM, r.shooting.tpArcA, r.shooting.tpDeepM, r.shooting.tpDeepA, r.shooting.ftm, r.shooting.fta,
-      effectiveFgPct(r.shooting.fgm, r.shooting.tpm, r.shooting.fga), trueShootingPct(r.totals.pts, r.shooting.fga, r.shooting.fta),
+      r.shotPct, effectiveFgPct(r.shooting.fgm, r.shooting.tpm, r.shooting.fga), trueShootingPct(r.totals.pts, r.shooting.fga, r.shooting.fta),
       r.stocks, r.astTov, r.defense.ptsAllowed,
       pct(r.defense.timesBeaten, r.defense.timesBeaten + r.defense.stops),
       r.defense.timesBeaten, r.defense.stops, r.rate.pts.toFixed(1), r.gameScorePer20.toFixed(1), r.twoWayPer20.toFixed(1)
