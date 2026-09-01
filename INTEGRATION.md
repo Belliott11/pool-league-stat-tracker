@@ -699,8 +699,8 @@ the merged table is identical to what the two old panels showed.
 changed.** The per-game **Game Stats** table (`GAME_STATS_COLUMNS`/`renderGameStatsTable()`) and
 Player Detail's **Game Log** (`PLAYER_GAME_LOG_COLUMNS`/`renderPlayerGameLog()`) both went from a
 static `<thead>` to the same sortable-column pattern the Leaderboard and Shot Distance already
-use — rows are built into a plain array first (`{player, team, s, def, sh, gmsc, twoWay}` for Game
-Stats; `{game, s, sh, def, result, gmsc, twoWay}` for Game Log), sorted once by whichever column's
+use — rows are built into a plain array first (`{player, team, s, def, sh, offRtg, twoWay}` for Game
+Stats; `{game, s, sh, def, result, offRtg, twoWay}` for Game Log), sorted once by whichever column's
 `accessor` is active, then rendered. Head-to-Head — As Scorer/As Defender
 (`H2H_SCORER_COLUMNS`/`H2H_DEFENDER_COLUMNS`) and Teammate Synergy
 (`TEAMMATE_SYNERGY_COLUMNS`) got the same treatment on top of their existing compute functions —
@@ -769,6 +769,55 @@ the closer thing to a real "synergy" signal (does this player's own output chang
 teammate on the floor) than a duo's shared win/loss record ever was, but it needs a real sample on
 both sides of the split to mean anything — a teammate this player has *always* played with has no
 "without" games to compare against, which the UI shows as "—" rather than a misleading 0.0.
+
+**Teammate Quality, Assisted By, and Defensive Matchup Difficulty on Player Detail are also purely
+computed, nothing stored.** Built to answer a concrete question rather than round out the page:
+does a player's own production actually lean on the players around them — better teammates
+creating mismatches and feeding easy shots, or a lighter defensive assignment because someone
+else draws the other team's best player? All three use the same "quality" yardstick —
+`offRatingPer20` from `computeLeaderboard()`, not `twoWayPer20` — deliberately, since the
+mechanism each one is testing (offensive gravity: drawing attention, creating mismatches, setting
+up shots) is about offensive skill specifically, not two-way value.
+
+`computeTeammateQualityTrend(playerId)` (`app.js`, near `renderTwoWayTrendChart()`) walks this
+player's qualifying games, and for each one averages `offRatingPer20` across every *other* player
+on their own roster that game (skipping anyone with `gp === 0`, i.e. no season number to average
+in), producing one point per game. The season average is **pooled across every (game, teammate)
+appearance, not a mean of the per-game averages** — `sumQuality / countAppearances` across the
+whole season, same "sum totals once, divide once" preference every per-20 rate on this tool
+already follows, rather than averaging pre-averaged per-game numbers (the two aren't
+mathematically identical when roster size varies game to game). No leave-one-out correction: a
+teammate's own `offRatingPer20` still includes every game they played, including ones where this
+player benefited from them too — a known simplification, not an oversight.
+
+`computeMatchupDifficultyTrend(playerId)` is the mirror on defense: for each qualifying game, it
+filters `scoring_events` to ones where this player is in `defenderIds`, and averages the *scorer's*
+`offRatingPer20` across those shots — weighted per shot, not deduplicated per opponent, matching
+how Stops/Beaten/Pts Allowed already treat a double-teamed or repeatedly-guarded shot as one event
+each. Same pooled-season-average approach as Teammate Quality above.
+
+`computeAssistedByBreakdown(playerId)` walks every `scoring_events` row where this player is the
+scorer, `made !== false`, and `points` is 2 or 3 (free throws excluded — they don't carry an
+assist by rule, same convention `shootingStats()` uses everywhere else), tallies makes with vs.
+without an `assist`, and groups the assisted ones by assister with that assister's own
+`offRatingPer20` attached. `avgAssisterQuality` is the assist-count-weighted average of those
+qualities — players who set this player up more often count for more, same idea as a weighted
+mean anywhere else.
+
+All three panels share `renderTrendLineChart(containerId, points, seasonAvg, unitLabel)` — a
+generalized version of the hand-written SVG line chart `renderTwoWayTrendChart()` already used
+(same per-game-points-plus-dashed-season-average shape, parameterized instead of hardwired to
+Two-Way/20). `renderTwoWayTrendChart()` itself was left untouched rather than rewritten on top of
+the new shared function, so the existing chart wasn't put at risk for a cosmetic dedupe.
+
+**Bug fix, while touching this part of the page:** `index.html`'s Player Detail `</section>` was
+misplaced one panel too early, closing `#tab-player` right after Teammate Synergy — which left the
+Highlights & Lowlights panel outside *every* tab section. Since `.tab-panel { display: none }`
+only applies to elements inside a tab section, that panel was rendering unconditionally on every
+tab, not just Player Detail, stacked below whichever tab was actually active. If your own build
+scraped this page's structure or independently noticed a stray/duplicate Highlights table showing
+up somewhere it shouldn't, this was the cause — fixed by moving `</section>` to after the media
+panel, where it always should have been.
 
 **`turnover_events`**, **`steal_events`**, **`foul_events`** — one row per occurrence, same shape
 for all three

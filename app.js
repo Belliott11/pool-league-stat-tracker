@@ -3786,6 +3786,176 @@ function renderTwoWayTrendChart(playerId) {
   `;
 }
 
+// Generic version of the SVG line-chart renderTwoWayTrendChart() draws above — same shape
+// (per-game points + a dashed season-average reference line), just parameterized over a
+// {date, value} point list and a unit label instead of being hardwired to Two-Way/20. Written
+// once Teammate Quality and Defensive Matchup Difficulty below needed the identical chart a
+// third time; renderTwoWayTrendChart() itself is left as its own hand-written copy rather than
+// rewritten on top of this, so the existing chart isn't put at risk for a cosmetic dedupe.
+function renderTrendLineChart(containerId, points, seasonAvg, unitLabel) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  if (points.length === 0 || seasonAvg === null) {
+    wrap.innerHTML = '<p class="empty-state">Not enough data yet.</p>';
+    return;
+  }
+  const W = 560, H = 220, PAD_L = 40, PAD_R = 16, PAD_T = 16, PAD_B = 34;
+  const plotW = W - PAD_L - PAD_R, plotH = H - PAD_T - PAD_B;
+  const values = [...points.map(p => p.value), seasonAvg];
+  const rawMin = Math.min(...values), rawMax = Math.max(...values);
+  const span = Math.max(1, rawMax - rawMin);
+  const yMin = rawMin - span * 0.15;
+  const yMax = rawMax + span * 0.15;
+  const xScale = i => points.length === 1 ? PAD_L + plotW / 2 : PAD_L + (i / (points.length - 1)) * plotW;
+  const yScale = v => PAD_T + plotH - ((v - yMin) / (yMax - yMin || 1)) * plotH;
+
+  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${xScale(i)},${yScale(p.value)}`).join(" ");
+  const dotsSvg = points.map((p, i) => `
+    <circle cx="${xScale(i)}" cy="${yScale(p.value)}" r="3.5" class="ts-line-dot">
+      <title>${escapeHtml(formatDateDisplay(p.date))}: ${p.value.toFixed(1)} ${escapeHtml(unitLabel)}</title>
+    </circle>
+  `).join("");
+  const labelEvery = Math.max(1, Math.ceil(points.length / 6));
+  const xLabelsSvg = points.map((p, i) => (i % labelEvery !== 0 && i !== points.length - 1) ? "" : `
+    <text x="${xScale(i)}" y="${H - PAD_B + 16}" text-anchor="middle" class="ts-line-axis-label">${escapeHtml(formatDateDisplay(p.date))}</text>
+  `).join("");
+  const seasonY = yScale(seasonAvg);
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" class="ts-line-svg">
+      <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${H - PAD_B}" class="ts-line-axis" />
+      <line x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" class="ts-line-axis" />
+      <line x1="${PAD_L}" y1="${seasonY}" x2="${W - PAD_R}" y2="${seasonY}" class="ts-line-ref">
+        <title>Season average: ${seasonAvg.toFixed(1)} ${escapeHtml(unitLabel)}</title>
+      </line>
+      <text x="${W - PAD_R}" y="${seasonY - 4}" text-anchor="end" class="ts-line-axis-label">season avg ${seasonAvg.toFixed(1)}</text>
+      <path d="${pathD}" class="ts-line-path" />
+      ${dotsSvg}
+      ${xLabelsSvg}
+    </svg>
+  `;
+}
+
+// "Teammate Quality" — how strong (season Off Rating/20) this player's own teammates have been,
+// game by game and on average. Built to test a specific hypothesis: a player whose own numbers
+// lean on playing next to good scorers/passers (drawing mismatches, getting fed easy looks)
+// should show a high teammate-quality average, distinct from their own Off Rating/20. Off
+// Rating/20 specifically, not Two-Way/20 — the mechanism this measures (drawing defensive
+// attention, creating mismatches, generating easy shots) is a teammate's offensive gravity, not
+// their defense. The season average is pooled across every (game, teammate) appearance rather
+// than a mean of per-game means, same "sum totals, divide once" preference every per-20 rate on
+// this tool already uses. Doesn't correct for this player also counting toward each teammate's
+// own Off Rating/20 (no leave-one-out adjustment) — a known simplification.
+function computeTeammateQualityTrend(playerId) {
+  const board = computeLeaderboard();
+  const offRtgById = {};
+  board.forEach(r => { offRtgById[r.player.id] = r.gp > 0 ? r.offRatingPer20 : null; });
+  const qualifyingGames = state.games.filter(g => g.scoringEvents.length > 0 && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const points = [];
+  let sumQuality = 0, countAppearances = 0;
+  sorted.forEach(g => {
+    const myTeam = g.teamA.includes(playerId) ? g.teamA : g.teamB;
+    const qualities = myTeam.filter(id => id !== playerId).map(id => offRtgById[id]).filter(v => v !== null && v !== undefined);
+    if (qualities.length === 0) return;
+    points.push({ date: g.date, value: qualities.reduce((a, b) => a + b, 0) / qualities.length });
+    sumQuality += qualities.reduce((a, b) => a + b, 0);
+    countAppearances += qualities.length;
+  });
+  return { points, seasonAvg: countAppearances > 0 ? sumQuality / countAppearances : null };
+}
+
+function renderTeammateQualityChart(playerId) {
+  const { points, seasonAvg } = computeTeammateQualityTrend(playerId);
+  renderTrendLineChart("playerTeammateQuality", points, seasonAvg, "Off Rating/20");
+}
+
+// "Defensive Matchup Difficulty" — the defensive-side counterpart to Teammate Quality above: how
+// strong (season Off Rating/20) the players this player was tagged defending have been, game by
+// game and on average, straight from the same defenderIds tags Def Rating already reads. A low
+// number doesn't guarantee an easy defensive night, but it does mean this player wasn't drawing
+// the toughest offensive assignments. Weighted per shot, not deduplicated per opponent — the
+// same shot-by-shot weighting Stops/Beaten/Pts Allowed already use.
+function computeMatchupDifficultyTrend(playerId) {
+  const board = computeLeaderboard();
+  const offRtgById = {};
+  board.forEach(r => { offRtgById[r.player.id] = r.gp > 0 ? r.offRatingPer20 : null; });
+  const qualifyingGames = state.games.filter(g => g.scoringEvents.length > 0 && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const points = [];
+  let sumQuality = 0, countShots = 0;
+  sorted.forEach(g => {
+    const qualities = g.scoringEvents
+      .filter(ev => (ev.defenderIds || []).includes(playerId))
+      .map(ev => offRtgById[ev.scorerId])
+      .filter(v => v !== null && v !== undefined);
+    if (qualities.length === 0) return;
+    points.push({ date: g.date, value: qualities.reduce((a, b) => a + b, 0) / qualities.length });
+    sumQuality += qualities.reduce((a, b) => a + b, 0);
+    countShots += qualities.length;
+  });
+  return { points, seasonAvg: countShots > 0 ? sumQuality / countShots : null };
+}
+
+function renderMatchupDifficultyChart(playerId) {
+  const { points, seasonAvg } = computeMatchupDifficultyTrend(playerId);
+  renderTrendLineChart("playerMatchupDifficulty", points, seasonAvg, "Opp Off Rating/20");
+}
+
+// "Assisted By" — what share of this player's own makes were set up by someone else, and how
+// good (season Off Rating/20) those passers have been. Field goals only (points === 2 or 3) —
+// free throws don't carry an assist by rule, matching how shootingStats()/Shot% already treat
+// FTs as their own category everywhere else in this tool.
+function computeAssistedByBreakdown(playerId) {
+  const board = computeLeaderboard();
+  const offRtgById = {};
+  board.forEach(r => { offRtgById[r.player.id] = r.gp > 0 ? r.offRatingPer20 : null; });
+  let fgm = 0, assistedFgm = 0;
+  const byAssister = {};
+  state.games.forEach(g => {
+    g.scoringEvents.forEach(ev => {
+      if (ev.scorerId !== playerId || ev.made === false) return;
+      if (ev.points !== 2 && ev.points !== 3) return;
+      fgm++;
+      if (ev.assistId) {
+        assistedFgm++;
+        byAssister[ev.assistId] = (byAssister[ev.assistId] || 0) + 1;
+      }
+    });
+  });
+  const assisters = Object.entries(byAssister).map(([id, assists]) => {
+    const player = state.players.find(p => p.id === id);
+    return { player, assists, offRatingPer20: offRtgById[id] ?? null };
+  }).filter(a => a.player).sort((a, b) => b.assists - a.assists);
+  const weightedSum = assisters.reduce((sum, a) => sum + (a.offRatingPer20 !== null ? a.offRatingPer20 * a.assists : 0), 0);
+  const weightedCount = assisters.reduce((sum, a) => sum + (a.offRatingPer20 !== null ? a.assists : 0), 0);
+  return {
+    fgm, assistedFgm, assistedPct: pct(assistedFgm, fgm), assisters,
+    avgAssisterQuality: weightedCount > 0 ? weightedSum / weightedCount : null
+  };
+}
+
+function renderAssistedByPanel(playerId) {
+  const wrap = document.getElementById("playerAssistedBy");
+  if (!wrap) return;
+  const { fgm, assistedFgm, assistedPct, assisters, avgAssisterQuality } = computeAssistedByBreakdown(playerId);
+  if (fgm === 0) {
+    wrap.innerHTML = '<p class="empty-state">No field goals logged yet.</p>';
+    return;
+  }
+  const qualityNote = avgAssisterQuality !== null ? ` — average assister quality: ${avgAssisterQuality.toFixed(1)} Off Rating/20` : "";
+  const rows = assisters.length === 0
+    ? '<tr><td colspan="3" class="empty-state">No assisted makes yet.</td></tr>'
+    : assisters.map(a => `<tr><td>${escapeHtml(a.player.name)}</td><td>${a.assists}</td><td>${a.offRatingPer20 !== null ? a.offRatingPer20.toFixed(1) : "—"}</td></tr>`).join("");
+  wrap.innerHTML = `
+    <p class="hint" style="margin:0 0 10px">${assistedFgm} of ${fgm} makes were assisted (${formatPct(assistedPct)})${qualityNote}.</p>
+    <table class="matchup-table">
+      <thead><tr><th>Teammate</th><th>Assists</th><th>Their Off Rating/20</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
 function formatShootingSplitRate(m, a) {
   return a > 0 ? `${m.toFixed(1)}/${a.toFixed(1)} (${pct(m, a)}%)` : "—";
 }
@@ -4008,6 +4178,9 @@ function renderPlayerDetail() {
   renderHeadToHead(player.id); // fills both the As-Scorer and As-Defender tables in one pass
   renderPlayerDefensiveHeatmap(player.id);
   renderTeammateSynergy(player.id);
+  renderTeammateQualityChart(player.id);
+  renderAssistedByPanel(player.id);
+  renderMatchupDifficultyChart(player.id);
   renderPlayerReel(player.id);
 }
 

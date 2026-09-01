@@ -423,7 +423,8 @@ individual player, not a team.
    open their **Player Detail** page, which is grouped the same loose way: season **Overview**
    (Two-Way Trend, Game Log), **Offense Detail** (Shot Chart, Shot Heatmap, Head-to-Head — As
    Scorer), **Defense Detail** (Defensive Heatmap, Head-to-Head — As Defender), **Team Context**
-   (Teammate Synergy), and **Media** (Highlights & Lowlights) at the very bottom:
+   (Teammate Synergy, Teammate Quality, Assisted By, Defensive Matchup Difficulty), and **Media**
+   (Highlights & Lowlights) at the very bottom:
    - **Two-Way Trend** — Two-Way/20 for every reviewed game this player's played, in chronological
      order, with a dashed season-average reference line. This is the line-graph version of the
      "Last 5: X vs. season Y" text the Leaderboard's Last 5 column already shows (and what the
@@ -462,6 +463,23 @@ individual player, not a team.
      record — so a teammate they've always played with shows "—" on the without side rather than
      a misleading 0.0, and a small GP on either side is a small sample, not a verdict. Sortable —
      a "—" always sorts last regardless of direction, same as anywhere else on this page.
+   - **Teammate Quality** — average season Off Rating/20 of this player's own teammates (not
+     them), game by game with a dashed season-average line. Off Rating specifically, not
+     Two-Way — this measures a teammate's offensive gravity (drawing defensive attention, causing
+     mismatches, setting up easy looks), not their defense. Built to answer a specific question:
+     does a player's own production lean on playing next to good scorers/passers? Doesn't correct
+     for this player also counting toward each teammate's own Off Rating/20 (no leave-one-out
+     adjustment) — a simplification, same tradeoff every other season-long number on this page
+     already makes.
+   - **Assisted By** — what share of this player's own made field goals were set up by someone
+     else, who, and how good (season Off Rating/20) those passers have been on average — the
+     direct test of "getting fed easy looks by good players" versus creating shots alone. Field
+     goals only; free throws don't carry an assist by rule.
+   - **Defensive Matchup Difficulty** — the defensive-side counterpart to Teammate Quality:
+     average season Off Rating/20 of whoever this player was tagged *defending*, game by game with
+     a dashed season-average line. Does this player draw the tough offensive assignments, or get
+     sheltered on weaker ones? Weighted per shot, not deduplicated per opponent — the same
+     shot-by-shot weighting Stops/Beaten/Pts Allowed already use.
    - **Highlights & Lowlights** — every clip tagged to this player, across every game, pulled
      from the "Player" dropdown on each clip in the Highlight/Lowlight Reel table in Stat Entry.
      A "Go to game" button jumps to that game so you can load/rewatch it. The league-wide version

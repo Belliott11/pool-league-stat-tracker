@@ -481,7 +481,24 @@
         </table>
       </div>
     </div>
-  </section>
+
+    <div class="panel">
+      <h2>Teammate Quality</h2>
+      <p class="hint">Average season Off Rating/20 of this player's own teammates (not this player), game by game, with a dashed season-average line. Off Rating specifically, not Two-Way — what this measures is a teammate's offensive gravity: how much they draw defensive attention, create mismatches, or set up easy looks, not their own defense. Doesn't correct for this player also counting toward each teammate's own Off Rating/20 (no leave-one-out adjustment) — a simplification, same tradeoff every other season-long number on this page already makes.</p>
+      <div id="playerTeammateQuality"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Assisted By</h2>
+      <p class="hint">What share of this player's own made field goals were set up by someone else, and how good (season Off Rating/20) those passers have been — the direct test of "getting fed easy looks by good players" vs. creating shots alone. Field goals only; free throws don't carry an assist by rule.</p>
+      <div id="playerAssistedBy"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Defensive Matchup Difficulty</h2>
+      <p class="hint">Average season Off Rating/20 of whoever this player was tagged defending, game by game, with a dashed season-average line — the defensive-side counterpart to Teammate Quality above: does this player draw the tough offensive assignments, or get sheltered on weaker ones? Weighted per shot, not per opponent — facing the same tough scorer five times in one game counts five times, the same way Stops/Beaten/Pts Allowed already weight every tagged shot equally.</p>
+      <div id="playerMatchupDifficulty"></div>
+    </div>
 
       <!-- Media -->
     <div class="panel">
@@ -494,6 +511,7 @@
         </table>
       </div>
     </div>
+  </section>
 
 <!-- EXPORT -->
   <section id="tab-export" class="tab-panel">
