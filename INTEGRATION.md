@@ -790,11 +790,23 @@ mathematically identical when roster size varies game to game). No leave-one-out
 teammate's own `offRatingPer20` still includes every game they played, including ones where this
 player benefited from them too — a known simplification, not an oversight.
 
-`computeMatchupDifficultyTrend(playerId)` is the mirror on defense: for each qualifying game, it
-filters `scoring_events` to ones where this player is in `defenderIds`, and averages the *scorer's*
-`offRatingPer20` across those shots — weighted per shot, not deduplicated per opponent, matching
-how Stops/Beaten/Pts Allowed already treat a double-teamed or repeatedly-guarded shot as one event
-each. Same pooled-season-average approach as Teammate Quality above.
+`computeDefensiveMatchupDifficultyTrend(playerId)` is the mirror on defense: for each qualifying
+game, it filters `scoring_events` to ones where this player is in `defenderIds`, and averages the
+*scorer's* `offRatingPer20` across those shots — weighted per shot, not deduplicated per opponent,
+matching how Stops/Beaten/Pts Allowed already treat a double-teamed or repeatedly-guarded shot as
+one event each. Same pooled-season-average approach as Teammate Quality above.
+
+`computeOffensiveMatchupDifficultyTrend(playerId)` is the mirror from the *scorer's* side — how
+tough have the defenders guarding THIS player's shots been. For each qualifying game, it filters
+`scoring_events` to ones where this player is the `scorer` and `points` is 2 or 3, then averages
+`defensiveRating(rate, rateDefense)` (not `offRatingPer20` — the relevant quality here is how good
+those defenders have been *defensively*) across every id in each shot's `defenderIds`, a
+double-teamed shot contributing once per tagged defender same as everywhere else. An untagged
+(wide-open) shot contributes nothing to either the point or the season average — there's no
+defender to rate, matching how Wide-Open Shooting already excludes those attempts from a
+"contested" read. Easy mix-up if you're porting this: Off Matchup Difficulty reads the *defender's*
+Def Rating, Def Matchup Difficulty reads the *scorer's* Off Rating — the two aren't the same field
+read from two directions, they're genuinely different stats on the opponent.
 
 `computeAssistedByBreakdown(playerId)` walks every `scoring_events` row where this player is the
 scorer, `made !== false`, and `points` is 2 or 3 (free throws excluded — they don't carry an
@@ -804,23 +816,24 @@ without an `assist`, and groups the assisted ones by assister with that assister
 qualities — players who set this player up more often count for more, same idea as a weighted
 mean anywhere else.
 
-All three panels share `renderTrendLineChart(containerId, points, seasonAvg, unitLabel)` — a
+All four panels share `renderTrendLineChart(containerId, points, seasonAvg, unitLabel)` — a
 generalized version of the hand-written SVG line chart `renderTwoWayTrendChart()` already used
 (same per-game-points-plus-dashed-season-average shape, parameterized instead of hardwired to
 Two-Way/20). `renderTwoWayTrendChart()` itself was left untouched rather than rewritten on top of
 the new shared function, so the existing chart wasn't put at risk for a cosmetic dedupe.
 
-**Teammate Context on the Leaderboard is the same three panels' season averages, league-wide,
+**Teammate Context on the Leaderboard is the same four panels' season averages, league-wide,
 also purely computed.** `computeTeammateContext()` (`app.js`, near `renderTeammateLiftMatrix()`)
 maps every player with `gp > 0` from `computeLeaderboard()` and, per player, calls
-`computeTeammateQualityTrend()`, `computeMatchupDifficultyTrend()`, and
-`computeAssistedByBreakdown()` — the exact same three functions Player Detail uses, just reading
-off `.seasonAvg`/`.assistedPct`/`.avgAssisterQuality` instead of rendering the full trend or
-breakdown. No separate computation to keep in sync with Player Detail; if you change one of those
-three functions, both surfaces pick it up. This does mean `computeLeaderboard()` runs once per
-player inside the loop (each of the three helpers calls it independently) — fine at this
-roster's size, not the pattern to copy if you're optimizing a much larger one. Sortable via the
-same `TEAMMATE_CONTEXT_COLUMNS`/`renderSortableHeader()` pattern as everywhere else.
+`computeTeammateQualityTrend()`, `computeOffensiveMatchupDifficultyTrend()`,
+`computeDefensiveMatchupDifficultyTrend()`, and `computeAssistedByBreakdown()` — the exact same
+functions Player Detail uses, just reading off `.seasonAvg`/`.assistedPct`/`.avgAssisterQuality`
+instead of rendering the full trend or breakdown. No separate computation to keep in sync with
+Player Detail; if you change one of those functions, both surfaces pick it up. This does mean
+`computeLeaderboard()` runs multiple times per player inside the loop (each helper calls it
+independently) — fine at this roster's size, not the pattern to copy if you're optimizing a much
+larger one. Sortable via the same `TEAMMATE_CONTEXT_COLUMNS`/`renderSortableHeader()` pattern as
+everywhere else.
 
 **Bug fix, while touching this part of the page:** `index.html`'s Player Detail `</section>` was
 misplaced one panel too early, closing `#tab-player` right after Teammate Synergy — which left the

@@ -3341,18 +3341,19 @@ function renderTeammateLiftMatrix() {
   `;
 }
 
-// Teammate Quality / Defensive Matchup Difficulty / Assisted By's season-average headline
-// numbers, side by side for every player at once — the league-wide table version of three
-// Player Detail panels, so the pattern they were built to catch (a player whose own numbers
-// lean on strong teammates and light defensive assignments) is scannable across the whole
-// roster instead of one profile at a time. Season summaries only, straight from the same three
-// compute functions Player Detail already uses — no separate computation to keep in sync.
+// Teammate Quality / Offensive & Defensive Matchup Difficulty / Assisted By's season-average
+// headline numbers, side by side for every player at once — the league-wide table version of
+// four Player Detail panels, so the pattern they were built to catch (a player whose own numbers
+// lean on strong teammates and easy matchups on both ends) is scannable across the whole roster
+// instead of one profile at a time. Season summaries only, straight from the same compute
+// functions Player Detail already uses — no separate computation to keep in sync.
 const TEAMMATE_CONTEXT_COLUMNS = [
   { key: "player", label: "Player", accessor: r => r.player.name },
   { key: "gp", label: "GP", accessor: r => r.gp },
   { key: "offRtg", label: "Off Rating/20", accessor: r => r.offRatingPer20 },
   { key: "teammateQuality", label: "Teammate Quality", accessor: r => r.teammateQuality },
-  { key: "matchupDifficulty", label: "Matchup Difficulty", accessor: r => r.matchupDifficulty },
+  { key: "offMatchupDifficulty", label: "Off Matchup Difficulty", accessor: r => r.offMatchupDifficulty },
+  { key: "defMatchupDifficulty", label: "Def Matchup Difficulty", accessor: r => r.defMatchupDifficulty },
   { key: "assistedPct", label: "Assisted%", accessor: r => r.assistedPct },
   { key: "avgAssisterQuality", label: "Avg Assister Quality", accessor: r => r.avgAssisterQuality }
 ];
@@ -3361,11 +3362,12 @@ let teammateContextSort = { key: "teammateQuality", dir: "desc" };
 function computeTeammateContext() {
   return computeLeaderboard().filter(r => r.gp > 0).map(r => {
     const tq = computeTeammateQualityTrend(r.player.id);
-    const md = computeMatchupDifficultyTrend(r.player.id);
+    const omd = computeOffensiveMatchupDifficultyTrend(r.player.id);
+    const dmd = computeDefensiveMatchupDifficultyTrend(r.player.id);
     const ab = computeAssistedByBreakdown(r.player.id);
     return {
       player: r.player, gp: r.gp, offRatingPer20: r.offRatingPer20,
-      teammateQuality: tq.seasonAvg, matchupDifficulty: md.seasonAvg,
+      teammateQuality: tq.seasonAvg, offMatchupDifficulty: omd.seasonAvg, defMatchupDifficulty: dmd.seasonAvg,
       assistedPct: ab.assistedPct, avgAssisterQuality: ab.avgAssisterQuality
     };
   });
@@ -3380,13 +3382,14 @@ function renderTeammateContextPanel() {
   const sortCol = TEAMMATE_CONTEXT_COLUMNS.find(c => c.key === teammateContextSort.key);
   rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), teammateContextSort.dir));
   body.innerHTML = rows.length === 0
-    ? '<tr><td colspan="7" class="empty-state">No games with players yet.</td></tr>'
+    ? '<tr><td colspan="8" class="empty-state">No games with players yet.</td></tr>'
     : rows.map(r => `<tr>
         <td>${escapeHtml(r.player.name)}</td>
         <td>${r.gp}</td>
         <td>${r.offRatingPer20.toFixed(1)}</td>
         <td>${r.teammateQuality !== null ? r.teammateQuality.toFixed(1) : "—"}</td>
-        <td>${r.matchupDifficulty !== null ? r.matchupDifficulty.toFixed(1) : "—"}</td>
+        <td>${r.offMatchupDifficulty !== null ? r.offMatchupDifficulty.toFixed(1) : "—"}</td>
+        <td>${r.defMatchupDifficulty !== null ? r.defMatchupDifficulty.toFixed(1) : "—"}</td>
         <td>${r.assistedPct !== null ? formatPct(r.assistedPct) : "—"}</td>
         <td>${r.avgAssisterQuality !== null ? r.avgAssisterQuality.toFixed(1) : "—"}</td>
       </tr>`).join("");
@@ -3927,7 +3930,7 @@ function renderTeammateQualityChart(playerId) {
 // number doesn't guarantee an easy defensive night, but it does mean this player wasn't drawing
 // the toughest offensive assignments. Weighted per shot, not deduplicated per opponent — the
 // same shot-by-shot weighting Stops/Beaten/Pts Allowed already use.
-function computeMatchupDifficultyTrend(playerId) {
+function computeDefensiveMatchupDifficultyTrend(playerId) {
   const board = computeLeaderboard();
   const offRtgById = {};
   board.forEach(r => { offRtgById[r.player.id] = r.gp > 0 ? r.offRatingPer20 : null; });
@@ -3948,9 +3951,49 @@ function computeMatchupDifficultyTrend(playerId) {
   return { points, seasonAvg: countShots > 0 ? sumQuality / countShots : null };
 }
 
-function renderMatchupDifficultyChart(playerId) {
-  const { points, seasonAvg } = computeMatchupDifficultyTrend(playerId);
-  renderTrendLineChart("playerMatchupDifficulty", points, seasonAvg, "Opp Off Rating/20");
+function renderDefensiveMatchupDifficultyChart(playerId) {
+  const { points, seasonAvg } = computeDefensiveMatchupDifficultyTrend(playerId);
+  renderTrendLineChart("playerDefensiveMatchupDifficulty", points, seasonAvg, "Opp Off Rating/20");
+}
+
+// "Offensive Matchup Difficulty" — the mirror of Defensive Matchup Difficulty from the scorer's
+// side: average season Def Rating/20 of whoever was tagged defending THIS player's own shot
+// attempts, game by game and on average. Def Rating/20 specifically (not Off Rating/20) — the
+// question here is how good the defenders this player has had to shoot over have been
+// defensively, not offensively. A double-teamed shot counts toward every tagged defender, not
+// split, same rule Stops/Beaten/Pts Allowed already use. An untagged ("wide open") shot
+// contributes nothing — there's no defender to rate, same exclusion Wide-Open Shooting already
+// makes. Field goals only (points === 2 or 3); free throws are uncontested by rule and never
+// carry a defender tag anyway.
+function computeOffensiveMatchupDifficultyTrend(playerId) {
+  const board = computeLeaderboard();
+  const defRtgById = {};
+  board.forEach(r => { defRtgById[r.player.id] = r.gp > 0 ? defensiveRating(r.rate, r.rateDefense) : null; });
+  const qualifyingGames = state.games.filter(g => g.scoringEvents.length > 0 && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const points = [];
+  let sumQuality = 0, countTags = 0;
+  sorted.forEach(g => {
+    const qualities = [];
+    g.scoringEvents
+      .filter(ev => ev.scorerId === playerId && (ev.points === 2 || ev.points === 3))
+      .forEach(ev => {
+        (ev.defenderIds || []).forEach(id => {
+          const q = defRtgById[id];
+          if (q !== null && q !== undefined) qualities.push(q);
+        });
+      });
+    if (qualities.length === 0) return;
+    points.push({ date: g.date, value: qualities.reduce((a, b) => a + b, 0) / qualities.length });
+    sumQuality += qualities.reduce((a, b) => a + b, 0);
+    countTags += qualities.length;
+  });
+  return { points, seasonAvg: countTags > 0 ? sumQuality / countTags : null };
+}
+
+function renderOffensiveMatchupDifficultyChart(playerId) {
+  const { points, seasonAvg } = computeOffensiveMatchupDifficultyTrend(playerId);
+  renderTrendLineChart("playerOffensiveMatchupDifficulty", points, seasonAvg, "Opp Def Rating/20");
 }
 
 // "Assisted By" — what share of this player's own makes were set up by someone else, and how
@@ -4232,7 +4275,8 @@ function renderPlayerDetail() {
   renderTeammateSynergy(player.id);
   renderTeammateQualityChart(player.id);
   renderAssistedByPanel(player.id);
-  renderMatchupDifficultyChart(player.id);
+  renderOffensiveMatchupDifficultyChart(player.id);
+  renderDefensiveMatchupDifficultyChart(player.id);
   renderPlayerReel(player.id);
 }
 

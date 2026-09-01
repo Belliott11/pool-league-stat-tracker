@@ -341,15 +341,16 @@ individual player, not a team.
    expect it to look symmetric across the diagonal the way a simple relationship count would.
    (There's deliberately no
    win/loss duo table here — the real Poolean site already tracks that.) Right after it,
-   **Teammate Context** puts Player Detail's Teammate Quality, Defensive Matchup Difficulty, and
-   Assisted By season averages side by side for every player at once — Off Rating/20, Teammate
-   Quality, Matchup Difficulty, Assisted%, and Avg Assister Quality in one sortable table, built
-   to catch a specific pattern across the whole roster without clicking into each player one at a
-   time: someone whose own Off Rating/20 leans on strong teammates (high Teammate Quality) and
-   light defensive assignments (low Matchup Difficulty) is a different case from someone posting
-   the same number on their own. Season summaries only, straight off the same three compute
-   functions Player Detail uses — see the Player Detail section below for the full formulas and
-   the game-by-game trend charts. Below that, **Shot
+   **Teammate Context** puts Player Detail's Teammate Quality, Offensive/Defensive Matchup
+   Difficulty, and Assisted By season averages side by side for every player at once — Off
+   Rating/20, Teammate Quality, Off Matchup Difficulty, Def Matchup Difficulty, Assisted%, and Avg
+   Assister Quality in one sortable table, built to catch a specific pattern across the whole
+   roster without clicking into each player one at a time: someone whose own Off Rating/20 leans
+   on strong teammates (high Teammate Quality), easy defenders to shoot over (low Off Matchup
+   Difficulty), and light defensive assignments (low Def Matchup Difficulty) is a different case
+   from someone posting the same number on their own. Season summaries only, straight off the
+   same compute functions Player Detail uses — see the Player Detail section below for the full
+   formulas and the game-by-game trend charts. Below that, **Shot
    Distance** splits every field goal further by how far it actually was from the hoop, on both
    sides of the 3pt line: **Close** and **Midrange** split the 2PT zone at its midpoint;
    **Line** (a normal, makeable three right at the line — "Line" not "Arc," since Poolean's
@@ -432,7 +433,8 @@ individual player, not a team.
    open their **Player Detail** page, which is grouped the same loose way: season **Overview**
    (Two-Way Trend, Game Log), **Offense Detail** (Shot Chart, Shot Heatmap, Head-to-Head — As
    Scorer), **Defense Detail** (Defensive Heatmap, Head-to-Head — As Defender), **Team Context**
-   (Teammate Synergy, Teammate Quality, Assisted By, Defensive Matchup Difficulty), and **Media**
+   (Teammate Synergy, Teammate Quality, Assisted By, Offensive Matchup Difficulty, Defensive
+   Matchup Difficulty), and **Media**
    (Highlights & Lowlights) at the very bottom:
    - **Two-Way Trend** — Two-Way/20 for every reviewed game this player's played, in chronological
      order, with a dashed season-average reference line. This is the line-graph version of the
@@ -484,11 +486,18 @@ individual player, not a team.
      else, who, and how good (season Off Rating/20) those passers have been on average — the
      direct test of "getting fed easy looks by good players" versus creating shots alone. Field
      goals only; free throws don't carry an assist by rule.
-   - **Defensive Matchup Difficulty** — the defensive-side counterpart to Teammate Quality:
-     average season Off Rating/20 of whoever this player was tagged *defending*, game by game with
-     a dashed season-average line. Does this player draw the tough offensive assignments, or get
-     sheltered on weaker ones? Weighted per shot, not deduplicated per opponent — the same
-     shot-by-shot weighting Stops/Beaten/Pts Allowed already use.
+   - **Offensive Matchup Difficulty** — average season Def Rating/20 of whoever was tagged
+     *defending* this player's own shot attempts, game by game with a dashed season-average line
+     — the mirror of Defensive Matchup Difficulty below, from the scorer's side: how tough have
+     the defenders this player shoots over actually been? Def Rating specifically, since the
+     question is how good those defenders have been defensively, not offensively. A double-teamed
+     shot counts toward every tagged defender, not split; an untagged (wide-open) shot contributes
+     nothing, since there's no defender to rate.
+   - **Defensive Matchup Difficulty** — the defensive-side counterpart to Offensive Matchup
+     Difficulty above: average season Off Rating/20 of whoever this player was tagged
+     *defending*, game by game with a dashed season-average line. Does this player draw the tough
+     offensive assignments, or get sheltered on weaker ones? Weighted per shot, not deduplicated
+     per opponent — the same shot-by-shot weighting Stops/Beaten/Pts Allowed already use.
    - **Highlights & Lowlights** — every clip tagged to this player, across every game, pulled
      from the "Player" dropdown on each clip in the Highlight/Lowlight Reel table in Stat Entry.
      A "Go to game" button jumps to that game so you can load/rewatch it. The league-wide version
