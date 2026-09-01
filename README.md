@@ -180,9 +180,16 @@ individual player, not a team.
    the game*, not a raw total or a per-game average, plus **W-L record and win %** per player (a
    game counts as a win/loss/tie for everyone on the winning/losing/tied team, since teams
    reshuffle every game — there's no team standings, just individual record). Only a game with
-   real shots logged counts toward a player's row at all — one that's just been rostered but not
-   reviewed yet doesn't drag their numbers toward 0, and a player with no such games doesn't
-   clutter the table with a row of dashes. Right after PTS/20 sits **Shot%** — not a per-20 rate
+   real shots logged *and equal team sizes* counts toward a player's row at all — one that's just
+   been rostered but not reviewed yet doesn't drag their numbers toward 0, a player with no such
+   games doesn't clutter the table with a row of dashes, and a 3-on-2 (or any other lopsided
+   roster split) doesn't get pooled into a rate math that assumes every game was a fair fight.
+   Imbalanced games show a **⚖️ 2v3**-style badge on their Games list card so they're easy to spot,
+   and stay fully visible everywhere that isn't a computed comparison — Game Log, Stat Entry, CSV
+   exports, Highlights & Lowlights all still show them as real history. **Include Imbalanced
+   Games**, next to the advanced-columns toggle above the table, brings them back into every
+   rate/award/chart if you'd rather see the old numbers (remembers your choice on reload, same as
+   the advanced-columns toggle). Right after PTS/20 sits **Shot%** — not a per-20 rate
    like its neighbors, but a season-long share: what percentage of their own *team's* total field
    goal attempts were theirs, across the games they played (their FGA ÷ their team's FGA in those
    same games — teammates included in the denominator, opponents' shots never counted). Free
@@ -534,7 +541,10 @@ individual player, not a team.
    - **Box Score CSV** — one row per player per game (with a Team A/B label for that game),
      including that game's Off Rating and Two-Way Score, and the full shot-distance split
      (`close_m`/`close_a`, `mid_m`/`mid_a`, `tp_arc_m`/`tp_arc_a`, `tp_deep_m`/`tp_deep_a`)
-     alongside the plain `fgm`/`fga`/`tpm`/`tpa`.
+     alongside the plain `fgm`/`fga`/`tpm`/`tpa`. Every game with any real shots logged is in
+     here, including an imbalanced (e.g. 3-on-2) one, regardless of the Include Imbalanced Games
+     toggle — this file is a raw record of what actually happened, not a filtered comparison. Same
+     for every other per-event CSV below except the Leaderboard one.
    - **Shot Log CSV** — one row per shot attempt (make or miss), with the shooter, result,
      points, who (if anyone) assisted it, who (if anyone) was contesting (multiple defenders
      joined with "+"), who (if anyone) blocked it, whether it went out of bounds for a turnover,
@@ -554,9 +564,10 @@ individual player, not a team.
      mm:ss), tagged player, and note. Your friend uses these timestamps to actually cut the clips
      from the source video file — the dashboard only marks *where* the clips are, since it can't
      export video itself.
-   - **Leaderboard CSV** — season totals per player (across the same stats-logged-only games the
-     page itself counts), including the full shot-distance split, plus PTS/20, Off Rating/20,
-     Def Rating/20, and Two-Way/20.
+   - **Leaderboard CSV** — season totals per player (across the exact same games the page itself
+     counts, computed by the same function — respects the Include Imbalanced Games toggle just
+     like the on-screen table does, unlike every other CSV above), including the full
+     shot-distance split, plus PTS/20, Off Rating/20, Def Rating/20, and Two-Way/20.
      Not the per-20 rates the Leaderboard page displays for every other counting stat — the CSV
      keeps raw totals plus `games_played`, so anyone consuming it can derive whichever rate or
      average they want without losing precision to a pre-divided number.

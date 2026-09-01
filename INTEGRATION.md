@@ -193,18 +193,64 @@ server-side, rather than switching to a naive per-game average — and apply it 
 stat, not a subset. A/TO and the shooting percentages are untouched by this, since they're
 already ratios.
 
-**Only a game with `scoringEvents.length > 0` counts toward a player's `gp` (and therefore every
-rate above) at all.** A game that's just been rostered — or one that only carries a historical
-`winner` imported with no shot-level detail, see the `winner` section above — has nothing to
-normalize a rate from, so counting it would drag every rate toward 0 for a game nobody's
-reviewed yet. `computeLeaderboard()` filters on this before computing anything else.
+**Only a game with `scoringEvents.length > 0` AND equal team sizes counts toward a player's `gp`
+(and therefore every rate above) at all.** A game that's just been rostered — or one that only
+carries a historical `winner` imported with no shot-level detail, see the `winner` section above
+— has nothing to normalize a rate from, so counting it would drag every rate toward 0 for a game
+nobody's reviewed yet. `computeLeaderboard()` filters on this before computing anything else.
 
-The Leaderboard CSV export is a separate code path and still exports raw season totals plus
-`games_played` (over that same stats-logged-only game set) rather than per-20 rates for every
-column — it only computes PTS/20, Off Rating/20, Def Rating/20, and Two-Way/20 directly, same as before. If
-you're pulling from the CSV (or replicating a season-totals collection) rather than scraping the
-rendered page, you have the totals; apply the same per-20 normalization yourself for whatever
-rate you want to show, same as the dashboard's own UI layer does.
+**Imbalanced games (3-on-2, or any other roster-size mismatch) are excluded from every computed
+comparison by default, behind a reversible toggle — a data-quality fix, not a cosmetic one.**
+`isBalancedGame(game)` (`app.js`, near `STAT_FIELDS`) is `game.teamA.length ===
+game.teamB.length` — no new stored field, team size is just the roster array's own length.
+`isQualifyingGame(game)` wraps the existing `scoringEvents.length > 0` check together with this:
+`game.scoringEvents.length > 0 && (includeImbalancedGames || isBalancedGame(game))`.
+`includeImbalancedGames` is a plain boolean persisted under
+`localStorage["poolLeagueIncludeImbalancedGames"]`, default `false` — same toggle-with-a-default
+pattern as `showAdvancedCols`. The reasoning: a 3-on-2 changes the game's own competitive shape
+(spacing, individual defensive load, who's available to get open) enough that pooling its
+per-player numbers into an otherwise-comparable "per 20 combined points" rate isn't a fair mix,
+the same logic that already excludes an unreviewed game from `gp` — this is an extension of that
+existing rule, not a new concept.
+
+If you're porting this, the mechanical change was replacing every `g.scoringEvents.length > 0`
+(or equivalent) check that gates a **season or league-wide comparison** with `isQualifyingGame(g)`
+— `computeLeaderboard()`'s `gamesPlayed` filter, every Player Detail trend function's
+`qualifyingGames` filter (Two-Way Trend, Teammate Synergy, Teammate Quality, both Matchup
+Difficulty directions, Assisted By), `computeIndividualGamePerformances()` (Best & Worst Games),
+`computePowerRankingVsPerformance()`, `computeCloseGameShooting()`, `computeLeagueTsOverTime()`,
+`computeLeagueTsByZone()`, `computeSecondChanceConversions()`, `computeOutOfBoundsStats()`,
+`computeAssistConnections()`, `computeGameWinningBuckets()` (via `gameWinningShot()` itself now
+returning `null` for a non-qualifying game), `computeMatchupGrid()`, `computeWideOpenShooting()`,
+`headToHeadAsScorer()`/`headToHeadAsDefender()`, and the League/Player/Defensive shot **heatmaps**
+specifically (`renderLeagueHeatmap()`, `renderPlayerHeatmap()`, `renderPlayerDefensiveHeatmap()`
+— these bucket into a zone FG%, a rate, unlike the plain dot-scatter Shot Chart below).
+
+**Deliberately left untouched — these show history, not a comparison, so an imbalanced game stays
+in them regardless of the toggle:** the individual Shot Chart (`renderPlayerShotChart()` — literal
+make/miss dots at real locations, no rate computed), Player Detail's own Game Log (`games` in
+`renderPlayerGameLog()`, unfiltered — every game this player was in, full stop), both Highlights &
+Lowlights panels (`renderPlayerReel()`/`computeLeagueHighlights()` — a good clip is a good clip),
+`computeFlaggedShotMismatches()` (a data-quality tool, needs to scan everything), and every CSV
+export **except** the Leaderboard one (see below) — these are meant to be a raw, complete record,
+same reasoning an unreviewed game already gets included in them today. `playerGameResult()` was
+also left alone — it decides *how* to compute one game's own W/L (live score vs. historical
+`winner`), not whether that game counts toward an aggregate; the aggregate-level exclusion already
+happens upstream, in whichever `qualifyingGames`/`gamesPlayed` filter calls it.
+
+The Games list shows a **⚖️ 2v3**-style badge (`app.js`, in `renderGames()`) on any game where
+`isBalancedGame()` is false, so which games are affected is visible without cross-referencing
+roster sizes by hand.
+
+The Leaderboard CSV export is a separate code path (calls `computeLeaderboard()` directly rather
+than iterating `scoring_events` itself, unlike the other CSVs) and still exports raw season totals
+plus `games_played` rather than per-20 rates for every column — it only computes PTS/20, Off
+Rating/20, Def Rating/20, and Two-Way/20 directly, same as before. Because it shares
+`computeLeaderboard()` with the on-screen table, it also shares that table's `isQualifyingGame()`
+filter — it's the one CSV that respects `includeImbalancedGames`, unlike every other export
+above. If you're pulling from the CSV (or replicating a season-totals collection) rather than
+scraping the rendered page, you have the totals; apply the same per-20 normalization yourself for
+whatever rate you want to show, same as the dashboard's own UI layer does.
 
 **Shot% (Leaderboard) is also purely computed, nothing stored — and is deliberately not a per-20
 rate either, same family as A/TO and the shooting percentages above.** It's a season-long share:

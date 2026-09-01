@@ -165,7 +165,9 @@ main {
 
 .leaderboard-toolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 10px;
   margin: 10px 0;
 }
 
@@ -926,6 +928,10 @@ button:disabled {
   color: var(--accent);
 }
 .badge-review {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+.badge-imbalanced {
   background: var(--warning-light);
   color: var(--warning);
 }

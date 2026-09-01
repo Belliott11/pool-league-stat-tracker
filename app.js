@@ -15,6 +15,24 @@ const SEEK_STEP_SECONDS = 5;
 const STAT_FIELDS = ["pts", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf"];
 const STAT_LABELS = { pts: "PTS", oreb: "OREB", dreb: "DREB", ast: "AST", stl: "STL", blk: "BLK", tov: "TOV", pf: "PF" };
 
+// A game only counts toward the app's own computed stats (Leaderboard rates, awards, per-player
+// trend charts, League Shot Heatmap, Matchup Grid, and every other comparative panel) when its
+// two rosters are the same size — a 3-on-2 (or any other imbalanced) game changes the game's own
+// competitive shape enough that pooling its per-player numbers into an otherwise-comparable "per
+// 20 combined points" rate isn't a fair mix. Hidden behind a toggle rather than silently and
+// permanently dropped — default excluded, same reversible-choice spirit as the advanced-columns
+// toggle. Imbalanced games stay fully visible everywhere that isn't a season/league comparison —
+// the Games list, Stat Entry, Game Log, CSV exports, Highlights & Lowlights — this only gates the
+// app's own computed comparisons, never the underlying record of what actually happened.
+const INCLUDE_IMBALANCED_KEY = "poolLeagueIncludeImbalancedGames";
+let includeImbalancedGames = localStorage.getItem(INCLUDE_IMBALANCED_KEY) === "true";
+function isBalancedGame(game) {
+  return game.teamA.length === game.teamB.length;
+}
+function isQualifyingGame(game) {
+  return game.scoringEvents.length > 0 && (includeImbalancedGames || isBalancedGame(game));
+}
+
 // STL/TOV/PF each tag the one opponent involved — single-select, unlike shot defenders,
 // since these are inherently one-on-one events. Drives both the box score picker and the
 // event log. A steal is always also a turnover for whoever it was stolen from, so logging a
@@ -321,10 +339,13 @@ function renderGames() {
     const reviewBadge = hasKnownVideo && needsReview
       ? ' <span class="badge badge-review">📝 Needs Review</span>'
       : (needsReview ? '<span class="review-badge-slot"></span>' : '');
+    const imbalancedBadge = isBalancedGame(game)
+      ? ""
+      : ` <span class="badge badge-imbalanced" title="Team A has ${game.teamA.length}, Team B has ${game.teamB.length} — excluded from Leaderboard rates and every other computed comparison unless the Include Imbalanced Games toggle on the Leaderboard is on.">⚖️ ${game.teamA.length}v${game.teamB.length}</span>`;
     card.innerHTML = `
       <div>
         <div class="matchup-line">Team A ${scoreA} — ${scoreB} Team B</div>
-        <div class="date-line">${formatDateDisplay(game.date)} · ${game.teamA.length + game.teamB.length} players${game.notes ? " · " + escapeHtml(game.notes) : ""}${videoBadge}${reviewBadge}</div>
+        <div class="date-line">${formatDateDisplay(game.date)} · ${game.teamA.length + game.teamB.length} players${game.notes ? " · " + escapeHtml(game.notes) : ""}${videoBadge}${reviewBadge}${imbalancedBadge}</div>
       </div>
     `;
     const delBtn = document.createElement("button");
@@ -635,7 +656,7 @@ function renderHeatmapInto(containerId, allFieldGoals, colorFn = heatmapCellColo
 
 function renderPlayerHeatmap(playerId) {
   const shots = [];
-  state.games.forEach(g => g.scoringEvents.forEach(ev => {
+  state.games.filter(isQualifyingGame).forEach(g => g.scoringEvents.forEach(ev => {
     if (ev.scorerId === playerId && (ev.points === 2 || ev.points === 3)) shots.push(ev);
   }));
   renderHeatmapInto("playerHeatmap", shots);
@@ -649,7 +670,7 @@ function renderPlayerHeatmap(playerId) {
 // that on its own.
 function renderPlayerDefensiveHeatmap(playerId) {
   const shots = [];
-  state.games.forEach(g => g.scoringEvents.forEach(ev => {
+  state.games.filter(isQualifyingGame).forEach(g => g.scoringEvents.forEach(ev => {
     if ((ev.points === 2 || ev.points === 3) && (ev.defenderIds || []).includes(playerId)) shots.push(ev);
   }));
   renderHeatmapInto("playerDefensiveHeatmap", shots, defensiveHeatmapCellColor);
@@ -700,7 +721,7 @@ function renderPlayerShotChart(playerId) {
 
 function renderLeagueHeatmap() {
   const shots = [];
-  state.games.forEach(g => g.scoringEvents.forEach(ev => {
+  state.games.filter(isQualifyingGame).forEach(g => g.scoringEvents.forEach(ev => {
     if (ev.points === 2 || ev.points === 3) shots.push(ev);
   }));
   renderHeatmapInto("leagueHeatmap", shots);
@@ -2448,8 +2469,9 @@ function computeLeaderboard() {
     // Only games actually logged with real shots count toward GP/averages — a game that's
     // just been rostered (or only carries a historical winner imported with no shot-level
     // detail, see playerGameResult()) has nothing to average, and counting it would drag
-    // every average toward 0 for a game nobody has reviewed yet.
-    const gamesPlayed = state.games.filter(g => (g.teamA.includes(p.id) || g.teamB.includes(p.id)) && g.scoringEvents.length > 0);
+    // every average toward 0 for a game nobody has reviewed yet. isQualifyingGame() also
+    // excludes an imbalanced (e.g. 3-on-2) game unless includeImbalancedGames is toggled on.
+    const gamesPlayed = state.games.filter(g => (g.teamA.includes(p.id) || g.teamB.includes(p.id)) && isQualifyingGame(g));
     const totals = { pts: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, pf: 0 };
     const shooting = { fgm: 0, fga: 0, tpm: 0, tpa: 0, closeM: 0, closeA: 0, midM: 0, midA: 0, tpArcM: 0, tpArcA: 0, tpDeepM: 0, tpDeepA: 0, ftm: 0, fta: 0 };
     const defense = { ptsAllowed: 0, timesBeaten: 0, stops: 0, blocksNotAlreadyStopped: 0 };
@@ -2553,7 +2575,7 @@ function computeLeaderboard() {
 // unlike win/loss (which the real Poolean site already tracks per duo).
 function computeAssistConnections() {
   const totals = {}; // "passerId|scorerId" -> count
-  state.games.forEach(g => {
+  state.games.filter(isQualifyingGame).forEach(g => {
     g.scoringEvents.forEach(ev => {
       if (!ev.assistId || ev.made === false) return;
       const key = `${ev.assistId}|${ev.scorerId}`;
@@ -2577,7 +2599,7 @@ function computeAssistConnections() {
 // don't guarantee insertion order matches game order. A tied game has no winner and therefore
 // no winning shot.
 function gameWinningShot(game) {
-  if (game.scoringEvents.length === 0) return null;
+  if (!isQualifyingGame(game)) return null;
   const scoreA = teamScore(game, game.teamA);
   const scoreB = teamScore(game, game.teamB);
   if (scoreA === scoreB) return null;
@@ -2630,7 +2652,7 @@ const CLUTCH_MARGIN_THRESHOLD = 5;
 
 function computeCloseGameShooting() {
   const closeGames = state.games.filter(g => {
-    if (g.scoringEvents.length === 0) return false;
+    if (!isQualifyingGame(g)) return false;
     return Math.abs(teamScore(g, g.teamA) - teamScore(g, g.teamB)) <= CLUTCH_MARGIN_THRESHOLD;
   });
   const totals = {}; // playerId -> { pts, fga, fta, gp }
@@ -2686,7 +2708,7 @@ function renderCloseGameShootingPanel() {
 // either roster for a reviewed game gets a row, even a quiet one with almost nothing recorded.
 function computeIndividualGamePerformances() {
   const rows = [];
-  state.games.filter(g => g.scoringEvents.length > 0).forEach(game => {
+  state.games.filter(isQualifyingGame).forEach(game => {
     [...game.teamA, ...game.teamB].forEach(playerId => {
       const player = state.players.find(p => p.id === playerId);
       if (!player) return;
@@ -2991,7 +3013,7 @@ const PARTY_RANKINGS = [
 // yet is dropped entirely — it would otherwise render as an all-"—" table telling you nothing.
 function computePowerRankingVsPerformance() {
   return PARTY_RANKINGS.map(party => {
-    const gamesThatNight = state.games.filter(g => g.date === party.date && g.scoringEvents.length > 0);
+    const gamesThatNight = state.games.filter(g => g.date === party.date && isQualifyingGame(g));
     const rows = party.players.map(pr => {
       const player = state.players.find(p => p.id === pr.slug);
       const gamesPlayed = player ? gamesThatNight.filter(g => g.teamA.includes(pr.slug) || g.teamB.includes(pr.slug)) : [];
@@ -3162,7 +3184,7 @@ function computeMatchupGrid() {
   const cellTotals = {}; // "scorerId|defenderId" -> { fgm, fga }
   const scorerTotals = {}; // scorerId -> attempts, for sorting rows by sample size
   const defenderTotals = {}; // defenderId -> attempts, for sorting columns by sample size
-  state.games.forEach(g => {
+  state.games.filter(isQualifyingGame).forEach(g => {
     g.scoringEvents.forEach(ev => {
       (ev.defenderIds || []).forEach(defenderId => {
         const key = `${ev.scorerId}|${defenderId}`;
@@ -3228,7 +3250,7 @@ function renderMatchupGrid() {
 // efficiency panel on this page prefers it — it accounts for the extra value of a made 3.
 function computeWideOpenShooting() {
   const totals = {}; // playerId -> { pts, fga, totalFga }
-  state.games.forEach(game => {
+  state.games.filter(isQualifyingGame).forEach(game => {
     game.scoringEvents.forEach(ev => {
       if (ev.points !== 2 && ev.points !== 3) return;
       const t = totals[ev.scorerId] = totals[ev.scorerId] || { pts: 0, fga: 0, totalFga: 0 };
@@ -3458,7 +3480,7 @@ function renderShotZonePanel() {
 // one player at a time and this needs every player's shots pooled together per date.
 function computeLeagueTsOverTime() {
   const byDate = {};
-  state.games.filter(g => g.scoringEvents.length > 0).forEach(game => {
+  state.games.filter(isQualifyingGame).forEach(game => {
     let pts = 0, fga = 0, fta = 0;
     game.scoringEvents.forEach(ev => {
       const made = ev.made !== false;
@@ -3540,7 +3562,7 @@ const LEAGUE_TS_ZONES = [
 function computeLeagueTsByZone() {
   const totals = {};
   LEAGUE_TS_ZONES.forEach(z => totals[z.key] = { pts: 0, fga: 0 });
-  state.games.forEach(game => {
+  state.games.filter(isQualifyingGame).forEach(game => {
     game.scoringEvents.forEach(ev => {
       if (!ev.shotLocation || (ev.points !== 2 && ev.points !== 3)) return;
       const bucket = totals[shotBand(ev.shotLocation, ev.points)];
@@ -3617,7 +3639,7 @@ const SECOND_CHANCE_WINDOW_SECONDS = 20;
 
 function computeSecondChanceConversions() {
   const totals = {}; // playerId -> { oreb, converted, noTimestamp }
-  state.games.forEach(game => {
+  state.games.filter(isQualifyingGame).forEach(game => {
     const events = game.scoringEvents;
     events.forEach(ev => {
       if (ev.made === false && ev.rebounderId && sameTeam(game, ev.scorerId, ev.rebounderId)) {
@@ -3669,7 +3691,7 @@ function renderSecondChancePanel() {
 
 function computeOutOfBoundsStats() {
   const totals = {}; // playerId -> { misses, oob }
-  state.games.forEach(g => {
+  state.games.filter(isQualifyingGame).forEach(g => {
     g.scoringEvents.filter(ev => ev.made === false).forEach(ev => {
       const t = totals[ev.scorerId] = totals[ev.scorerId] || { misses: 0, oob: 0 };
       t.misses++;
@@ -3736,7 +3758,7 @@ function computeRateSummaryForGames(playerId, games) {
 // split that player's own games into "with" (teammate on their side) and "without" (teammate
 // on the other team, or not playing) and compare per-20 output across the split.
 function computeTeammateSynergy(playerId) {
-  const qualifyingGames = state.games.filter(g => g.scoringEvents.length > 0 && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
   const teammateIds = new Set();
   qualifyingGames.forEach(g => {
     const myTeam = g.teamA.includes(playerId) ? g.teamA : g.teamB;
@@ -3788,7 +3810,7 @@ function renderTeammateSynergy(playerId) {
 // computeRateSummaryForGames() run on a single game, so it's the same per-20 math as everywhere
 // else, just normalized against that one game's own combined score instead of the season's.
 function computeTwoWayTrend(playerId) {
-  const qualifyingGames = state.games.filter(g => g.scoringEvents.length > 0 && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
   const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const points = sorted.map(g => ({ date: g.date, twoWay: computeRateSummaryForGames(playerId, [g]).twoWayPer20 }));
   const seasonAvg = computeRateSummaryForGames(playerId, qualifyingGames).twoWayPer20;
@@ -3904,7 +3926,7 @@ function computeTeammateQualityTrend(playerId) {
   const board = computeLeaderboard();
   const offRtgById = {};
   board.forEach(r => { offRtgById[r.player.id] = r.gp > 0 ? r.offRatingPer20 : null; });
-  const qualifyingGames = state.games.filter(g => g.scoringEvents.length > 0 && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
   const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const points = [];
   let sumQuality = 0, countAppearances = 0;
@@ -3934,7 +3956,7 @@ function computeDefensiveMatchupDifficultyTrend(playerId) {
   const board = computeLeaderboard();
   const offRtgById = {};
   board.forEach(r => { offRtgById[r.player.id] = r.gp > 0 ? r.offRatingPer20 : null; });
-  const qualifyingGames = state.games.filter(g => g.scoringEvents.length > 0 && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
   const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const points = [];
   let sumQuality = 0, countShots = 0;
@@ -3969,7 +3991,7 @@ function computeOffensiveMatchupDifficultyTrend(playerId) {
   const board = computeLeaderboard();
   const defRtgById = {};
   board.forEach(r => { defRtgById[r.player.id] = r.gp > 0 ? defensiveRating(r.rate, r.rateDefense) : null; });
-  const qualifyingGames = state.games.filter(g => g.scoringEvents.length > 0 && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
   const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const points = [];
   let sumQuality = 0, countTags = 0;
@@ -4006,7 +4028,7 @@ function computeAssistedByBreakdown(playerId) {
   board.forEach(r => { offRtgById[r.player.id] = r.gp > 0 ? r.offRatingPer20 : null; });
   let fgm = 0, assistedFgm = 0;
   const byAssister = {};
-  state.games.forEach(g => {
+  state.games.filter(isQualifyingGame).forEach(g => {
     g.scoringEvents.forEach(ev => {
       if (ev.scorerId !== playerId || ev.made === false) return;
       if (ev.points !== 2 && ev.points !== 3) return;
@@ -4121,6 +4143,20 @@ document.getElementById("toggleAdvancedColsBtn").addEventListener("click", () =>
   renderLeaderboard();
 });
 
+function updateImbalancedGamesBtnLabel() {
+  const btn = document.getElementById("toggleImbalancedGamesBtn");
+  if (btn) btn.textContent = includeImbalancedGames ? "Exclude Imbalanced Games" : "Include Imbalanced Games";
+}
+document.getElementById("toggleImbalancedGamesBtn").addEventListener("click", () => {
+  includeImbalancedGames = !includeImbalancedGames;
+  localStorage.setItem(INCLUDE_IMBALANCED_KEY, String(includeImbalancedGames));
+  updateImbalancedGamesBtnLabel();
+  // isQualifyingGame() feeds Leaderboard rates, awards, every Player Detail trend/panel, and
+  // most of the league-wide Leaderboard panels — a full re-render, same as any other toggle
+  // that changes what counts as "in" rather than just what's shown.
+  renderLeaderboard();
+});
+
 // Nulls (no attempts yet, etc.) always sort last regardless of direction.
 function compareForSort(a, b, dir) {
   if (a === null && b === null) return 0;
@@ -4184,6 +4220,7 @@ function renderLeaderboardHeader() {
 // situational stats, capped with the season's best/worst individual games. Keep the two in sync.
 function renderLeaderboard() {
   updateAdvancedColsBtnLabel();
+  updateImbalancedGamesBtnLabel();
   renderLeaderboardHeader();
   renderAwardsVsStats();
   renderPowerRankingVsPerformance();
@@ -4645,7 +4682,7 @@ function renderPlayerGameLog(playerId) {
 // double-teamed shot counts fully against each tagged defender's bucket, same as gameDefenseStats.
 function headToHeadAsScorer(playerId) {
   const totals = {}; // defenderId | "none" -> { fgm, fga }
-  state.games.forEach(g => {
+  state.games.filter(isQualifyingGame).forEach(g => {
     g.scoringEvents.filter(ev => ev.scorerId === playerId).forEach(ev => {
       const keys = (ev.defenderIds && ev.defenderIds.length > 0) ? ev.defenderIds : ["none"];
       keys.forEach(key => {
@@ -4663,7 +4700,7 @@ function headToHeadAsScorer(playerId) {
 // Every shot this player was tagged defending, grouped by who took it.
 function headToHeadAsDefender(playerId) {
   const totals = {}; // scorerId -> { fgm, fga }
-  state.games.forEach(g => {
+  state.games.filter(isQualifyingGame).forEach(g => {
     g.scoringEvents.filter(ev => (ev.defenderIds || []).includes(playerId)).forEach(ev => {
       totals[ev.scorerId] = totals[ev.scorerId] || { fgm: 0, fga: 0 };
       totals[ev.scorerId].fga++;
