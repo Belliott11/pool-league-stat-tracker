@@ -340,7 +340,16 @@ individual player, not a team.
    facts about two different people's own games, not mirror images of the same number, so don't
    expect it to look symmetric across the diagonal the way a simple relationship count would.
    (There's deliberately no
-   win/loss duo table here — the real Poolean site already tracks that.) Below that, **Shot
+   win/loss duo table here — the real Poolean site already tracks that.) Right after it,
+   **Teammate Context** puts Player Detail's Teammate Quality, Defensive Matchup Difficulty, and
+   Assisted By season averages side by side for every player at once — Off Rating/20, Teammate
+   Quality, Matchup Difficulty, Assisted%, and Avg Assister Quality in one sortable table, built
+   to catch a specific pattern across the whole roster without clicking into each player one at a
+   time: someone whose own Off Rating/20 leans on strong teammates (high Teammate Quality) and
+   light defensive assignments (low Matchup Difficulty) is a different case from someone posting
+   the same number on their own. Season summaries only, straight off the same three compute
+   functions Player Detail uses — see the Player Detail section below for the full formulas and
+   the game-by-game trend charts. Below that, **Shot
    Distance** splits every field goal further by how far it actually was from the hoop, on both
    sides of the 3pt line: **Close** and **Midrange** split the 2PT zone at its midpoint;
    **Line** (a normal, makeable three right at the line — "Line" not "Arc," since Poolean's

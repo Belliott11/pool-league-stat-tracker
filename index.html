@@ -318,6 +318,17 @@
     </div>
 
     <div class="panel">
+      <h2>Teammate Context</h2>
+      <p class="hint">The season-average headline numbers from Player Detail's Teammate Quality, Defensive Matchup Difficulty, and Assisted By panels, side by side for every player at once — built to catch a specific pattern without clicking into each player one at a time: someone whose own Off Rating/20 leans heavily on strong teammates (high Teammate Quality) and light defensive assignments (low Matchup Difficulty) is a different case from someone producing the same number on their own. All three "quality" columns use season Off Rating/20, not Two-Way — see the Player Detail panels for the full explanation and the game-by-game trend charts. Click a column header to sort by it.</p>
+      <div class="table-scroll">
+        <table class="matchup-table" id="teammateContextTable">
+          <thead><tr id="teammateContextHeaderRow"></tr></thead>
+          <tbody id="teammateContextBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
       <h2>Assist Connections</h2>
       <p class="hint">Every passer-to-scorer connection, league-wide — who set up whom, and how often. Directional: Alice assisting Bob is a separate row from Bob assisting Alice, since those are different facts. Sorted by assist count. Only connections with at least one assist are listed.</p>
       <div class="table-scroll">

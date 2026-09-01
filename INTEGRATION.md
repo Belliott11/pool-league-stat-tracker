@@ -810,6 +810,18 @@ generalized version of the hand-written SVG line chart `renderTwoWayTrendChart()
 Two-Way/20). `renderTwoWayTrendChart()` itself was left untouched rather than rewritten on top of
 the new shared function, so the existing chart wasn't put at risk for a cosmetic dedupe.
 
+**Teammate Context on the Leaderboard is the same three panels' season averages, league-wide,
+also purely computed.** `computeTeammateContext()` (`app.js`, near `renderTeammateLiftMatrix()`)
+maps every player with `gp > 0` from `computeLeaderboard()` and, per player, calls
+`computeTeammateQualityTrend()`, `computeMatchupDifficultyTrend()`, and
+`computeAssistedByBreakdown()` — the exact same three functions Player Detail uses, just reading
+off `.seasonAvg`/`.assistedPct`/`.avgAssisterQuality` instead of rendering the full trend or
+breakdown. No separate computation to keep in sync with Player Detail; if you change one of those
+three functions, both surfaces pick it up. This does mean `computeLeaderboard()` runs once per
+player inside the loop (each of the three helpers calls it independently) — fine at this
+roster's size, not the pattern to copy if you're optimizing a much larger one. Sortable via the
+same `TEAMMATE_CONTEXT_COLUMNS`/`renderSortableHeader()` pattern as everywhere else.
+
 **Bug fix, while touching this part of the page:** `index.html`'s Player Detail `</section>` was
 misplaced one panel too early, closing `#tab-player` right after Teammate Synergy — which left the
 Highlights & Lowlights panel outside *every* tab section. Since `.tab-panel { display: none }`

@@ -3341,6 +3341,57 @@ function renderTeammateLiftMatrix() {
   `;
 }
 
+// Teammate Quality / Defensive Matchup Difficulty / Assisted By's season-average headline
+// numbers, side by side for every player at once — the league-wide table version of three
+// Player Detail panels, so the pattern they were built to catch (a player whose own numbers
+// lean on strong teammates and light defensive assignments) is scannable across the whole
+// roster instead of one profile at a time. Season summaries only, straight from the same three
+// compute functions Player Detail already uses — no separate computation to keep in sync.
+const TEAMMATE_CONTEXT_COLUMNS = [
+  { key: "player", label: "Player", accessor: r => r.player.name },
+  { key: "gp", label: "GP", accessor: r => r.gp },
+  { key: "offRtg", label: "Off Rating/20", accessor: r => r.offRatingPer20 },
+  { key: "teammateQuality", label: "Teammate Quality", accessor: r => r.teammateQuality },
+  { key: "matchupDifficulty", label: "Matchup Difficulty", accessor: r => r.matchupDifficulty },
+  { key: "assistedPct", label: "Assisted%", accessor: r => r.assistedPct },
+  { key: "avgAssisterQuality", label: "Avg Assister Quality", accessor: r => r.avgAssisterQuality }
+];
+let teammateContextSort = { key: "teammateQuality", dir: "desc" };
+
+function computeTeammateContext() {
+  return computeLeaderboard().filter(r => r.gp > 0).map(r => {
+    const tq = computeTeammateQualityTrend(r.player.id);
+    const md = computeMatchupDifficultyTrend(r.player.id);
+    const ab = computeAssistedByBreakdown(r.player.id);
+    return {
+      player: r.player, gp: r.gp, offRatingPer20: r.offRatingPer20,
+      teammateQuality: tq.seasonAvg, matchupDifficulty: md.seasonAvg,
+      assistedPct: ab.assistedPct, avgAssisterQuality: ab.avgAssisterQuality
+    };
+  });
+}
+
+function renderTeammateContextPanel() {
+  const headerRow = document.getElementById("teammateContextHeaderRow");
+  if (!headerRow) return;
+  renderSortableHeader(headerRow, TEAMMATE_CONTEXT_COLUMNS, teammateContextSort, renderTeammateContextPanel);
+  const body = document.getElementById("teammateContextBody");
+  const rows = computeTeammateContext();
+  const sortCol = TEAMMATE_CONTEXT_COLUMNS.find(c => c.key === teammateContextSort.key);
+  rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), teammateContextSort.dir));
+  body.innerHTML = rows.length === 0
+    ? '<tr><td colspan="7" class="empty-state">No games with players yet.</td></tr>'
+    : rows.map(r => `<tr>
+        <td>${escapeHtml(r.player.name)}</td>
+        <td>${r.gp}</td>
+        <td>${r.offRatingPer20.toFixed(1)}</td>
+        <td>${r.teammateQuality !== null ? r.teammateQuality.toFixed(1) : "—"}</td>
+        <td>${r.matchupDifficulty !== null ? r.matchupDifficulty.toFixed(1) : "—"}</td>
+        <td>${r.assistedPct !== null ? formatPct(r.assistedPct) : "—"}</td>
+        <td>${r.avgAssisterQuality !== null ? r.avgAssisterQuality.toFixed(1) : "—"}</td>
+      </tr>`).join("");
+}
+
 // Shot Distance + Shot Selection, combined — these used to be two separate panels (FG% by zone,
 // and share-of-attempts by zone) built from the exact same per-player, same-4-zone data, which
 // just meant scanning two panels to answer one real question: "where does this player shoot
@@ -4102,6 +4153,7 @@ function renderLeaderboard() {
   renderLeagueTsChart();
   renderMatchupGrid();
   renderTeammateLiftMatrix();
+  renderTeammateContextPanel();
   renderAssistSynergy();
   renderOutOfBoundsPanel();
   renderSecondChancePanel();
