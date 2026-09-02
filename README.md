@@ -30,8 +30,7 @@ individual player, not a team.
    name. Right above the list, **Balance Teams** turns picking fair sides into a click instead of
    eyeballing a roster: check off whoever's showing up, set a team size (defaults to 3), and
    **Generate Balanced Teams** returns up to 5 different splits, ranked by how close each team's
-   *average* season Two-Way/20 is to the others (a player with no games logged yet counts as a
-   neutral 0.0 — no data, not a penalty). Team count is whichever integer is closest to
+   *average* season Two-Way/20 is to the others. Team count is whichever integer is closest to
    attendees ÷ team size, at least 2 — 7 people at a team size of 3 rounds to 2 teams (4-and-3),
    not 3 teams with one running short. The search is randomized (one seeded "snake draft" split
    plus 300 randomized attempts, deduplicated and sorted by spread), so **Generate** again turns
@@ -39,7 +38,15 @@ individual player, not a team.
    **Use These Teams → Create Game** creates a real game with that roster pre-filled, using
    whatever date is set in Create Game above — for 3+ teams, this is a planning read only,
    nothing gets created for you automatically. This doesn't touch your data until you click that
-   button; picking attendees and generating splits is throwaway, not saved anywhere.
+   button; picking attendees and generating splits is throwaway, not saved anywhere. A player
+   with no dashboard stats logged doesn't just default to a flat, misleadingly-neutral 0.0 — if
+   they've got a real season-average power-ranking percentile (from `poolean_player_profiles.xlsx`,
+   hand-imported into `PLAYER_REPUTATION_DATA` in `app.js`), that's converted into a Two-Way/20-
+   equivalent estimate instead, and the attendee picker marks them with a **\*** (hover a chip for
+   the exact number and source). Truly no-data players (never logged a game *or* a real-life
+   party) still fall back to a neutral 0.0. Doesn't use anything from that spreadsheet's
+   subjective scouting notes (attitude, effort, shooting tendency) — that's Ben's own read on a
+   player, not something folded into a numeric fairness score.
 3. **Stat Entry** — this is where you sit while reviewing the video:
    - If one recording covers several games back-to-back, use **Session video**: upload it once
      under any of those games (give it a name when prompted) and then pick that same session

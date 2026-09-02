@@ -1113,3 +1113,32 @@ the ordinary game-creation path when someone clicks **Use These Teams** (only of
 exactly-2-team result, since that's the only case that maps onto a single `teamA`/`teamB` game);
 for 3+ teams it's display-only, on the theory that a "day of games" with more than two groups
 rotating through multiple actual games isn't something this tool tries to auto-create for you.
+
+**A player with no dashboard stats logged gets a reputation-based fallback instead of a flat
+0.0.** `PLAYER_REPUTATION_DATA` (`app.js`, right above the Balance Teams section) is a hand-typed
+array — `{slug, avgPercentile, parties}` per player — imported from Ben's own
+`poolean_player_profiles.xlsx` ("Power Rankings & Awards" sheet), the same frozen-external-
+snapshot pattern as `AWARD_RESULTS`/`PARTY_RANKINGS` elsewhere in this file: not derived from
+`state`, not auto-synced, edit it by hand if Ben sends a newer export. It is **not** the same data
+as `PARTY_RANKINGS` — that array only covers the handful of dates tied to a game Ben's actually
+reviewed (5 dates when this was written), while the spreadsheet's percentile is a full-season
+average across every real-life party (up to 15 for some players), including many players with
+*zero* entries in `PARTY_RANKINGS` at all. Don't try to derive one from the other; they answer
+different questions (`PARTY_RANKINGS` powers the "Power Ranking vs. Performance" panel's per-date
+pairing with that night's actual performance; `PLAYER_REPUTATION_DATA` powers this one single
+season-long fallback number).
+
+`computeBalanceQualityMap()` is the single source of truth for "how good is this attendee" —
+real season Two-Way/20 for anyone with `gp > 0`, else `estimatedQualityFromReputation(avgPercentile)`
+if they're in `PLAYER_REPUTATION_DATA` (`(avgPercentile - 50) / 10` — a single adjustable
+constant, calibrated so a dominant 100th-percentile reputation lands around the top of this
+roster's real Two-Way/20 range rather than some inflated outlier), else a neutral 0.0 same as
+before. Both the attendee picker and the results re-derive this map on every render rather than
+caching it, so it can never drift out of sync with `computeLeaderboard()`. The picker marks a
+reputation-estimated player with a **\*** and a tooltip naming the source and percentile — worth
+keeping if you port this, since silently blending a real stat with an estimate (even a
+well-reasoned one) without flagging which is which would be misleading. Deliberately does **not**
+pull in anything from the spreadsheet's "Player Profiles" sheet (attitude, effort, preferred
+role, shooting tendency, free-text notes) — that's Ben's own subjective scouting, and folding
+free-text judgment calls into a numeric fairness score wasn't something to do without him
+explicitly asking for it specifically.

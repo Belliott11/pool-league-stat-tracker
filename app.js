@@ -398,6 +398,74 @@ async function renderNeedsReviewSummary() {
 }
 
 // ---------- Balance Teams ----------
+// Real season-average power-ranking percentile per player, pulled from Ben's own
+// poolean_player_profiles.xlsx ("Power Rankings & Awards" sheet) — a frozen external snapshot,
+// same hand-edited-historical-record pattern as AWARD_RESULTS/PARTY_RANKINGS, not derived from
+// anything in state. Covers every player who's attended at least one real-life party, including
+// the many with zero dashboard stats logged (no film reviewed yet) — exactly the gap Balance
+// Teams' quality estimate needs filling, since defaulting a player with no games to a flat 0.0
+// treats a real MVP-caliber player and a total beginner identically. Only ever used as a
+// *fallback* below, for a player with no dashboard stats — anyone with real logged games keeps
+// using their own Two-Way/20, untouched. Deliberately doesn't fold in anything from the
+// spreadsheet's "Player Profiles" sheet (attitude, effort, preferred role, shooting tendency,
+// free-text notes) — that's Ben's own subjective scouting, not something to silently encode into
+// a numeric fairness score. Update this table by hand if a newer export exists.
+const PLAYER_REPUTATION_DATA = [
+  { slug: "phillip", avgPercentile: 100, parties: 4 },
+  { slug: "logan-hoskins", avgPercentile: 88.9, parties: 1 },
+  { slug: "ben", avgPercentile: 73.3, parties: 15 },
+  { slug: "reilly", avgPercentile: 73, parties: 7 },
+  { slug: "evan", avgPercentile: 65.1, parties: 4 },
+  { slug: "adam", avgPercentile: 63.2, parties: 15 },
+  { slug: "sean", avgPercentile: 63, parties: 3 },
+  { slug: "jason", avgPercentile: 52.9, parties: 3 },
+  { slug: "zach", avgPercentile: 42.1, parties: 15 },
+  { slug: "alex", avgPercentile: 35.6, parties: 9 },
+  { slug: "will", avgPercentile: 35.5, parties: 6 },
+  { slug: "g-ian", avgPercentile: 20.8, parties: 3 },
+  { slug: "logan-watson", avgPercentile: 16.2, parties: 3 },
+  { slug: "viraj", avgPercentile: 15.3, parties: 3 },
+  { slug: "g-lukas", avgPercentile: 8.3, parties: 3 },
+  { slug: "ryder", avgPercentile: 0, parties: 2 },
+  { slug: "kayla", avgPercentile: 0, parties: 2 },
+  { slug: "g-michael-t", avgPercentile: 0, parties: 1 },
+  { slug: "g-danny", avgPercentile: 0, parties: 1 }
+  // "michael" and "g-michael-k" have no parties logged in the source sheet at all, so they get
+  // no reputation fallback either — same neutral 0.0 default as anyone with truly no signal.
+];
+const PLAYER_REPUTATION_BY_ID = {};
+PLAYER_REPUTATION_DATA.forEach(r => { PLAYER_REPUTATION_BY_ID[r.slug] = r; });
+
+// Converts a season-average power-ranking percentile (0-100, 50 = exactly average that night)
+// into a Two-Way/20-equivalent estimate. Calibrated against the real spread of this roster's own
+// Two-Way/20 values (roughly -5 to +5.5): 10 percentile points above/below league-average maps
+// to about 1 point of Two-Way/20, so a dominant 100th-percentile reputation (Phillip) lands
+// around +5 rather than some inflated outlier. A single adjustable constant, not a UI setting,
+// same pattern as every other judgment-call threshold in this tool (CLUTCH_MARGIN_THRESHOLD,
+// SECOND_CHANCE_WINDOW_SECONDS, etc.) — revisit if it turns out to under- or over-weight
+// reputation once more of these players actually get logged film.
+function estimatedQualityFromReputation(avgPercentile) {
+  return (avgPercentile - 50) / 10;
+}
+
+// Every attendee's balancing quality plus where it came from, computed once per generate/render
+// pass so the attendee picker, the results, and the search itself all agree with each other.
+function computeBalanceQualityMap() {
+  const board = computeLeaderboard();
+  const map = {};
+  board.forEach(r => {
+    if (r.gp > 0) {
+      map[r.player.id] = { quality: r.twoWayPer20, source: "stats" };
+    } else {
+      const rep = PLAYER_REPUTATION_BY_ID[r.player.id];
+      map[r.player.id] = rep
+        ? { quality: estimatedQualityFromReputation(rep.avgPercentile), source: "reputation", avgPercentile: rep.avgPercentile, parties: rep.parties }
+        : { quality: 0, source: "none" };
+    }
+  });
+  return map;
+}
+
 // Not tied to a specific game — this is a "who's here today, how should we split them up"
 // planning tool, so its own selection state lives outside any one game's record and isn't
 // persisted (picking attendees is a one-time, throwaway decision each session, not data worth
@@ -414,11 +482,18 @@ function renderBalanceAttendeePicker() {
     wrap.innerHTML = '<p class="empty-state">No players yet. Add players in the Players tab.</p>';
     return;
   }
+  const qualityMap = computeBalanceQualityMap();
   [...state.players].sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+    const q = qualityMap[p.id];
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "attendee-chip" + (balanceAttendeeIds.has(p.id) ? " selected" : "");
-    chip.textContent = p.name;
+    chip.textContent = q.source === "reputation" ? `${p.name} *` : p.name;
+    chip.title = q.source === "stats"
+      ? `${q.quality.toFixed(1)} season Two-Way/20`
+      : q.source === "reputation"
+        ? `No dashboard stats yet — estimated from a ${q.avgPercentile}th percentile power ranking (${q.parties} part${q.parties === 1 ? "y" : "ies"}), not logged film`
+        : "No dashboard stats or power ranking data — counted as a neutral average";
     chip.addEventListener("click", () => {
       if (balanceAttendeeIds.has(p.id)) balanceAttendeeIds.delete(p.id);
       else balanceAttendeeIds.add(p.id);
@@ -499,18 +574,19 @@ function scoreTeamSet(teams, qualityById) {
   return { avgs, spread: Math.max(...avgs) - Math.min(...avgs) };
 }
 
-// Season Two-Way/20 (0 for anyone with no games logged — a neutral "no data yet" baseline, not
-// a penalty) is the balancing currency: it's already this tool's single "how good, overall"
-// number, used the same way for MVP-style comparisons elsewhere. Team count is whichever integer
-// is closest to attendees/teamSize (at least 2, since a "team" needs an opponent) — for example
-// 7 attendees at a team size of 3 rounds to 2 teams (sizes 4 and 3) rather than 3 (sizes 3,2,2),
-// matching how an odd number out in real pickup usually just makes one side's bench thicker
-// instead of spinning up a third team. Runs one seeded snake-draft candidate plus 300 randomized
-// ones, dedupes identical team compositions, and returns the 5 lowest-spread survivors.
+// Season Two-Way/20 — or, for a player with no games logged yet, a reputation-based estimate
+// from PLAYER_REPUTATION_DATA (real power-ranking percentile, not a flat neutral 0) — is the
+// balancing currency: Two-Way/20 is already this tool's single "how good, overall" number, used
+// the same way for MVP-style comparisons elsewhere. Team count is whichever integer is closest
+// to attendees/teamSize (at least 2, since a "team" needs an opponent) — for example 7 attendees
+// at a team size of 3 rounds to 2 teams (sizes 4 and 3) rather than 3 (sizes 3,2,2), matching how
+// an odd number out in real pickup usually just makes one side's bench thicker instead of
+// spinning up a third team. Runs one seeded snake-draft candidate plus 300 randomized ones,
+// dedupes identical team compositions, and returns the 5 lowest-spread survivors.
 function generateBalancedTeamSets(attendeeIds, teamSize) {
-  const board = computeLeaderboard();
+  const qualityMap = computeBalanceQualityMap();
   const qualityById = {};
-  board.forEach(r => { qualityById[r.player.id] = r.gp > 0 ? r.twoWayPer20 : 0; });
+  Object.entries(qualityMap).forEach(([id, v]) => { qualityById[id] = v.quality; });
 
   const numTeams = Math.max(2, Math.round(attendeeIds.length / Math.max(1, teamSize)));
   const base = Math.floor(attendeeIds.length / numTeams);
@@ -540,11 +616,17 @@ function renderBalanceResults() {
     wrap.innerHTML = "";
     return;
   }
+  const qualityMap = computeBalanceQualityMap();
+  const anyEstimated = Object.values(qualityMap).some(v => v.source === "reputation");
   wrap.innerHTML = balanceResults.map((r, i) => {
     const teamsHtml = r.teams.map((team, ti) => `
       <div class="balance-team-card">
         <h5><span>Team ${String.fromCharCode(65 + ti)}</span><span class="balance-team-avg">${r.avgs[ti].toFixed(1)} avg</span></h5>
-        <ul>${team.map(id => `<li>${escapeHtml(state.players.find(p => p.id === id)?.name || "?")}</li>`).join("")}</ul>
+        <ul>${team.map(id => {
+          const name = state.players.find(p => p.id === id)?.name || "?";
+          const marker = qualityMap[id]?.source === "reputation" ? " *" : "";
+          return `<li>${escapeHtml(name)}${marker}</li>`;
+        }).join("")}</ul>
       </div>
     `).join("");
     const useBtn = r.teams.length === 2
@@ -560,7 +642,9 @@ function renderBalanceResults() {
         ${useBtn}
       </div>
     `;
-  }).join("");
+  }).join("") + (anyEstimated
+    ? '<p class="hint" style="margin:0">* No dashboard stats yet — quality estimated from real power-ranking reputation (see the attendee picker above for each one\'s percentile), not logged film.</p>'
+    : "");
   wrap.querySelectorAll(".balance-use-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const r = balanceResults[Number(btn.dataset.index)];
