@@ -494,9 +494,15 @@ button:disabled {
 }
 
 .stat-cell button {
-  padding: 3px 7px;
+  /* Was 3px 7px (~20px tall) — the single most-tapped interaction in the app, and the smallest
+     touch target in it. Bumped as far as the existing 4-across (PTS) / 3-across (MISS) row
+     layout allows without widening .stat-cell itself and disrupting how many player cards fit
+     per screen — still short of the ~44px ideal, but a real improvement, and flex-shrink on
+     these buttons already lets them compress further on a genuinely narrow cell rather than
+     overflow it. */
+  padding: 7px 6px;
   font-size: 0.75rem;
-  min-width: 24px;
+  min-width: 26px;
   border-radius: 6px;
 }
 
