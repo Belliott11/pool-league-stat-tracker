@@ -660,6 +660,40 @@ To load it: open the dashboard, go to **Export → Data Management → Import JS
 `poolean-seed.json`. Then open a game from the **Games** tab, paste in its video URL, and start
 clicking stats.
 
+## Starting a new season
+
+The player roster is meant to carry over — it's one league-wide list, not scoped to any
+particular season — but everything else here (games, stats, awards, power rankings) is real
+Summer 2026 history that a new season shouldn't get pooled together with. Two separate things
+need doing, and only one of them is a button:
+
+1. **Export → Data Management → Download JSON** first, as a backup of the season you're closing
+   out — once you clear it in the next step there's no undo.
+2. **Export → Data Management → Start New Season.** Clears every game, stat, matchup, and
+   locally-stored video file — keeps the player roster untouched, unlike **Reset All Data** right
+   next to it (the actual nuclear option: wipes the roster too, back to a genuinely empty
+   tracker). Roster additions/removals from the closing season stay exactly as they were; add or
+   remove anyone from the **Players** tab same as always going forward.
+3. **Three hardcoded tables in `app.js` still need a hand-edit — the button above can't touch
+   these, since they're baked into the source file, not runtime data:**
+   - `AWARD_RESULTS` — Summer 2026's closed award ballot (winners, vote standings). Replace with
+     the new season's ballot once it closes, or clear it out and leave the Awards vs. Stats panel
+     empty until it does.
+   - `PARTY_RANKINGS` — per-date power rankings for the nights Ben's actually reviewed film for.
+     Starts empty for a new season; add an entry per date as games get logged, same as this
+     season's own history was built up.
+   - `PLAYER_REPUTATION_DATA` — the season-average power-ranking percentiles Balance Teams falls
+     back on for a player with no dashboard stats yet, imported from
+     `poolean_player_profiles.xlsx`. Stale numbers here would quietly bias team-balancing toward
+     last season's reputations instead of this one's — clear it out (or replace with a fresh
+     export) at the same time as everything else.
+
+   Everything else that looks like a hardcoded constant — `CLOSE_RANGE_THRESHOLD`,
+   `THREE_PT_DEEP_THRESHOLD`, `CLUTCH_MARGIN_THRESHOLD`, `SECOND_CHANCE_WINDOW_SECONDS` — is a
+   shot-geometry or rule threshold, not season history, and doesn't need to change for a new
+   season (though revisiting them once a new season has more shot volume behind it is always
+   fair game, same as any other season).
+
 ## Data schema (JSON)
 
 ```json

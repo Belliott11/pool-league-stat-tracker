@@ -634,7 +634,11 @@ button:disabled {
   margin-bottom: 14px;
 }
 .attendee-chip {
-  padding: 5px 12px;
+  /* Matches the app's own baseline button height (input/select/button's 9px 12px padding,
+     ~34px tall) rather than the smaller pill this started as — a row of these is the main
+     touch interaction on Balance Teams, and undersized tap targets are the first thing that
+     goes wrong picking attendees on a phone at the court. */
+  padding: 9px 14px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface-tint);

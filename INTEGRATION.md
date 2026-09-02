@@ -449,7 +449,13 @@ average Two-Way/20 lift a "Best Teammate" winner gives their actual teammates, r
 `computeTeammateSynergy()` from the section above — same "nothing stored, always current"
 pattern as the rest of this page. If you add a new season's awards, that means editing
 `AWARD_RESULTS` by hand (or building a real `award_results` collection and reading from it) —
-there's no mechanism here that pulls it from anywhere automatically. Winner slugs are matched
+there's no mechanism here that pulls it from anywhere automatically. This is one of three
+hardcoded season-snapshot tables (`AWARD_RESULTS`, `PARTY_RANKINGS`, `PLAYER_REPUTATION_DATA`)
+that Ben's own **Export → Data Management → Start New Season** button deliberately can't touch,
+since they're baked into this source file, not runtime `state` — see README.md "Starting a new
+season" for the full checklist. If you build a real backend collection for any of these instead,
+that's the natural place to make the season transition actually automatic, which a static
+hardcoded array never can be. Winner slugs are matched
 against `player.id` exactly like `poolean-seed.json` (see "Player and game ids already match
 your PocketBase" above); a slug with no matching player renders as "not in current roster"
 rather than erroring, which covers both a genuinely-absent player and one Ben simply hasn't

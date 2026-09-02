@@ -5758,6 +5758,26 @@ document.getElementById("importFileInput").addEventListener("change", e => {
   e.target.value = "";
 });
 
+// Clears everything season-specific (games, stats, matchups, session/per-game video blobs) but
+// keeps the player roster — the one thing meant to carry over from one season to the next,
+// unlike Reset All Data below. Also clears the two hardcoded season-snapshot tables that live in
+// this file (AWARD_RESULTS, PARTY_RANKINGS, PLAYER_REPUTATION_DATA are declared with real
+// Summer 2026 data above) — those still need a hand-edit for a new season, this button can't do
+// that part for you. See README.md "Starting a new season" for the full checklist.
+document.getElementById("startNewSeasonBtn").addEventListener("click", async () => {
+  if (!confirm("This clears every game, stat, and locally-stored video — but keeps the player roster. Download JSON first if you want a backup. Continue?")) return;
+  state.games = [];
+  state.masterVideos = [];
+  saveState();
+  const videoIds = await getAllStoredVideoIds();
+  for (const id of videoIds) await deleteVideoFile(id);
+  currentGameId = null;
+  currentPlayerId = null;
+  renderPlayers();
+  renderGames();
+  showTab("games");
+});
+
 document.getElementById("resetDataBtn").addEventListener("click", () => {
   if (!confirm("This will permanently delete all players, games, and stats. Continue?")) return;
   state = { players: [], games: [], masterVideos: [] };
