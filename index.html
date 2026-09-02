@@ -245,6 +245,17 @@
     </div>
 
     <div class="panel">
+      <h2>Player Comparison</h2>
+      <p class="hint">Pick any two players to see their full stat lines side by side — every column from the table above, including the advanced % ones, whether or not they're currently shown there. Green marks whichever value is better for a given stat where "better" has a clear direction (lower for TOV/PF/Pts Allowed/Opp FG%/Beaten/TOV%, higher for everything else with a real quality read) — left uncolored for GP and the shot-share percentages (Shot%/AST%/OREB%/DREB%/TRB%), since a bigger share of the team's shots or assists reflects a role, not necessarily better play.</p>
+      <div class="compare-controls">
+        <select id="comparePlayer1Select"></select>
+        <span>vs.</span>
+        <select id="comparePlayer2Select"></select>
+      </div>
+      <div id="playerComparisonResult" class="table-scroll"></div>
+    </div>
+
+    <div class="panel">
       <h2>Awards vs. Stats</h2>
       <p class="hint">Summer 2026's voted awards, from that season's closed ballot, checked against the closest tracked stat — computed live from whatever games are actually logged in this browser, so it's only as complete as your Shot Log is. A stat winner sitting outside the top of its column isn't a bug — the vote and the numbers are allowed to disagree, that's the point of comparing them.</p>
       <div id="awardsVsStats" class="awards-grid"></div>
@@ -256,7 +267,8 @@
       <div id="powerRankingVsPerformance"></div>
     </div>
 
-    <!-- Player Comparison Charts -->
+    <!-- Comparison Scatters (not to be confused with the Player Comparison panel above, a
+         side-by-side stat table for two named players — these are whole-roster scatter plots) -->
     <div class="panel">
       <h2>Two-Way Quadrant</h2>
       <p class="hint">Off Rating/20 (offense) vs. Def Rating/20 for every player who's played, plotted separately instead of pre-summed into Two-Way Score — so "who's good" splits into "good at what." Quadrant lines are drawn at zero on each axis.</p>

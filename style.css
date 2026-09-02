@@ -708,6 +708,40 @@ button:disabled {
   margin: 0;
   padding-left: 18px;
 }
+.balance-preview-wrap {
+  margin-top: 10px;
+}
+.balance-preview-table {
+  font-size: 0.85rem;
+}
+
+/* Player Comparison (Leaderboard tab) */
+.compare-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.compare-controls select {
+  flex: 1;
+  min-width: 160px;
+}
+.compare-table td {
+  text-align: center;
+}
+.compare-stat-label {
+  text-align: left !important;
+  color: var(--muted);
+  font-weight: 600;
+}
+.compare-better {
+  color: var(--success);
+  font-weight: 700;
+}
+.compare-worse {
+  color: var(--danger);
+}
 
 /* Stat Entry: the video and the box score (the two things you're actually looking at and
    clicking while tagging a play) sit side by side at the top, each tall enough to hold its

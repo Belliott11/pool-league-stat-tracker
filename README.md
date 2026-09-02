@@ -46,7 +46,13 @@ individual player, not a team.
    the exact number and source). Truly no-data players (never logged a game *or* a real-life
    party) still fall back to a neutral 0.0. Doesn't use anything from that spreadsheet's
    subjective scouting notes (attitude, effort, shooting tendency) — that's Ben's own read on a
-   player, not something folded into a numeric fairness score.
+   player, not something folded into a numeric fairness score. For any 2-team split, **Preview
+   Matchups** expands real head-to-head history between the two rosters about to face each
+   other — every scorer/defender pair from either side with real logged shots between them,
+   sorted by attempts, both directions (each side's shooters against the other's defenders).
+   Reuses the same data as the league-wide Head-to-Head Matchup Grid further down, just scoped to
+   these specific players instead of the whole roster — a pairing with no history yet just says
+   so rather than showing a grid of empty cells.
 3. **Stat Entry** — this is where you sit while reviewing the video:
    - If one recording covers several games back-to-back, use **Session video**: upload it once
      under any of those games (give it a name when prompted) and then pick that same session
@@ -247,8 +253,21 @@ individual player, not a team.
    last 5 games with real shots logged (fewer if they haven't played 5 yet), with a ▲/▼ showing
    whether that's above or below their season Off Rating/20 (within ±0.5 counts as flat, shown as ●
    rather than a dash, since a dash next to a number reads as a minus sign).
+
+   Right below the main table, **Player Comparison** picks up where a 34-column table stops being
+   readable for "just tell me how these two stack up": two dropdowns, and every column from the
+   table above (all 31 of them, including the six advanced ones regardless of whether they're
+   currently shown) laid out as rows instead, one player's value next to the other's. Green marks
+   whichever value is better for a given stat where "better" has an unambiguous direction — lower
+   for TOV/PF/Pts Allowed/Opp FG%/Beaten/TOV%, higher for everything else with a real quality
+   read — and GP plus the shot-share percentages (Shot%/AST%/OREB%/DREB%/TRB%) are left
+   uncolored on purpose, since a bigger share of the team's shots or assists is a role a player's
+   settled into, not inherently better play. Not to be confused with the **Comparison Scatters**
+   further down (Two-Way Quadrant, Volume vs. Efficiency) — those plot the whole roster at once
+   on two axes; this is a focused, all-stats side-by-side for exactly two named players.
+
    Everything below this main table is grouped into five loose sections, top to bottom: season
-   **Overview** (Awards vs. Stats, Power Ranking vs. Performance), **Player Comparison Charts**
+   **Overview** (Awards vs. Stats, Power Ranking vs. Performance), **Comparison Scatters**
    (Two-Way Quadrant, Volume vs. Efficiency), **Shot Location & Efficiency** (the heatmap through
    League TS% Over Time), **Matchups & Chemistry** (the pairing grids and Assist Connections), and
    **Situational & Moments** (Out-of-Bounds through the two highlight reels at the very bottom).

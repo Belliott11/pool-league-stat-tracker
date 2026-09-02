@@ -609,6 +609,47 @@ function generateBalancedTeamSets(attendeeIds, teamSize) {
   return scored.slice(0, 5);
 }
 
+// Real head-to-head history between two specific rosters about to face each other — reuses
+// computeMatchupGrid()'s own per-pair FG data rather than re-deriving it, scoped down to just
+// the cross-team pairs relevant to this specific matchup (a teammate never guards a teammate in
+// the game about to happen, so same-team pairs are skipped entirely rather than shown as
+// meaningless dashes). Both directions count: team A shooting on team B's defenders, and team B
+// shooting on team A's. Sorted by attempts, most-tested pairings first, so it reads as "this is
+// what we actually know" rather than a wall of mostly-empty cells for pairs with no history yet.
+function computeCrossTeamMatchups(teamA, teamB) {
+  const { cellFor } = computeMatchupGrid();
+  const rows = [];
+  const addPairs = (scorers, defenders) => {
+    scorers.forEach(scorerId => {
+      defenders.forEach(defenderId => {
+        const cell = cellFor(scorerId, defenderId);
+        if (cell) rows.push({ scorerId, defenderId, fgm: cell.fgm, fga: cell.fga });
+      });
+    });
+  };
+  addPairs(teamA, teamB);
+  addPairs(teamB, teamA);
+  return rows.sort((a, b) => b.fga - a.fga);
+}
+
+function renderMatchupPreviewTable(teamA, teamB) {
+  const rows = computeCrossTeamMatchups(teamA, teamB);
+  if (rows.length === 0) {
+    return '<p class="empty-state" style="margin:0">No head-to-head history between these two teams yet.</p>';
+  }
+  const rowsHtml = rows.map(r => {
+    const scorer = state.players.find(p => p.id === r.scorerId)?.name || "?";
+    const defender = state.players.find(p => p.id === r.defenderId)?.name || "?";
+    return `<tr><td>${escapeHtml(scorer)}</td><td>${escapeHtml(defender)}</td><td>${r.fgm}/${r.fga}</td><td>${pct(r.fgm, r.fga)}%</td></tr>`;
+  }).join("");
+  return `
+    <table class="matchup-table balance-preview-table">
+      <thead><tr><th>Scorer</th><th>Defender</th><th>FG</th><th>FG%</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `;
+}
+
 function renderBalanceResults() {
   const wrap = document.getElementById("balanceTeamsResults");
   if (!wrap) return;
@@ -629,8 +670,12 @@ function renderBalanceResults() {
         }).join("")}</ul>
       </div>
     `).join("");
-    const useBtn = r.teams.length === 2
-      ? `<button type="button" class="secondary-btn balance-use-btn" data-index="${i}">Use These Teams &rarr; Create Game</button>`
+    const buttonsHtml = r.teams.length === 2
+      ? `<button type="button" class="secondary-btn balance-preview-btn" data-index="${i}">Preview Matchups</button>
+         <button type="button" class="secondary-btn balance-use-btn" data-index="${i}">Use These Teams &rarr; Create Game</button>`
+      : "";
+    const previewHtml = r.teams.length === 2
+      ? `<div class="balance-preview-wrap" id="balancePreview${i}" hidden>${renderMatchupPreviewTable(r.teams[0], r.teams[1])}</div>`
       : "";
     return `
       <div class="balance-option ${i === 0 ? "balance-option-best" : ""}">
@@ -639,7 +684,8 @@ function renderBalanceResults() {
           <span class="balance-spread">Δ${r.spread.toFixed(1)} Two-Way/20 between strongest and weakest team</span>
         </div>
         <div class="balance-teams-row">${teamsHtml}</div>
-        ${useBtn}
+        ${buttonsHtml}
+        ${previewHtml}
       </div>
     `;
   }).join("") + (anyEstimated
@@ -649,6 +695,14 @@ function renderBalanceResults() {
     btn.addEventListener("click", () => {
       const r = balanceResults[Number(btn.dataset.index)];
       applyBalancedTeamsToNewGame(r.teams[0], r.teams[1]);
+    });
+  });
+  wrap.querySelectorAll(".balance-preview-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const panel = document.getElementById(`balancePreview${btn.dataset.index}`);
+      if (!panel) return;
+      panel.hidden = !panel.hidden;
+      btn.textContent = panel.hidden ? "Preview Matchups" : "Hide Matchups";
     });
   });
 }
@@ -4519,6 +4573,8 @@ function renderLeaderboard() {
   renderCloseGameShootingPanel();
   renderIndividualGamePerformances();
   renderLeagueHighlights();
+  renderPlayerComparisonSelects();
+  renderPlayerComparison();
   const body = document.getElementById("leaderboardBody");
   body.innerHTML = "";
   // Players with no games yet just clutter the table with a row of dashes.
@@ -4553,6 +4609,79 @@ function renderLeaderboard() {
     body.appendChild(tr);
   });
 }
+
+// Every stat with a clear "which direction is better" reads that way here; everything else
+// (GP, and the shot-share percentages Shot%/AST%/OREB%/DREB%/TRB%) is left uncolored on
+// purpose, since a bigger share of the team's shots or assists reflects a role a player's
+// settled into, not necessarily better play.
+const COMPARISON_NEUTRAL_KEYS = new Set(["gp", "shotpct", "astpct", "orebpct", "drebpct", "trebpct"]);
+const COMPARISON_LOWER_IS_BETTER_KEYS = new Set(["l", "tov", "pf", "ptsAllowed", "oppfg", "beaten", "tovpct"]);
+
+// Rebuilds the two <select> option lists from the current roster — cheap, called on every
+// Leaderboard render so a player added elsewhere shows up without a reload. Re-setting
+// innerHTML only touches the <option> children, not the <select> itself, so the change
+// listeners wired once below stay attached across re-renders.
+function renderPlayerComparisonSelects() {
+  const sel1 = document.getElementById("comparePlayer1Select");
+  const sel2 = document.getElementById("comparePlayer2Select");
+  if (!sel1 || !sel2) return;
+  const options = ['<option value="">Select a player…</option>']
+    .concat([...state.players].sort((a, b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`))
+    .join("");
+  const prev1 = sel1.value, prev2 = sel2.value;
+  sel1.innerHTML = options;
+  sel2.innerHTML = options;
+  sel1.value = prev1;
+  sel2.value = prev2;
+}
+
+// Every LEADERBOARD_COLUMNS entry, reused as-is (accessor/display/tooltip) so this table can
+// never drift from what the main Season Rates table itself shows — always all of them,
+// including the advanced ones, regardless of the Leaderboard's own show/hide toggle, since a
+// two-column comparison doesn't have that table's 34-column width problem. "player" and "last5"
+// are skipped: player is the row label already, and Last 5's trend-arrow display format doesn't
+// reduce to a single comparable number the way every other column does.
+function renderPlayerComparison() {
+  const wrap = document.getElementById("playerComparisonResult");
+  if (!wrap) return;
+  const id1 = document.getElementById("comparePlayer1Select")?.value;
+  const id2 = document.getElementById("comparePlayer2Select")?.value;
+  if (!id1 || !id2) {
+    wrap.innerHTML = '<p class="empty-state">Pick two players above.</p>';
+    return;
+  }
+  if (id1 === id2) {
+    wrap.innerHTML = '<p class="empty-state">Pick two different players.</p>';
+    return;
+  }
+  const board = computeLeaderboard();
+  const row1 = board.find(r => r.player.id === id1);
+  const row2 = board.find(r => r.player.id === id2);
+  if (!row1 || !row2) { wrap.innerHTML = ""; return; }
+
+  const rowsHtml = LEADERBOARD_COLUMNS.filter(c => c.key !== "player" && c.key !== "last5").map(col => {
+    const v1 = col.accessor(row1), v2 = col.accessor(row2);
+    const d1 = col.display ? col.display(row1) : v1;
+    const d2 = col.display ? col.display(row2) : v2;
+    let cls1 = "", cls2 = "";
+    if (!COMPARISON_NEUTRAL_KEYS.has(col.key) && typeof v1 === "number" && typeof v2 === "number" && v1 !== v2) {
+      const lowerBetter = COMPARISON_LOWER_IS_BETTER_KEYS.has(col.key);
+      const win1 = lowerBetter ? v1 < v2 : v1 > v2;
+      cls1 = win1 ? "compare-better" : "compare-worse";
+      cls2 = win1 ? "compare-worse" : "compare-better";
+    }
+    return `<tr title="${escapeHtml(col.tooltip || "")}"><td class="compare-stat-label">${escapeHtml(col.label)}</td><td class="${cls1}">${d1}</td><td class="${cls2}">${d2}</td></tr>`;
+  }).join("");
+
+  wrap.innerHTML = `
+    <table class="matchup-table compare-table">
+      <thead><tr><th></th><th>${escapeHtml(row1.player.name)}</th><th>${escapeHtml(row2.player.name)}</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `;
+}
+document.getElementById("comparePlayer1Select").addEventListener("change", renderPlayerComparison);
+document.getElementById("comparePlayer2Select").addEventListener("change", renderPlayerComparison);
 
 // ---------- Player Detail ----------
 let currentPlayerId = null;

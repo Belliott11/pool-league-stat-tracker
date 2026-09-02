@@ -1142,3 +1142,34 @@ pull in anything from the spreadsheet's "Player Profiles" sheet (attitude, effor
 role, shooting tendency, free-text notes) — that's Ben's own subjective scouting, and folding
 free-text judgment calls into a numeric fairness score wasn't something to do without him
 explicitly asking for it specifically.
+
+**Matchup Preview, on any 2-team Balance Teams result, is not new data either — it's
+`computeMatchupGrid()`'s existing per-pair FG data, filtered down to one specific matchup.**
+`computeCrossTeamMatchups(teamA, teamB)` (`app.js`, right before `renderBalanceResults()`) calls
+`computeMatchupGrid()` once and reads `cellFor(scorerId, defenderId)` for every cross-team pair in
+both directions (team A shooting on team B's defenders, and the reverse) — same-team pairs are
+skipped outright, not shown as empty cells, since teammates never guard each other in the game
+about to happen. `renderMatchupPreviewTable()` turns that into a small sorted table (most-tested
+pairing first); `renderBalanceResults()` wires a **Preview Matchups** button per 2-team option
+that toggles a `hidden` wrapper div rather than re-rendering on each click, since the content
+itself never changes for a given generated split. If you're porting the underlying grid data
+(`computeMatchupGrid()`) anyway for the league-wide version, this is a free extra view on top of
+it — no separate query.
+
+**Player Comparison (Leaderboard tab, right below the main table) is `LEADERBOARD_COLUMNS`
+rendered sideways for exactly two players — the same array (accessor/display/tooltip, unchanged),
+just iterated as table rows instead of table columns, with `"player"` and `"last5"` skipped** (the
+row label already names the player; Last 5's `"▲ 3.9"`-style display string doesn't reduce to one
+comparable number the way every other column does). `renderPlayerComparisonSelects()` rebuilds
+just the `<option>` lists on every Leaderboard render (cheap; the `change` listeners are wired
+once, directly on the `<select>` elements, so they survive that); `renderPlayerComparison()` reads
+both selections, looks up each player's row from `computeLeaderboard()`, and for each column calls
+its own `accessor`/`display` on both rows. Always shows all columns regardless of the main table's
+own advanced-columns toggle — a two-column-of-values comparison doesn't have that table's
+34-column width problem, so there's no reason to hide anything here. The green/red "which is
+better" coloring is **not** part of `LEADERBOARD_COLUMNS` itself — it's two small local sets,
+`COMPARISON_NEUTRAL_KEYS` (GP + the five share percentages, where a bigger share is a role, not
+inherently better play) and `COMPARISON_LOWER_IS_BETTER_KEYS` (L, TOV, PF, Pts Allowed, Opp FG%,
+Beaten, TOV%) — everything else defaults to higher-is-better. If you add a new Leaderboard column
+later, decide which of these three buckets it belongs in the same way; nothing auto-detects
+direction from the stat's own shape.
