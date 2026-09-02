@@ -625,6 +625,90 @@ button:disabled {
   width: 100%;
 }
 
+/* Balance Teams (Games tab) — an attendee-picker chip row, a team-size control, and a shortlist
+   of candidate splits, each rendered as a row of small team cards. */
+.attendee-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.attendee-chip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-tint);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.attendee-chip.selected {
+  background: var(--primary-light);
+  border-color: var(--primary-dark);
+  color: var(--primary-dark);
+}
+.balance-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.balance-controls input[type="number"] {
+  width: 60px;
+  margin-left: 6px;
+}
+.balance-option {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.balance-option-best {
+  border-color: var(--success);
+  background: var(--success-light);
+}
+.balance-option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.balance-spread {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.balance-teams-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.balance-team-card {
+  background: var(--surface-tint);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  min-width: 150px;
+}
+.balance-team-card h5 {
+  margin: 0 0 6px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.balance-team-avg {
+  color: var(--muted);
+  font-weight: 500;
+}
+.balance-team-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
 /* Stat Entry: the video and the box score (the two things you're actually looking at and
    clicking while tagging a play) sit side by side at the top, each tall enough to hold its
    own scroll if it needs one, so neither ever has to be scrolled away to see the other.

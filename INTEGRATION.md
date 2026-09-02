@@ -1077,3 +1077,39 @@ logged — it's backed up 5 seconds (clamped at 0), since you're always clicking
 play actually happened.** `currentPlaybackTime()` in `app.js` applies this before every capture,
 so `videoTime` already has the runway built in — don't apply your own additional offset on top of
 it when building a "jump to clip" feature server-side.
+
+## Balance Teams — a planning tool, not new data
+
+The Games tab has a **Balance Teams** panel: pick who's attending, set a team size, and it
+generates up to 5 candidate splits ranked by fairness. Worth flagging separately because it's a
+genuinely different kind of feature from everything else in this tool — a *before-the-fact*
+planning aid rather than something computed off logged games, and its own selection state
+(`balanceAttendeeIds`, a `Set`, and `balanceResults`, the last generated shortlist) is deliberately
+**not persisted anywhere** — no `state` field, no `localStorage` key. Picking attendees and
+generating options is meant to be throwaway per session; the only thing that becomes real data is
+the game a user actually creates from a chosen split, at which point it's a completely ordinary
+`teamA`/`teamB` game record indistinguishable from one built by hand through Create Game.
+
+**The balancing currency is season Two-Way/20** (0 for a player with no games logged — a neutral
+baseline, not a penalty), read straight from `computeLeaderboard()` — no new stat, no new
+schema. For a chosen attendee list and team size, `generateBalancedTeamSets()` (`app.js`, in the
+`---------- Balance Teams ----------` section) works out a team count (whichever integer is
+closest to `attendees / teamSize`, minimum 2 — so 7 people at team size 3 becomes one team of 4
+and one of 3, not three teams with one short) and a target size per team (attendees distributed
+as evenly as the team count allows, so sizes never differ by more than 1). It then generates one
+seeded "snake draft" candidate (`snakeDraftTeams()` — attendees sorted by quality descending,
+dealt out in serpentine order across the teams, skipping a team once it hits its target size) plus
+300 randomized ones (`randomGreedyTeams()` — random attendee order, each player greedily assigned
+to whichever team with room has the lowest *running average* quality so far), dedupes identical
+team compositions (`teamSetSignature()`), and returns the 5 lowest-spread survivors — spread being
+`max(team average) - min(team average)` across the candidate's own teams (`scoreTeamSet()`).
+Averages, not totals, is deliberate: with uneven team sizes a raw total would read a bigger team
+as "stronger" even at identical per-player quality.
+
+If you're porting this: it's pure client-side computation over data you already have (player
+qualities, an attendee list from the UI), so there's genuinely nothing new to store or sync — the
+whole feature is one read (`computeLeaderboard()`) and some in-memory search. The only write is
+the ordinary game-creation path when someone clicks **Use These Teams** (only offered for an
+exactly-2-team result, since that's the only case that maps onto a single `teamA`/`teamB` game);
+for 3+ teams it's display-only, on the theory that a "day of games" with more than two groups
+rotating through multiple actual games isn't something this tool tries to auto-create for you.

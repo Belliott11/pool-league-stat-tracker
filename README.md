@@ -27,7 +27,19 @@ individual player, not a team.
    all of them, independent of whatever the filter box below is currently narrowed to — a game
    with no video at all doesn't count toward this, since there's nothing to review yet. Once the
    list gets long, use the filter box to narrow down by date, notes, or any rostered player's
-   name.
+   name. Right above the list, **Balance Teams** turns picking fair sides into a click instead of
+   eyeballing a roster: check off whoever's showing up, set a team size (defaults to 3), and
+   **Generate Balanced Teams** returns up to 5 different splits, ranked by how close each team's
+   *average* season Two-Way/20 is to the others (a player with no games logged yet counts as a
+   neutral 0.0 — no data, not a penalty). Team count is whichever integer is closest to
+   attendees ÷ team size, at least 2 — 7 people at a team size of 3 rounds to 2 teams (4-and-3),
+   not 3 teams with one running short. The search is randomized (one seeded "snake draft" split
+   plus 300 randomized attempts, deduplicated and sorted by spread), so **Generate** again turns
+   up a different shortlist rather than the same one every time. For a straight 2-team split,
+   **Use These Teams → Create Game** creates a real game with that roster pre-filled, using
+   whatever date is set in Create Game above — for 3+ teams, this is a planning read only,
+   nothing gets created for you automatically. This doesn't touch your data until you click that
+   button; picking attendees and generating splits is throwaway, not saved anywhere.
 3. **Stat Entry** — this is where you sit while reviewing the video:
    - If one recording covers several games back-to-back, use **Session video**: upload it once
      under any of those games (give it a name when prompted) and then pick that same session

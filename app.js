@@ -233,6 +233,9 @@ function showTab(tab) {
   if (btn) btn.classList.add("active");
   if (tab === "export") { renderExportGameSelect(); renderMasterVideoList(); renderBrokenVideoLinks(); renderBackfillShotLocations(); renderFlaggedShotMismatches(); }
   if (tab === "leaderboard") renderLeaderboard();
+  // Refreshes the attendee picker against the current roster — cheap, and a player added while
+  // on a different tab shouldn't require a page reload to show up here.
+  if (tab === "games") renderBalanceAttendeePicker();
   // currentGameId/currentPlayerId are always set before showTab() is called for "stats"/"player"
   // (see openGame/openPlayerDetail), so this always captures the right context alongside the tab.
   localStorage.setItem(UI_STATE_KEY, JSON.stringify({ tab, gameId: currentGameId, playerId: currentPlayerId }));
@@ -393,6 +396,197 @@ async function renderNeedsReviewSummary() {
     ? `📝 ${count} game${count === 1 ? "" : "s"} with video still need${count === 1 ? "s" : ""} review.`
     : "";
 }
+
+// ---------- Balance Teams ----------
+// Not tied to a specific game — this is a "who's here today, how should we split them up"
+// planning tool, so its own selection state lives outside any one game's record and isn't
+// persisted (picking attendees is a one-time, throwaway decision each session, not data worth
+// saving). balanceResults holds the last generated shortlist so it survives a re-render of the
+// attendee picker (e.g. toggling a chip) without wiping the results the user is looking at.
+let balanceAttendeeIds = new Set();
+let balanceResults = [];
+
+function renderBalanceAttendeePicker() {
+  const wrap = document.getElementById("balanceAttendeePicker");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  if (state.players.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No players yet. Add players in the Players tab.</p>';
+    return;
+  }
+  [...state.players].sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "attendee-chip" + (balanceAttendeeIds.has(p.id) ? " selected" : "");
+    chip.textContent = p.name;
+    chip.addEventListener("click", () => {
+      if (balanceAttendeeIds.has(p.id)) balanceAttendeeIds.delete(p.id);
+      else balanceAttendeeIds.add(p.id);
+      renderBalanceAttendeePicker();
+      updateBalanceGenerateBtnState();
+    });
+    wrap.appendChild(chip);
+  });
+}
+
+function updateBalanceGenerateBtnState() {
+  const btn = document.getElementById("generateBalancedTeamsBtn");
+  if (btn) btn.disabled = balanceAttendeeIds.size < 2;
+}
+
+// Deals a quality-sorted list of ids out across `targetSizes.length` teams in serpentine
+// ("snake draft") order — 0,1,2,...,K-1,K-1,...,2,1,0,0,1,2,... — skipping a team once it's
+// reached its own target size (teams can differ by one player when attendee count doesn't
+// divide evenly by the requested team size). The standard no-search way to keep total quality
+// close across groups: the strongest and weakest players each round land on different teams,
+// and the team that "loses" the top pick in a round gets first pick of the next one.
+function snakeOrderIndices(targetSizes, totalCount) {
+  const numTeams = targetSizes.length;
+  const counts = new Array(numTeams).fill(0);
+  const order = [];
+  let i = 0, dir = 1;
+  while (order.length < totalCount) {
+    if (counts[i] < targetSizes[i]) {
+      order.push(i);
+      counts[i]++;
+    }
+    const next = i + dir;
+    if (next < 0 || next >= numTeams) dir = -dir;
+    else i = next;
+  }
+  return order;
+}
+
+function snakeDraftTeams(sortedIds, targetSizes) {
+  const order = snakeOrderIndices(targetSizes, sortedIds.length);
+  const teams = targetSizes.map(() => []);
+  sortedIds.forEach((id, i) => teams[order[i]].push(id));
+  return teams;
+}
+
+// One randomized candidate: shuffle the attendee order, then greedily assign each in turn to
+// whichever team (among those with room left) currently has the lowest running average quality
+// — a fast heuristic, not an exhaustive search, but running it many times over different random
+// orders and keeping the best few results turns up a genuinely varied shortlist rather than one
+// "optimal" answer, which is the point (there's often more than one fair way to split a group,
+// and the search here surfaces several instead of picking one for you).
+function randomGreedyTeams(attendeeIds, targetSizes, qualityById) {
+  const shuffled = [...attendeeIds].sort(() => Math.random() - 0.5);
+  const teams = targetSizes.map(() => []);
+  const totals = targetSizes.map(() => 0);
+  shuffled.forEach(id => {
+    let best = -1, bestAvg = Infinity;
+    teams.forEach((team, i) => {
+      if (team.length >= targetSizes[i]) return;
+      const avg = team.length > 0 ? totals[i] / team.length : -Infinity;
+      if (avg < bestAvg) { bestAvg = avg; best = i; }
+    });
+    teams[best].push(id);
+    totals[best] += qualityById[id] || 0;
+  });
+  return teams;
+}
+
+function teamSetSignature(teams) {
+  return teams.map(t => [...t].sort().join(",")).sort().join("|");
+}
+
+// Balance is judged by each team's *average* quality, not its total — the two can differ by a
+// player when the attendee count doesn't divide evenly by the team size, and comparing totals
+// would then unfairly read a bigger team as "stronger" even at equal per-player quality.
+function scoreTeamSet(teams, qualityById) {
+  const avgs = teams.map(team => team.reduce((sum, id) => sum + (qualityById[id] || 0), 0) / team.length);
+  return { avgs, spread: Math.max(...avgs) - Math.min(...avgs) };
+}
+
+// Season Two-Way/20 (0 for anyone with no games logged — a neutral "no data yet" baseline, not
+// a penalty) is the balancing currency: it's already this tool's single "how good, overall"
+// number, used the same way for MVP-style comparisons elsewhere. Team count is whichever integer
+// is closest to attendees/teamSize (at least 2, since a "team" needs an opponent) — for example
+// 7 attendees at a team size of 3 rounds to 2 teams (sizes 4 and 3) rather than 3 (sizes 3,2,2),
+// matching how an odd number out in real pickup usually just makes one side's bench thicker
+// instead of spinning up a third team. Runs one seeded snake-draft candidate plus 300 randomized
+// ones, dedupes identical team compositions, and returns the 5 lowest-spread survivors.
+function generateBalancedTeamSets(attendeeIds, teamSize) {
+  const board = computeLeaderboard();
+  const qualityById = {};
+  board.forEach(r => { qualityById[r.player.id] = r.gp > 0 ? r.twoWayPer20 : 0; });
+
+  const numTeams = Math.max(2, Math.round(attendeeIds.length / Math.max(1, teamSize)));
+  const base = Math.floor(attendeeIds.length / numTeams);
+  const remainder = attendeeIds.length % numTeams;
+  const targetSizes = Array.from({ length: numTeams }, (_, i) => base + (i < remainder ? 1 : 0));
+
+  const sortedByQuality = [...attendeeIds].sort((a, b) => (qualityById[b] || 0) - (qualityById[a] || 0));
+  const candidates = [snakeDraftTeams(sortedByQuality, targetSizes)];
+  for (let i = 0; i < 300; i++) candidates.push(randomGreedyTeams(attendeeIds, targetSizes, qualityById));
+
+  const seen = new Set();
+  const scored = [];
+  candidates.forEach(teams => {
+    const sig = teamSetSignature(teams);
+    if (seen.has(sig)) return;
+    seen.add(sig);
+    scored.push({ teams, ...scoreTeamSet(teams, qualityById) });
+  });
+  scored.sort((a, b) => a.spread - b.spread);
+  return scored.slice(0, 5);
+}
+
+function renderBalanceResults() {
+  const wrap = document.getElementById("balanceTeamsResults");
+  if (!wrap) return;
+  if (balanceResults.length === 0) {
+    wrap.innerHTML = "";
+    return;
+  }
+  wrap.innerHTML = balanceResults.map((r, i) => {
+    const teamsHtml = r.teams.map((team, ti) => `
+      <div class="balance-team-card">
+        <h5><span>Team ${String.fromCharCode(65 + ti)}</span><span class="balance-team-avg">${r.avgs[ti].toFixed(1)} avg</span></h5>
+        <ul>${team.map(id => `<li>${escapeHtml(state.players.find(p => p.id === id)?.name || "?")}</li>`).join("")}</ul>
+      </div>
+    `).join("");
+    const useBtn = r.teams.length === 2
+      ? `<button type="button" class="secondary-btn balance-use-btn" data-index="${i}">Use These Teams &rarr; Create Game</button>`
+      : "";
+    return `
+      <div class="balance-option ${i === 0 ? "balance-option-best" : ""}">
+        <div class="balance-option-header">
+          <strong>${i === 0 ? "🏆 Most Balanced" : `Option ${i + 1}`}</strong>
+          <span class="balance-spread">Δ${r.spread.toFixed(1)} Two-Way/20 between strongest and weakest team</span>
+        </div>
+        <div class="balance-teams-row">${teamsHtml}</div>
+        ${useBtn}
+      </div>
+    `;
+  }).join("");
+  wrap.querySelectorAll(".balance-use-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const r = balanceResults[Number(btn.dataset.index)];
+      applyBalancedTeamsToNewGame(r.teams[0], r.teams[1]);
+    });
+  });
+}
+
+// Creates a real game with the chosen split pre-filled as teamA/teamB, same shape addGameForm's
+// own submit handler builds, reusing whatever date is currently set in that form.
+function applyBalancedTeamsToNewGame(teamA, teamB) {
+  const date = document.getElementById("gameDateInput").value;
+  const game = { id: uid("game"), date, videoUrl: "", notes: "", winner: null, teamA: [...teamA], teamB: [...teamB], stats: [], matchups: [], scoringEvents: [], plays: [] };
+  normalizeGame(game);
+  state.games.push(game);
+  saveState();
+  renderGames();
+  openGame(game.id);
+}
+
+document.getElementById("generateBalancedTeamsBtn").addEventListener("click", () => {
+  const teamSizeInput = document.getElementById("balanceTeamSizeInput");
+  const teamSize = Math.max(1, parseInt(teamSizeInput.value, 10) || 3);
+  balanceResults = generateBalancedTeamSets([...balanceAttendeeIds], teamSize);
+  renderBalanceResults();
+});
 
 function teamScore(game, playerIds) {
   return playerIds.reduce((sum, pid) => {

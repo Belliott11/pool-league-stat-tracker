@@ -66,6 +66,17 @@
       </form>
     </div>
 
+    <div class="panel">
+      <h2>Balance Teams</h2>
+      <p class="hint">Pick who's showing up, set a team size, and generate a few different balanced splits to choose from — ranked by how close each team's average Two-Way/20 is to the others. A player with no games logged yet counts as a neutral 0.0, not a penalty — there's just nothing to go on yet. This doesn't create anything by itself; for a straight 2-team split, <strong>Use These Teams</strong> creates a game with that roster pre-filled, using whatever date is set above. Click Generate again for a different set of options — the search is randomized, so it won't always turn up the same shortlist.</p>
+      <div id="balanceAttendeePicker" class="attendee-picker"></div>
+      <div class="balance-controls">
+        <label>Team size <input type="number" id="balanceTeamSizeInput" min="1" value="3"></label>
+        <button type="button" class="secondary-btn" id="generateBalancedTeamsBtn" disabled>Generate Balanced Teams</button>
+      </div>
+      <div id="balanceTeamsResults"></div>
+    </div>
+
     <p id="needsReviewSummary" class="hint" style="margin:0 0 10px"></p>
 
     <div class="inline-form" style="margin-bottom:12px">
