@@ -29,8 +29,23 @@ let includeImbalancedGames = localStorage.getItem(INCLUDE_IMBALANCED_KEY) === "t
 function isBalancedGame(game) {
   return game.teamA.length === game.teamB.length;
 }
+
+// A game also only counts toward the current season by default — Start New Season (Export →
+// Data Management) never deletes games, it just sets state.currentSeasonStartedAt to the day
+// it was clicked, archiving everything before that behind a boundary rather than losing it.
+// Hidden behind its own toggle, same reversible-choice pattern as the imbalanced-games one
+// above — off by default (a new season should start clean), on to blend archived seasons back
+// into every computed comparison. A tracker that's never had a season closed has
+// currentSeasonStartedAt === null, so every game counts as "current" and this is a no-op.
+const INCLUDE_PAST_SEASONS_KEY = "poolLeagueIncludePastSeasons";
+let includePastSeasons = localStorage.getItem(INCLUDE_PAST_SEASONS_KEY) === "true";
+function isCurrentSeasonGame(game) {
+  return !state.currentSeasonStartedAt || (game.date || "") >= state.currentSeasonStartedAt;
+}
 function isQualifyingGame(game) {
-  return game.scoringEvents.length > 0 && (includeImbalancedGames || isBalancedGame(game));
+  return game.scoringEvents.length > 0
+    && (includeImbalancedGames || isBalancedGame(game))
+    && (includePastSeasons || isCurrentSeasonGame(game));
 }
 
 // STL/TOV/PF each tag the one opponent involved — single-select, unlike shot defenders,
@@ -142,6 +157,14 @@ function loadState() {
   // that actually disambiguates it from another recording of the same night.
   s.masterVideos.forEach(m => { if (m.fileName === undefined) m.fileName = null; });
   (s.games || []).forEach(normalizeGame);
+  // seasonHistory: closed-out seasons, oldest first — [{ label, startedAt, endedAt }]. A game
+  // with date <= the last entry's endedAt is a past season; currentSeasonStartedAt (the day
+  // Start New Season was last clicked, or null if it never has been) marks where "current"
+  // begins. Games themselves are never deleted on a season close — only archived behind this
+  // boundary — so past-season numbers stay live-recomputed forever, never a frozen snapshot
+  // that could drift out of sync with a formula change later.
+  s.seasonHistory = s.seasonHistory || [];
+  s.currentSeasonStartedAt = s.currentSeasonStartedAt || null;
   return s;
 }
 
@@ -345,10 +368,13 @@ function renderGames() {
     const imbalancedBadge = isBalancedGame(game)
       ? ""
       : ` <span class="badge badge-imbalanced" title="Team A has ${game.teamA.length}, Team B has ${game.teamB.length} — excluded from Leaderboard rates and every other computed comparison unless the Include Imbalanced Games toggle on the Leaderboard is on.">⚖️ ${game.teamA.length}v${game.teamB.length}</span>`;
+    const pastSeasonBadge = isCurrentSeasonGame(game)
+      ? ""
+      : ` <span class="badge badge-past-season" title="From a season closed out before this one — excluded from Leaderboard rates and every other computed comparison unless the Include Past Seasons toggle on the Leaderboard is on. See Player Detail's Past Seasons panel for that season's own final numbers.">📅 Past Season</span>`;
     card.innerHTML = `
       <div>
         <div class="matchup-line">Team A ${scoreA} — ${scoreB} Team B</div>
-        <div class="date-line">${formatDateDisplay(game.date)} · ${game.teamA.length + game.teamB.length} players${game.notes ? " · " + escapeHtml(game.notes) : ""}${videoBadge}${reviewBadge}${imbalancedBadge}</div>
+        <div class="date-line">${formatDateDisplay(game.date)} · ${game.teamA.length + game.teamB.length} players${game.notes ? " · " + escapeHtml(game.notes) : ""}${videoBadge}${reviewBadge}${imbalancedBadge}${pastSeasonBadge}</div>
       </div>
     `;
     const delBtn = document.createElement("button");
@@ -4086,6 +4112,65 @@ function computeRateSummaryForGames(playerId, games) {
   return { gp: games.length, offRatingPer20: per20(totalOffRating), twoWayPer20: per20(totalTwoWay) };
 }
 
+// Everything before the current season boundary, one row per closed season (state.seasonHistory),
+// computed live off the still-fully-intact game records rather than a frozen snapshot — these
+// numbers stay correct if a stat's formula ever changes later, same as every other computed
+// number in this tool. Respects the imbalanced-games toggle (a 3-on-2 shouldn't count in a past
+// season's numbers any more than it counts in the current one) but deliberately not the Include
+// Past Seasons toggle itself — that toggle blends archived games INTO the live current-season
+// view; this panel is the opposite, each closed season shown on its own row for comparison, never
+// blended together.
+function computeSeasonHistoryForPlayer(playerId) {
+  return state.seasonHistory.map(season => {
+    const seasonGames = state.games.filter(g =>
+      g.scoringEvents.length > 0
+      && (g.teamA.includes(playerId) || g.teamB.includes(playerId))
+      && (includeImbalancedGames || isBalancedGame(g))
+      && (season.startedAt ? (g.date || "") >= season.startedAt : true)
+      && (g.date || "") <= season.endedAt
+    );
+    if (seasonGames.length === 0) return null;
+    let wins = 0, losses = 0, ties = 0;
+    seasonGames.forEach(g => {
+      const result = playerGameResult(g, playerId);
+      if (result === "W") wins++;
+      else if (result === "L") losses++;
+      else if (result === "T") ties++;
+    });
+    const summary = computeRateSummaryForGames(playerId, seasonGames);
+    return {
+      label: season.label, endedAt: season.endedAt, gp: seasonGames.length, wins, losses, ties,
+      offRatingPer20: summary.offRatingPer20,
+      defRatingPer20: summary.twoWayPer20 - summary.offRatingPer20,
+      twoWayPer20: summary.twoWayPer20
+    };
+  }).filter(Boolean);
+}
+
+function renderSeasonHistoryPanel(playerId) {
+  const wrap = document.getElementById("playerSeasonHistory");
+  if (!wrap) return;
+  const rows = computeSeasonHistoryForPlayer(playerId);
+  if (rows.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No past seasons recorded for this player yet.</p>';
+    return;
+  }
+  const rowsHtml = rows.map(r => `<tr>
+    <td>${escapeHtml(r.label)}</td>
+    <td>${r.gp}</td>
+    <td>${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}</td>
+    <td>${r.offRatingPer20.toFixed(1)}</td>
+    <td>${r.defRatingPer20.toFixed(1)}</td>
+    <td>${r.twoWayPer20.toFixed(1)}</td>
+  </tr>`).join("");
+  wrap.innerHTML = `
+    <table class="matchup-table">
+      <thead><tr><th>Season</th><th>GP</th><th>Record</th><th>Off Rating/20</th><th>Def Rating/20</th><th>Two-Way/20</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `;
+}
+
 // For each teammate this player has shared a team with (in a game with real shots logged),
 // split that player's own games into "with" (teammate on their side) and "without" (teammate
 // on the other team, or not playing) and compare per-20 output across the split.
@@ -4489,6 +4574,26 @@ document.getElementById("toggleImbalancedGamesBtn").addEventListener("click", ()
   renderLeaderboard();
 });
 
+function updatePastSeasonsBtnLabel() {
+  const btn = document.getElementById("togglePastSeasonsBtn");
+  if (!btn) return;
+  if (!state.currentSeasonStartedAt) {
+    btn.textContent = "Include Past Seasons";
+    btn.disabled = true;
+    btn.title = "No season has been closed yet (Export → Data Management → Start New Season) — nothing archived to include.";
+    return;
+  }
+  btn.disabled = false;
+  btn.title = "";
+  btn.textContent = includePastSeasons ? "Exclude Past Seasons" : "Include Past Seasons";
+}
+document.getElementById("togglePastSeasonsBtn").addEventListener("click", () => {
+  includePastSeasons = !includePastSeasons;
+  localStorage.setItem(INCLUDE_PAST_SEASONS_KEY, String(includePastSeasons));
+  updatePastSeasonsBtnLabel();
+  renderLeaderboard();
+});
+
 // Nulls (no attempts yet, etc.) always sort last regardless of direction.
 function compareForSort(a, b, dir) {
   if (a === null && b === null) return 0;
@@ -4553,6 +4658,7 @@ function renderLeaderboardHeader() {
 function renderLeaderboard() {
   updateAdvancedColsBtnLabel();
   updateImbalancedGamesBtnLabel();
+  updatePastSeasonsBtnLabel();
   renderLeaderboardHeader();
   renderAwardsVsStats();
   renderPowerRankingVsPerformance();
@@ -4707,9 +4813,10 @@ function renderPlayerDetail() {
     ? `${row.wins}-${row.losses}${row.ties ? `-${row.ties}` : ""} · ${row.rate.pts.toFixed(1)} PTS/20 · ${row.offRatingPer20.toFixed(1)} Off Rating/20 · ${row.twoWayPer20.toFixed(1)} Two-Way/20`
     : "No games yet";
 
-  // Render order follows the panels' actual top-to-bottom order in index.html — season overview,
-  // then offense detail (shots, then who defended them), then defense detail (same shape,
-  // mirrored), then team context, then media. Keep the two in sync.
+  // Render order follows the panels' actual top-to-bottom order in index.html — past-season
+  // context, then season overview, then offense detail (shots, then who defended them), then
+  // defense detail (same shape, mirrored), then team context, then media. Keep the two in sync.
+  renderSeasonHistoryPanel(player.id);
   renderTwoWayTrendChart(player.id);
   renderPlayerGameLog(player.id);
   renderPlayerShotChart(player.id);
@@ -5745,6 +5852,8 @@ document.getElementById("importFileInput").addEventListener("change", e => {
       if (!confirm("This will replace all current data with the imported file. Continue?")) return;
       state = imported;
       state.masterVideos = state.masterVideos || [];
+      state.seasonHistory = state.seasonHistory || [];
+      state.currentSeasonStartedAt = state.currentSeasonStartedAt || null;
       (state.games || []).forEach(normalizeGame);
       saveState();
       renderPlayers();
@@ -5758,19 +5867,32 @@ document.getElementById("importFileInput").addEventListener("change", e => {
   e.target.value = "";
 });
 
-// Clears everything season-specific (games, stats, matchups, session/per-game video blobs) but
-// keeps the player roster — the one thing meant to carry over from one season to the next,
-// unlike Reset All Data below. Also clears the two hardcoded season-snapshot tables that live in
-// this file (AWARD_RESULTS, PARTY_RANKINGS, PLAYER_REPUTATION_DATA are declared with real
-// Summer 2026 data above) — those still need a hand-edit for a new season, this button can't do
-// that part for you. See README.md "Starting a new season" for the full checklist.
+// Closes out the current season without deleting anything: pushes a labeled entry onto
+// seasonHistory and moves currentSeasonStartedAt to today, which is all isQualifyingGame() and
+// isCurrentSeasonGame() need to start treating every existing game as "past" instead of
+// "current." Games/stats/matchups themselves are untouched — a player's numbers from the closed
+// season stay fully intact and live-recomputed (see computeSeasonHistoryForPlayer(), Player
+// Detail's Past Seasons panel), not a frozen snapshot that could go stale if a formula changes
+// later. Only the locally-stored video blobs actually get deleted, since those are large and the
+// point here is stats, not rewatchability — a past game's masterVideoId/local video reference
+// just goes dangling, the same already-handled case Export → Broken Session Video Links exists
+// for. The player roster was never touched by this in the first place, since it's one
+// league-wide list, not scoped to any season. Doesn't touch the three hardcoded season-snapshot
+// tables elsewhere in this file (AWARD_RESULTS, PARTY_RANKINGS, PLAYER_REPUTATION_DATA) — those
+// still need a hand-edit for a new season; see README.md "Starting a new season" for the
+// checklist.
 document.getElementById("startNewSeasonBtn").addEventListener("click", async () => {
-  if (!confirm("This clears every game, stat, and locally-stored video — but keeps the player roster. Download JSON first if you want a backup. Continue?")) return;
-  state.games = [];
-  state.masterVideos = [];
+  const today = new Date().toISOString().slice(0, 10);
+  const label = prompt('Name the season that\'s ending (shown on player profiles and the "Include Past Seasons" toggle) — e.g. "Summer 2026":', "");
+  if (label === null) return;
+  if (!confirm("This archives every current game behind today's date and clears locally-stored video files. Games, stats, and the player roster are all kept — download JSON first if you want a full backup anyway. Continue?")) return;
+  state.seasonHistory.push({ label: label.trim() || `Season ending ${today}`, startedAt: state.currentSeasonStartedAt, endedAt: today });
+  state.currentSeasonStartedAt = today;
   saveState();
   const videoIds = await getAllStoredVideoIds();
   for (const id of videoIds) await deleteVideoFile(id);
+  state.masterVideos = [];
+  saveState();
   currentGameId = null;
   currentPlayerId = null;
   renderPlayers();
@@ -5780,7 +5902,7 @@ document.getElementById("startNewSeasonBtn").addEventListener("click", async () 
 
 document.getElementById("resetDataBtn").addEventListener("click", () => {
   if (!confirm("This will permanently delete all players, games, and stats. Continue?")) return;
-  state = { players: [], games: [], masterVideos: [] };
+  state = { players: [], games: [], masterVideos: [], seasonHistory: [], currentSeasonStartedAt: null };
   saveState();
   renderPlayers();
   renderGames();

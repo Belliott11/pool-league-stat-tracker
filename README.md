@@ -663,17 +663,31 @@ clicking stats.
 ## Starting a new season
 
 The player roster is meant to carry over — it's one league-wide list, not scoped to any
-particular season — but everything else here (games, stats, awards, power rankings) is real
-Summer 2026 history that a new season shouldn't get pooled together with. Two separate things
-need doing, and only one of them is a button:
+particular season — and so, as of the **Include Past Seasons** toggle, is every game and stat:
+closing a season *archives* it rather than deleting it, so a player's history stays visible and
+factors back in whenever you want it to, instead of just vanishing. Only the hardcoded award/
+ranking tables (below) and the locally-stored video files are actually gone for good.
 
-1. **Export → Data Management → Download JSON** first, as a backup of the season you're closing
-   out — once you clear it in the next step there's no undo.
-2. **Export → Data Management → Start New Season.** Clears every game, stat, matchup, and
-   locally-stored video file — keeps the player roster untouched, unlike **Reset All Data** right
-   next to it (the actual nuclear option: wipes the roster too, back to a genuinely empty
-   tracker). Roster additions/removals from the closing season stay exactly as they were; add or
-   remove anyone from the **Players** tab same as always going forward.
+1. **Export → Data Management → Download JSON** first if you want an extra backup, though nothing
+   in the next step actually deletes your games or stats anymore.
+2. **Export → Data Management → Start New Season.** Prompts for a label (e.g. "Summer 2026") and
+   archives every current game behind today's date — they stay in the file, they're just no
+   longer "current." Clears locally-stored video files (large, and re-watching last season's
+   footage isn't the point of keeping the stats), and the player roster is untouched, same as
+   always. This is a different button from **Reset All Data** right next to it — that one's the
+   actual nuclear option, wiping the roster and everything else back to a genuinely empty tracker.
+   - The **Include Past Seasons** toggle, next to the other two on the Leaderboard, blends every
+     archived season back into the live Leaderboard/awards/Player Detail/Balance Teams numbers
+     when it's on — off by default, so a new season starts clean. Disabled with an explanatory
+     tooltip until a season's actually been closed at least once.
+   - Every player's **Past Seasons** panel, on their own Player Detail page, shows one row per
+     closed season regardless of the toggle — GP, record, Off/Def/Two-Way Rating, computed live
+     off the archived games (not a frozen snapshot, so these stay correct if a stat's formula
+     ever changes later) — so a season's final numbers are always visible on a profile even with
+     the toggle off.
+   - The Games list marks every archived game with a **📅 Past Season** badge, same idea as the
+     ⚖️ imbalanced-game one, so which games are currently excluded from computed stats is visible
+     without cross-referencing dates by hand.
 3. **Three hardcoded tables in `app.js` still need a hand-edit — the button above can't touch
    these, since they're baked into the source file, not runtime data:**
    - `AWARD_RESULTS` — Summer 2026's closed award ballot (winners, vote standings). Replace with
@@ -700,6 +714,10 @@ need doing, and only one of them is a button:
 {
   "players": [{ "id": "player_abc", "name": "Jane Doe" }],
   "masterVideos": [{ "id": "master_abc", "name": "Aug 16 games", "fileName": "IMG_2764.MOV" }],
+  "currentSeasonStartedAt": null,
+  "seasonHistory": [
+    { "label": "Summer 2026", "startedAt": null, "endedAt": "2026-09-02" }
+  ],
   "games": [
     {
       "id": "game_abc",

@@ -1057,6 +1057,10 @@ button:disabled {
   background: var(--warning-light);
   color: var(--warning);
 }
+.badge-past-season {
+  background: var(--surface-muted);
+  color: var(--muted);
+}
 .reel-time-input {
   width: 64px;
   padding: 5px 6px;

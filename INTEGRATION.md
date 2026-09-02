@@ -242,6 +242,49 @@ The Games list shows a **⚖️ 2v3**-style badge (`app.js`, in `renderGames()`)
 `isBalancedGame()` is false, so which games are affected is visible without cross-referencing
 roster sizes by hand.
 
+**Season boundaries reuse this exact same mechanism — a closed season archives games, it never
+deletes them.** `state.currentSeasonStartedAt` (a date string, or `null` if no season's ever been
+closed) and `state.seasonHistory` (`[{label, startedAt, endedAt}]`, oldest first) are the only two
+new `state` fields; `loadState()` defaults both for anything imported before this existed.
+`isCurrentSeasonGame(game)` is `!state.currentSeasonStartedAt || game.date >= state.currentSeasonStartedAt`,
+folded into `isQualifyingGame()` alongside the balance check: `scoringEvents.length > 0 &&
+(includeImbalancedGames || isBalancedGame(game)) && (includePastSeasons || isCurrentSeasonGame(game))`.
+Because `isQualifyingGame()` already threads through every season/league-aggregate function from
+the imbalanced-games work above, extending it here was the entire change needed to make every one
+of those panels respect the season boundary and its own toggle — no new call sites to touch.
+`includePastSeasons` (`localStorage["poolLeagueIncludePastSeasons"]`) is the toggle itself, same
+default-off/persisted/button-relabels-itself pattern as `includeImbalancedGames`, with one
+addition: the button (`togglePastSeasonsBtn`) is disabled with an explanatory `title` whenever
+`state.currentSeasonStartedAt` is `null`, since the toggle is a genuine no-op until a season's
+been closed at least once (`updatePastSeasonsBtnLabel()` handles both the label and the
+disabled state, called from `renderLeaderboard()` same as the other two button-label updaters).
+
+**Export → Data Management → Start New Season** (`app.js`, near `resetDataBtn`) is the only thing
+that writes to these two fields: it `prompt()`s for a label, pushes `{label, startedAt:
+state.currentSeasonStartedAt, endedAt: today}` onto `seasonHistory`, and sets
+`currentSeasonStartedAt = today` — that's the entire "close a season" operation as far as game/stat
+data goes. It does **not** touch `state.games`, `state.players`, or any player's stats; it only
+also deletes every locally-stored video blob (`getAllStoredVideoIds()` → `deleteVideoFile()` for
+each) and clears `state.masterVideos`, since those are large and re-watching last season's footage
+isn't the point of keeping the stats — a past game's `masterVideoId`/local video reference just
+goes dangling afterward, the same already-handled case **Export → Broken Session Video Links**
+exists for. `resetDataBtn` (the actual full wipe) additionally resets `seasonHistory: []` and
+`currentSeasonStartedAt: null`, so a truly empty tracker doesn't retain stale season boundaries.
+
+**Player Detail's Past Seasons panel is deliberately not built on the toggle/`isQualifyingGame()`
+path at all.** `computeSeasonHistoryForPlayer(playerId)` filters `state.games` itself, once per
+entry in `seasonHistory` (`game.date` between that entry's `startedAt`/`endedAt`, real shots
+logged, balance-toggle-respecting) and runs `computeRateSummaryForGames()` on each resulting
+subset — the same shared helper Two-Way Trend/Teammate Synergy/Teammate Quality already use, just
+scoped to a season's date range instead of a game subset. This has to stay a separate code path
+from `isQualifyingGame()` on purpose: the toggle blends every archived season *into* the current
+one for one combined number, while this panel's whole job is showing each closed season *on its
+own row*, side by side, regardless of whatever the toggle happens to be set to at the moment.
+Nothing here is a frozen snapshot — every number is recomputed from the still-fully-intact game
+records on every render, so if a stat's formula changes later (as several already have this
+season), a past season's own numbers update right along with the current one's, exactly the same
+"recompute, don't trust a stored copy" rule this entire tool already runs on everywhere else.
+
 The Leaderboard CSV export is a separate code path (calls `computeLeaderboard()` directly rather
 than iterating `scoring_events` itself, unlike the other CSVs) and still exports raw season totals
 plus `games_played` rather than per-20 rates for every column — it only computes PTS/20, Off
