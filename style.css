@@ -753,6 +753,40 @@ button:disabled {
   color: var(--danger);
 }
 
+/* Games tab — Advanced Filters (collapsed by default) */
+.games-advanced-filters {
+  background: var(--surface-tint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.filter-block-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.filter-inline-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  margin-right: 14px;
+  margin-top: 8px;
+}
+.filter-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 /* Stat Entry: the video and the box score (the two things you're actually looking at and
    clicking while tagging a play) sit side by side at the top, each tall enough to hold its
    own scroll if it needs one, so neither ever has to be scrolled away to see the other.

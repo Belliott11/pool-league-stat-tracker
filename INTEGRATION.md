@@ -1222,3 +1222,33 @@ inherently better play) and `COMPARISON_LOWER_IS_BETTER_KEYS` (L, TOV, PF, Pts A
 Beaten, TOV%) — everything else defaults to higher-is-better. If you add a new Leaderboard column
 later, decide which of these three buckets it belongs in the same way; nothing auto-detects
 direction from the stat's own shape.
+
+**Games tab Advanced Filters is client-side only, no schema implications, purely additive to the
+existing free-text filter (both apply together, AND'd).** Collapsed behind its own toggle
+(`toggleGamesAdvancedFilterBtn`, a `hidden` panel) so the default one-line filter box stays the
+common case. Four independent conditions, all in `app.js` right before `renderGames()`:
+`gamesFilterPlayerIds` (a `Set`, chip-picker same as Balance Teams' attendee picker) requires
+every checked player to be on the game's combined roster; `gamesFilterTeamMode`
+("either"/"together"/"against") only does anything with 2+ players checked — "together" requires
+all of them on the same side, "against" requires at least one on each; `gamesFilterDateFrom`/`To`
+are a plain inclusive date-string range; `gamesFilterStat` (`{playerId, field, op, value}`) is a
+single condition — `getGameStatValue(game, playerId, field)` reads PTS/OREB/DREB/AST/STL/BLK/TOV/PF
+straight off `getOrCreatePlayerStats()`, or computes Off Rating/Two-Way via
+`offensiveRating()`/`twoWayScore()` for that one game, same per-game helpers Game Stats itself
+uses — never a stored or season-level number. `gameMatchesAdvancedFilters(game)` combines all
+four (each is a no-op when unset); `Clear Filters` resets every field, both the JS state and the
+DOM inputs, then re-renders. No interaction with `isQualifyingGame()` — this filters which games
+*display* in the list, not which count toward a computed stat, so an imbalanced or archived game
+is still findable here even when it's excluded from the Leaderboard.
+
+**The Games list card itself picked up two more things, both purely display, no new state.**
+The matchup line now joins `game.teamA`/`teamB` player names directly (`.map(id =>
+state.players.find(...).name).join(", ")`, falling back to the literal string "Team A"/"Team B"
+only when a side has no roster yet) instead of always showing the literal "Team A"/"Team B"
+labels. And once `game.scoringEvents.length > 0` with at least 2 rostered players, the card
+computes `twoWayScore(s, sh, def)` for every player on the combined roster (same per-game
+helpers Game Stats and the Advanced Filters stat-line condition both already use) and shows the
+max as a 🔥 `.badge-highlight` and the min as a 👎 `.badge-lowlight` — the exact same number and
+formula Best & Worst Individual Games ranks the whole season by, just computed for this one
+game's own roster instead of pooled. Both skip entirely (not a placeholder dash) when there's
+nothing to rank yet, or when best and worst would be the same single player.

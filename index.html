@@ -81,6 +81,51 @@
 
     <div class="inline-form" style="margin-bottom:12px">
       <input type="text" id="gameFilterInput" placeholder="Filter by date, player, or notes…" style="flex:1;min-width:220px">
+      <button type="button" class="secondary-btn" id="toggleGamesAdvancedFilterBtn">Advanced Filters</button>
+    </div>
+
+    <div id="gamesAdvancedFilters" class="games-advanced-filters" hidden>
+      <div class="filter-block">
+        <div class="filter-block-label">Players (must all be in the game)</div>
+        <div id="gamesFilterPlayerPicker" class="attendee-picker"></div>
+        <label class="filter-inline-label">Team
+          <select id="gamesFilterTeamMode">
+            <option value="either">Doesn't matter</option>
+            <option value="together">On the same team</option>
+            <option value="against">On opposing teams</option>
+          </select>
+        </label>
+      </div>
+      <div class="filter-block">
+        <div class="filter-block-label">Date range</div>
+        <label class="filter-inline-label">From <input type="date" id="gamesFilterDateFrom"></label>
+        <label class="filter-inline-label">To <input type="date" id="gamesFilterDateTo"></label>
+      </div>
+      <div class="filter-block">
+        <div class="filter-block-label">Stat line — find games where a specific player hit a threshold</div>
+        <div class="filter-stat-row">
+          <select id="gamesFilterStatPlayer"><option value="">Any player…</option></select>
+          <select id="gamesFilterStatField">
+            <option value="pts">PTS</option>
+            <option value="oreb">OREB</option>
+            <option value="dreb">DREB</option>
+            <option value="ast">AST</option>
+            <option value="stl">STL</option>
+            <option value="blk">BLK</option>
+            <option value="tov">TOV</option>
+            <option value="pf">PF</option>
+            <option value="offRtg">Off Rating</option>
+            <option value="twoWay">Two-Way</option>
+          </select>
+          <select id="gamesFilterStatOp">
+            <option value="gte">&ge;</option>
+            <option value="lte">&le;</option>
+            <option value="eq">=</option>
+          </select>
+          <input type="number" id="gamesFilterStatValue" placeholder="value" style="width:70px">
+        </div>
+      </div>
+      <button type="button" class="secondary-btn" id="clearGamesFiltersBtn">Clear Filters</button>
     </div>
 
     <div id="gamesList" class="games-list"></div>

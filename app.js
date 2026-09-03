@@ -258,7 +258,11 @@ function showTab(tab) {
   if (tab === "leaderboard") renderLeaderboard();
   // Refreshes the attendee picker against the current roster — cheap, and a player added while
   // on a different tab shouldn't require a page reload to show up here.
-  if (tab === "games") renderBalanceAttendeePicker();
+  if (tab === "games") {
+    renderBalanceAttendeePicker();
+    renderGamesFilterPlayerPicker();
+    renderGamesFilterStatPlayerSelect();
+  }
   // currentGameId/currentPlayerId are always set before showTab() is called for "stats"/"player"
   // (see openGame/openPlayerDetail), so this always captures the right context alongside the tab.
   localStorage.setItem(UI_STATE_KEY, JSON.stringify({ tab, gameId: currentGameId, playerId: currentPlayerId }));
@@ -334,6 +338,140 @@ function gameMatchesFilter(game, filterText) {
   return haystack.includes(filterText);
 }
 
+// ---- Advanced Filters (Games tab) ----
+// Additive to the free-text box above (AND'd together, not a replacement) — collapsed behind
+// its own toggle so the common case (typing a name or date) stays a one-line control, and this
+// more deliberate "find a specific kind of game" tool only appears when asked for.
+let gamesFilterPlayerIds = new Set();
+let gamesFilterTeamMode = "either"; // "either" | "together" | "against"
+let gamesFilterDateFrom = "";
+let gamesFilterDateTo = "";
+let gamesFilterStat = { playerId: "", field: "pts", op: "gte", value: "" };
+
+function renderGamesFilterPlayerPicker() {
+  const wrap = document.getElementById("gamesFilterPlayerPicker");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  [...state.players].sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "attendee-chip" + (gamesFilterPlayerIds.has(p.id) ? " selected" : "");
+    chip.textContent = p.name;
+    chip.addEventListener("click", () => {
+      if (gamesFilterPlayerIds.has(p.id)) gamesFilterPlayerIds.delete(p.id);
+      else gamesFilterPlayerIds.add(p.id);
+      renderGamesFilterPlayerPicker();
+      renderGames();
+    });
+    wrap.appendChild(chip);
+  });
+}
+
+function renderGamesFilterStatPlayerSelect() {
+  const sel = document.getElementById("gamesFilterStatPlayer");
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Any player…</option>' +
+    [...state.players].sort((a, b) => a.name.localeCompare(b.name)).map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+  sel.value = prev;
+}
+
+// This player's box-score value for this specific game, for whichever field the stat-line
+// filter is set to — reads off the same per-game helpers Game Stats itself uses (getOrCreate
+// PlayerStats, shootingStats, gameDefenseStats), not a stored/derived season number, so it's
+// always exactly what that one game's own box score shows.
+function getGameStatValue(game, playerId, field) {
+  const s = getOrCreatePlayerStats(game, playerId);
+  if (["pts", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf"].includes(field)) return s[field];
+  const sh = shootingStats(game, playerId);
+  if (field === "offRtg") return offensiveRating(s, sh);
+  if (field === "twoWay") {
+    const def = gameDefenseStats(game, playerId);
+    return twoWayScore(s, sh, def);
+  }
+  return null;
+}
+
+function gameMatchesAdvancedFilters(game) {
+  const rosterIds = [...game.teamA, ...game.teamB];
+
+  if (gamesFilterPlayerIds.size > 0) {
+    const selected = [...gamesFilterPlayerIds];
+    if (!selected.every(id => rosterIds.includes(id))) return false;
+    if (gamesFilterTeamMode === "together") {
+      const allOnA = selected.every(id => game.teamA.includes(id));
+      const allOnB = selected.every(id => game.teamB.includes(id));
+      if (!allOnA && !allOnB) return false;
+    } else if (gamesFilterTeamMode === "against") {
+      const anyOnA = selected.some(id => game.teamA.includes(id));
+      const anyOnB = selected.some(id => game.teamB.includes(id));
+      if (!anyOnA || !anyOnB) return false;
+    }
+  }
+
+  if (gamesFilterDateFrom && (game.date || "") < gamesFilterDateFrom) return false;
+  if (gamesFilterDateTo && (game.date || "") > gamesFilterDateTo) return false;
+
+  if (gamesFilterStat.playerId && gamesFilterStat.value !== "") {
+    if (!rosterIds.includes(gamesFilterStat.playerId)) return false;
+    const val = getGameStatValue(game, gamesFilterStat.playerId, gamesFilterStat.field);
+    const threshold = parseFloat(gamesFilterStat.value);
+    if (val === null || Number.isNaN(threshold)) return false;
+    if (gamesFilterStat.op === "gte" && !(val >= threshold)) return false;
+    if (gamesFilterStat.op === "lte" && !(val <= threshold)) return false;
+    if (gamesFilterStat.op === "eq" && !(Math.abs(val - threshold) < 0.05)) return false;
+  }
+
+  return true;
+}
+
+document.getElementById("toggleGamesAdvancedFilterBtn").addEventListener("click", () => {
+  const panel = document.getElementById("gamesAdvancedFilters");
+  panel.hidden = !panel.hidden;
+  document.getElementById("toggleGamesAdvancedFilterBtn").textContent = panel.hidden ? "Advanced Filters" : "Hide Advanced Filters";
+});
+document.getElementById("gamesFilterTeamMode").addEventListener("change", e => {
+  gamesFilterTeamMode = e.target.value;
+  renderGames();
+});
+document.getElementById("gamesFilterDateFrom").addEventListener("change", e => {
+  gamesFilterDateFrom = e.target.value;
+  renderGames();
+});
+document.getElementById("gamesFilterDateTo").addEventListener("change", e => {
+  gamesFilterDateTo = e.target.value;
+  renderGames();
+});
+["gamesFilterStatPlayer", "gamesFilterStatField", "gamesFilterStatOp", "gamesFilterStatValue"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    gamesFilterStat = {
+      playerId: document.getElementById("gamesFilterStatPlayer").value,
+      field: document.getElementById("gamesFilterStatField").value,
+      op: document.getElementById("gamesFilterStatOp").value,
+      value: document.getElementById("gamesFilterStatValue").value
+    };
+    renderGames();
+  });
+});
+document.getElementById("clearGamesFiltersBtn").addEventListener("click", () => {
+  gamesFilterPlayerIds = new Set();
+  gamesFilterTeamMode = "either";
+  gamesFilterDateFrom = "";
+  gamesFilterDateTo = "";
+  gamesFilterStat = { playerId: "", field: "pts", op: "gte", value: "" };
+  document.getElementById("gameFilterInput").value = "";
+  gamesFilterText = "";
+  document.getElementById("gamesFilterTeamMode").value = "either";
+  document.getElementById("gamesFilterDateFrom").value = "";
+  document.getElementById("gamesFilterDateTo").value = "";
+  document.getElementById("gamesFilterStatPlayer").value = "";
+  document.getElementById("gamesFilterStatField").value = "pts";
+  document.getElementById("gamesFilterStatOp").value = "gte";
+  document.getElementById("gamesFilterStatValue").value = "";
+  renderGamesFilterPlayerPicker();
+  renderGames();
+});
+
 function renderGames() {
   renderNeedsReviewSummary();
   const list = document.getElementById("gamesList");
@@ -344,7 +482,7 @@ function renderGames() {
   }
   const filtered = [...state.games]
     .sort((x, y) => (x.date || "").localeCompare(y.date || ""))
-    .filter(game => gameMatchesFilter(game, gamesFilterText));
+    .filter(game => gameMatchesFilter(game, gamesFilterText) && gameMatchesAdvancedFilters(game));
   if (filtered.length === 0) {
     list.innerHTML = '<p class="empty-state">No games match that filter.</p>';
     return;
@@ -371,10 +509,38 @@ function renderGames() {
     const pastSeasonBadge = isCurrentSeasonGame(game)
       ? ""
       : ` <span class="badge badge-past-season" title="From a season closed out before this one — excluded from Leaderboard rates and every other computed comparison unless the Include Past Seasons toggle on the Leaderboard is on. See Player Detail's Past Seasons panel for that season's own final numbers.">📅 Past Season</span>`;
+    // Best/worst-of-the-game badge — same Two-Way score Best & Worst Individual Games ranks by
+    // (Off Rating + Def Rating for that one game, not a per-20 rate or season number), just
+    // scoped to this specific game's own roster instead of pooled across the whole season. Only
+    // meaningful once there's real data to rank and at least two players to compare, so an
+    // unreviewed game or a lone-player roster gets neither badge rather than a trivial or
+    // misleading one.
+    const rosterIds = [...game.teamA, ...game.teamB];
+    let starBadge = "", coldBadge = "";
+    if (game.scoringEvents.length > 0 && rosterIds.length >= 2) {
+      const performances = rosterIds.map(pid => {
+        const player = state.players.find(p => p.id === pid);
+        if (!player) return null;
+        const s = getOrCreatePlayerStats(game, pid);
+        const sh = shootingStats(game, pid);
+        const def = gameDefenseStats(game, pid);
+        return { player, twoWay: twoWayScore(s, sh, def) };
+      }).filter(Boolean);
+      if (performances.length >= 2) {
+        const best = performances.reduce((a, b) => b.twoWay > a.twoWay ? b : a);
+        const worst = performances.reduce((a, b) => b.twoWay < a.twoWay ? b : a);
+        starBadge = ` <span class="badge badge-highlight" title="Best individual performance this game by Two-Way score.">🔥 ${escapeHtml(best.player.name)} ${best.twoWay >= 0 ? "+" : ""}${best.twoWay.toFixed(1)}</span>`;
+        if (worst.player.id !== best.player.id) {
+          coldBadge = ` <span class="badge badge-lowlight" title="Worst individual performance this game by Two-Way score.">👎 ${escapeHtml(worst.player.name)} ${worst.twoWay >= 0 ? "+" : ""}${worst.twoWay.toFixed(1)}</span>`;
+        }
+      }
+    }
+    const teamANames = game.teamA.map(id => state.players.find(p => p.id === id)?.name).filter(Boolean).join(", ") || "Team A";
+    const teamBNames = game.teamB.map(id => state.players.find(p => p.id === id)?.name).filter(Boolean).join(", ") || "Team B";
     card.innerHTML = `
       <div>
-        <div class="matchup-line">Team A ${scoreA} — ${scoreB} Team B</div>
-        <div class="date-line">${formatDateDisplay(game.date)} · ${game.teamA.length + game.teamB.length} players${game.notes ? " · " + escapeHtml(game.notes) : ""}${videoBadge}${reviewBadge}${imbalancedBadge}${pastSeasonBadge}</div>
+        <div class="matchup-line">${escapeHtml(teamANames)} ${scoreA} — ${scoreB} ${escapeHtml(teamBNames)}</div>
+        <div class="date-line">${formatDateDisplay(game.date)} · ${game.teamA.length + game.teamB.length} players${game.notes ? " · " + escapeHtml(game.notes) : ""}${videoBadge}${reviewBadge}${imbalancedBadge}${pastSeasonBadge}${starBadge}${coldBadge}</div>
       </div>
     `;
     const delBtn = document.createElement("button");

@@ -20,14 +20,30 @@ individual player, not a team.
 
 1. **Players** — add everyone in the league once.
 2. **Games** — create a game (date, optional video URL, notes), then click it to open Stat Entry.
-   Games are listed in chronological order (oldest first), and any game with a video attached
-   (URL or local file) shows a 🎥 badge, so you can spot at a glance which ones are ready to score.
-   A game with video but nothing logged yet also gets a 📝 **Needs Review** badge, and the count
-   at the top of the list ("📝 N games with video still need review") tracks your backlog across
+   Games are listed in chronological order (oldest first), each card headed by the actual player
+   names on each side (not "Team A"/"Team B" — those labels only show for a freshly-created game
+   with no roster set yet) and any game with a video attached (URL or local file) shows a 🎥
+   badge, so you can spot at a glance which ones are ready to score. Once a game has real shots
+   logged, its card also gets a 🔥/👎 pair — the best and worst individual performance in that
+   specific game by Two-Way score, the same number Best & Worst Individual Games on the
+   Leaderboard ranks by, just scoped to this one game instead of pooled across the season (skipped
+   entirely for an unreviewed game, or one with only a single player on either side, since
+   "best/worst" isn't meaningful yet). A game with video but nothing logged yet also gets a 📝
+   **Needs Review** badge, and the count at the top of the list ("📝 N games with video still need
+   review") tracks your backlog across
    all of them, independent of whatever the filter box below is currently narrowed to — a game
    with no video at all doesn't count toward this, since there's nothing to review yet. Once the
    list gets long, use the filter box to narrow down by date, notes, or any rostered player's
-   name. Right above the list, **Balance Teams** turns picking fair sides into a click instead of
+   name. **Advanced Filters**, right next to it, opens a panel for more specific lookups, additive
+   to the text box (both apply together): a **Players** chip picker restricted to games where
+   every checked player was actually in it, with a **Team** dropdown that only matters once 2+ are
+   checked — "On the same team" vs. "On opposing teams" vs. "Doesn't matter" (just "all of them
+   played, regardless of side"); a **Date range** (from/to); and a **Stat line** — pick a player, a
+   box-score field (PTS through Two-Way), a comparison (≥/≤/=), and a value, to find something
+   like "every game Ben scored 15+" without paging through the list by hand. Reads off the same
+   per-game numbers Game Stats itself shows, computed fresh each time, not a stored/cached value.
+   **Clear Filters** resets the whole panel (and the text box) in one click. Right above the list,
+   **Balance Teams** turns picking fair sides into a click instead of
    eyeballing a roster: check off whoever's showing up, set a team size (defaults to 3), and
    **Generate Balanced Teams** returns up to 5 different splits, ranked by how close each team's
    *average* season Two-Way/20 is to the others. Team count is whichever integer is closest to
