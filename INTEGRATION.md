@@ -1323,6 +1323,16 @@ name button) — wired into `renderLeaderboard()` alongside every other panel th
 on the same toggles (Include Imbalanced Games, Include Past Seasons) that already feed `gp`
 and `twoWayPer20` through `computeLeaderboard()`.
 
+**Deliberately partial against the real ballot's own MVP criteria — Ben supplied the actual
+wording: impact on winning, consistency, attendance, leadership, sportsmanship, and making
+teammates better.** `mvpScore` only covers two of those: impact (via `twoWayPer20`) and
+attendance. Asked directly whether to fold in the two more that this tool *could* compute —
+a consistency term from game-to-game Two-Way variance, and a "makes teammates better" term from
+the existing `computeTeammateSynergy()`/chemistry lift already used in Balance Teams — Ben chose
+to leave the formula as-is and just have the panel's own hint text (`index.html`) and this doc
+say plainly what it does and doesn't cover, rather than build either in speculatively. Leadership
+and sportsmanship have no data source in this tool at all, computable or not.
+
 **The Players tab itself (`renderPlayers()`) now shows a color-coded tag row per player, driven
 by `physicalProfileTags(phys)`** — one `{label, kind}` entry per role. Height and build stay real
 fields (still feed the Balance Teams tiebreak, still editable in the form below) but deliberately

@@ -364,7 +364,14 @@ individual player, not a team.
    gets a positive nudge scaled toward the top." Its full size is itself relative rather than a
    fixed number — half the gap between this season's best and worst qualifying Two-Way/20, so a
    tight season hands out a small nudge and a wide-open one a bigger one. Click a name to jump to
-   their Player Detail page.
+   their Player Detail page. Worth being honest about: the real ballot's own MVP criteria is
+   broader than this score — impact on winning, consistency, attendance, leadership,
+   sportsmanship, and making teammates better — and this only covers two of those (impact via
+   Two-Way/20, and attendance). Consistency and making teammates better are both things this tool
+   could compute (game-to-game Two-Way variance; the existing Teammate Synergy/Chemistry lift)
+   but currently doesn't fold into this score; leadership and sportsmanship have no data source
+   at all. Treat MVP Score as one useful data point toward the fuller picture, not a stand-in
+   for it.
 
    Right below that, **Player Comparison** picks up where a 34-column table stops being
    readable for "just tell me how these two stack up": two dropdowns, and every column from the
