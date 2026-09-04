@@ -357,10 +357,14 @@ individual player, not a team.
 
    Right below the main table, **MVP Score** is a separate, live ranking (not the same thing as
    the frozen, real-voted Summer 2026 **MVP** award further down, which can't be recomputed) —
-   Two-Way/20 plus an **Attendance Bonus** (0 to +2.0, scaling with games played relative to
-   whoever's played the most this season) added on top, never multiplied or in place of it, so
+   Two-Way/20 plus an **Attendance Bonus** added on top, never multiplied or in place of it, so
    quality still leads and a player who barely plays can't out-rank a clearly better one just by
-   showing up a lot. Click a name to jump to their Player Detail page.
+   showing up a lot. The bonus is centered on the *median* games played this season, not the
+   max — below-median attendance genuinely subtracts, above-median genuinely adds, not "everyone
+   gets a positive nudge scaled toward the top." Its full size is itself relative rather than a
+   fixed number — half the gap between this season's best and worst qualifying Two-Way/20, so a
+   tight season hands out a small nudge and a wide-open one a bigger one. Click a name to jump to
+   their Player Detail page.
 
    Right below that, **Player Comparison** picks up where a 34-column table stops being
    readable for "just tell me how these two stack up": two dropdowns, and every column from the

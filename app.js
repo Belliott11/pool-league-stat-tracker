@@ -273,6 +273,7 @@ function showTab(tab) {
   // on a different tab shouldn't require a page reload to show up here.
   if (tab === "games") {
     renderBalanceAttendeePicker();
+    renderBalanceRsvpDateSelect();
     renderGamesFilterPlayerPicker();
     renderGamesFilterStatPlayerSelect();
     renderRsvpAttendeePicker();
@@ -536,6 +537,7 @@ document.getElementById("clearRsvpBtn").addEventListener("click", () => {
 });
 
 function renderRsvpRecentList() {
+  renderBalanceRsvpDateSelect();
   const wrap = document.getElementById("rsvpRecentList");
   if (!wrap) return;
   if (state.rsvps.length === 0) {
@@ -1041,6 +1043,35 @@ function updateBalanceGenerateBtnState() {
   const btn = document.getElementById("generateBalancedTeamsBtn");
   if (btn) btn.disabled = balanceAttendeeIds.size < 2;
 }
+
+// Lets Balance Teams pull its attendee list straight from a saved "Who's Coming?" RSVP instead
+// of re-clicking through the whole roster by hand — a separate action from picking a date for
+// the game itself, since you might balance teams for a date before creating any game for it.
+function renderBalanceRsvpDateSelect() {
+  const sel = document.getElementById("balanceRsvpDateSelect");
+  const btn = document.getElementById("loadRsvpToBalanceBtn");
+  if (!sel || !btn) return;
+  const sorted = [...state.rsvps].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  if (sorted.length === 0) {
+    sel.innerHTML = '<option value="">No RSVPs saved yet</option>';
+    sel.disabled = true;
+    btn.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  btn.disabled = false;
+  sel.innerHTML = sorted.map(r => `<option value="${r.id}">${escapeHtml(formatDateDisplay(r.date))} (${r.playerIds.length})</option>`).join("");
+}
+document.getElementById("loadRsvpToBalanceBtn").addEventListener("click", () => {
+  const sel = document.getElementById("balanceRsvpDateSelect");
+  const entry = state.rsvps.find(r => r.id === sel.value);
+  if (!entry) return;
+  // Filters out any id that isn't a current roster player, in case someone RSVP'd who's since
+  // been removed — the picker below can only ever select real current players anyway.
+  balanceAttendeeIds = new Set(entry.playerIds.filter(id => state.players.some(p => p.id === id)));
+  renderBalanceAttendeePicker();
+  updateBalanceGenerateBtnState();
+});
 
 // Deals a quality-sorted list of ids out across `targetSizes.length` teams in serpentine
 // ("snake draft") order — 0,1,2,...,K-1,K-1,...,2,1,0,0,1,2,... — skipping a team once it's
@@ -3742,22 +3773,41 @@ function computeLeaderboard() {
   });
 }
 
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
 // A dedicated "who's actually been the most valuable, showing-up included" ranking, separate
 // from the Leaderboard's own Two-Way/20 sort and from the frozen historical MVP award in
 // AWARD_RESULTS (that one's a real past vote and can't be recomputed). Quality still leads —
 // this is Two-Way/20 with a bonus added on top, not multiplied or replaced, so a player who
-// barely plays can't out-rank a clearly better one just by showing up a lot. The bonus scales
-// with games played *relative to whoever's played the most this season* (0 for the least-played
-// qualifying player up to the full MVP_ATTENDANCE_BONUS_MAX for the most-played one) rather than
-// an absolute games-played count, since "a lot" only means something relative to how many
-// sessions have actually happened.
-const MVP_ATTENDANCE_BONUS_MAX = 2;
+// barely plays can't out-rank a clearly better one just by showing up a lot. The bonus is
+// centered on the *median* games played this season (not the max) — median over mean since a
+// couple of every-single-session regulars shouldn't drag the center up and make everyone else
+// look like a flake by comparison. Below-median attendance genuinely subtracts, above-median
+// genuinely adds — this isn't "everyone gets a positive nudge scaled by how close to the top
+// they are," it's a real relative comparison in both directions. Scaled by how far a player's
+// own gp sits from that median relative to the single furthest player on either side (so the
+// most/least-attending player each hit the full bonus, everyone else falls proportionally
+// between), and the size of that full bonus is itself relative rather than a fixed number —
+// MVP_ATTENDANCE_RELATIVE_WEIGHT of however wide this season's own Two-Way/20 spread actually is
+// (best qualifying player minus worst), so a tight, closely-matched season hands out a small
+// nudge and a wide-open one a bigger one, instead of one arbitrary constant pretending every
+// season's spread is the same.
+const MVP_ATTENDANCE_RELATIVE_WEIGHT = 0.5;
 function computeMvpStandings() {
   const board = computeLeaderboard().filter(r => r.gp > 0);
   if (board.length === 0) return [];
-  const maxGp = Math.max(...board.map(r => r.gp));
+  const gpValues = board.map(r => r.gp);
+  const medianGp = median(gpValues);
+  const maxDeviation = Math.max(...gpValues.map(gp => Math.abs(gp - medianGp))) || 1;
+  const twoWayValues = board.map(r => r.twoWayPer20);
+  const qualitySpread = Math.max(...twoWayValues) - Math.min(...twoWayValues);
+  const fullBonus = qualitySpread * MVP_ATTENDANCE_RELATIVE_WEIGHT;
   return board.map(r => {
-    const attendanceBonus = maxGp > 0 ? (r.gp / maxGp) * MVP_ATTENDANCE_BONUS_MAX : 0;
+    const attendanceBonus = ((r.gp - medianGp) / maxDeviation) * fullBonus;
     return { player: r.player, gp: r.gp, twoWayPer20: r.twoWayPer20, attendanceBonus, mvpScore: r.twoWayPer20 + attendanceBonus };
   }).sort((a, b) => b.mvpScore - a.mvpScore);
 }
@@ -3775,7 +3825,7 @@ function renderMvpStandings() {
     <td>${r.mvpScore.toFixed(1)}</td>
     <td>${r.twoWayPer20.toFixed(1)}</td>
     <td>${r.gp}</td>
-    <td>+${r.attendanceBonus.toFixed(1)}</td>
+    <td>${r.attendanceBonus >= 0 ? "+" : ""}${r.attendanceBonus.toFixed(1)}</td>
   </tr>`).join("");
   wrap.innerHTML = `
     <table class="matchup-table">
@@ -6827,7 +6877,27 @@ function escapeHtml(str) {
   }[c]));
 }
 
+// Wraps every panel's explanatory paragraph (the <p class="hint"> immediately after a panel's
+// <h2>) in a collapsed <details>/<summary> — the app has grown enough panels that a page full of
+// always-visible explainer paragraphs was more wall-of-text than helpful; each one's still there
+// on demand, just collapsed by default. Runs once against the static index.html structure (these
+// h2/hint pairs are never rebuilt via innerHTML by any render function, unlike the dynamic
+// content living in the sibling divs after them), so a single pass at load covers every panel,
+// current and future, without hand-editing each one's markup.
+function collapseSectionHints() {
+  document.querySelectorAll(".panel > h2").forEach(h2 => {
+    const hint = h2.nextElementSibling;
+    if (!hint || !hint.classList.contains("hint")) return;
+    const details = document.createElement("details");
+    details.className = "hint-details";
+    details.appendChild(document.createElement("summary"));
+    h2.after(details);
+    details.appendChild(hint);
+  });
+}
+
 // ---------- Init ----------
+collapseSectionHints();
 renderPlayers();
 document.getElementById("rsvpDateInput").value = new Date().toISOString().slice(0, 10);
 loadRsvpForDate(document.getElementById("rsvpDateInput").value);

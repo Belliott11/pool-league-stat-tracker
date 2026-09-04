@@ -148,6 +148,34 @@ main {
   margin-bottom: 12px;
 }
 
+/* Every panel's explanatory paragraph gets wrapped in one of these at runtime
+   (collapseSectionHints() in app.js) so a page full of panels isn't a wall of text by default —
+   collapsed to start, expand per-panel as needed. */
+.hint-details {
+  margin-top: -4px;
+  margin-bottom: 12px;
+}
+.hint-details summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  list-style: none;
+  padding: 2px 0;
+  user-select: none;
+}
+.hint-details summary::-webkit-details-marker { display: none; }
+.hint-details summary::before {
+  content: "▸ About this panel";
+}
+.hint-details[open] summary::before {
+  content: "▾ About this panel";
+}
+.hint-details .hint {
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
 .inline-form {
   display: flex;
   flex-wrap: wrap;

@@ -1072,6 +1072,26 @@ the shared recording into per-game files at upload time (falling back to the *ne
 null) — and you'd shift that game's clip timestamps back by its `videoStart` to make them
 relative to the new file, same as before this field existed.
 
+## Collapsible panel hints
+
+**`collapseSectionHints()` (`app.js`, called once at the very top of the Init section, before
+`renderPlayers()`) wraps every panel's explanatory `<p class="hint">` — the paragraph immediately
+after that panel's `<h2>` — in a collapsed `<details>`/`<summary>`, `.hint-details` in
+`style.css`.** Added once the app had grown enough panels (50+) that all their explainer text
+being permanently visible was more wall-of-text than helpful. It's a one-time DOM pass over the
+*static* `index.html` structure, not something wired into any render function — every one of
+these `h2`/`hint` pairs is fixed markup that render functions never rebuild via `innerHTML`
+(only the sibling content *after* them, in their own separate `<div id="...">`, gets touched),
+so a single pass at load covers every current and future panel without hand-editing each one's
+HTML or re-running per render. `querySelectorAll(".panel > h2")` finds each title, checks whether
+`nextElementSibling` is a `.hint`, and if so creates the `<details>`, inserts it right after the
+`h2`, and moves the hint paragraph inside it — an empty `<summary>` (styled via
+`::before`/`[open] ::before` content so it never needs escaping or i18n-unfriendly text baked
+into the DOM) toggles between "▸ About this panel" and "▾ About this panel". Collapsed by
+default; each panel remembers its own open/closed state only via the browser's native `<details>`
+behavior for that render (no persistence across reload — a deliberate simplicity choice, not an
+oversight, since which panels someone wants expanded is a very session-specific thing).
+
 ## Theming — matching your site's look
 
 All colors, fonts, radii, and shadows are CSS custom properties defined in one place,
@@ -1280,12 +1300,23 @@ un-resolve an RSVP entry for that same date.
 **`computeMvpStandings()`/`renderMvpStandings()` (`app.js`, right after `computeLeaderboard()`)
 build a new, separate "MVP Score" ranking — deliberately not the same thing as the frozen
 historical `AWARD_RESULTS` `mvp` entry (a real past vote that can't be recomputed), and not a
-replacement for the Leaderboard's own Two-Way/20 sort either.** `MVP_ATTENDANCE_BONUS_MAX = 2`;
-for each player with `gp > 0`, `attendanceBonus = (gp / maxGp) * MVP_ATTENDANCE_BONUS_MAX` where
-`maxGp` is the most games played by anyone currently on the board, and `mvpScore =
-twoWayPer20 + attendanceBonus` — additive, not a multiplier, so quality still leads and a
-low-quality player can gain at most 2.0 points of Two-Way/20-equivalent from attendance alone,
-never enough on its own to leapfrog someone genuinely better. Sorted descending by `mvpScore` and
+replacement for the Leaderboard's own Two-Way/20 sort either.** For each player with `gp > 0`,
+`attendanceBonus = ((gp - medianGp) / maxDeviation) * fullBonus` — centered on the season's
+*median* `gp` (via a small new `median()` helper), not the max, per direct feedback that
+attendance shouldn't just be "everyone gets a positive nudge scaled toward whoever's played the
+most": below-median attendance genuinely subtracts from `mvpScore`, above-median genuinely adds,
+a real two-directional comparison rather than a one-sided bonus. `maxDeviation` is
+`max(|gp - medianGp|)` across the board (so whichever player sits furthest from the median, in
+either direction, hits the full ±bonus, everyone else falls proportionally between) and
+`fullBonus = qualitySpread * MVP_ATTENDANCE_RELATIVE_WEIGHT` (`MVP_ATTENDANCE_RELATIVE_WEIGHT =
+0.5`, `qualitySpread` = this season's own `max(twoWayPer20) - min(twoWayPer20)` across qualifying
+players) — deliberately **not** a fixed point value: the size of the full bonus scales with how
+spread out this season's own quality actually is, so a tight, closely-matched season hands out a
+small nudge and a wide-open one a bigger one, rather than one arbitrary constant pretending every
+season looks the same. `mvpScore = twoWayPer20 + attendanceBonus` — additive, not a multiplier,
+so quality still leads and a low-quality player can gain at most half this season's own quality
+spread from attendance alone, never enough on its own to leapfrog someone genuinely better.
+Sorted descending by `mvpScore` and
 rendered as its own table (`#mvpStandings`, Leaderboard tab, right after the main table) with a
 clickable player name (`openPlayerDetail()`, same pattern as the main Leaderboard table's own
 name button) — wired into `renderLeaderboard()` alongside every other panel there, so it recomputes
