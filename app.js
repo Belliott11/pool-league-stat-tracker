@@ -300,14 +300,45 @@ function physicalProfileTags(phys) {
 // inside it.
 let editingPhysicalProfileId = null;
 
+// Which role chips are picked, above the roster list — OR semantics (any selected role matches,
+// not all of them), same as picking any other multi-select filter. Empty set = show everyone,
+// same "no filter active" convention as the Games tab's own advanced filters.
+let playersRoleFilter = new Set();
+
+function renderPlayersRoleFilter() {
+  const wrap = document.getElementById("playersRoleFilter");
+  if (!wrap) return;
+  wrap.innerHTML = Object.entries(PHYSICAL_ROLE_LABELS).map(([key, label]) => {
+    const active = playersRoleFilter.has(key);
+    return `<button type="button" class="profile-tag profile-tag-${key} role-filter-chip${active ? " active" : ""}" data-role="${key}">${escapeHtml(label)}</button>`;
+  }).join("");
+  wrap.querySelectorAll(".role-filter-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const role = chip.dataset.role;
+      if (playersRoleFilter.has(role)) playersRoleFilter.delete(role);
+      else playersRoleFilter.add(role);
+      renderPlayers();
+    });
+  });
+}
+
 function renderPlayers() {
+  renderPlayersRoleFilter();
   const list = document.getElementById("playersList");
   list.innerHTML = "";
   if (state.players.length === 0) {
     list.innerHTML = '<p class="empty-state">No players yet. Add one above.</p>';
     return;
   }
-  [...state.players].sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+  const sortedPlayers = [...state.players].sort((a, b) => a.name.localeCompare(b.name));
+  const visiblePlayers = playersRoleFilter.size === 0
+    ? sortedPlayers
+    : sortedPlayers.filter(p => (getPlayerPhysicalData(p.id)?.roles || []).some(r => playersRoleFilter.has(r)));
+  if (visiblePlayers.length === 0) {
+    list.innerHTML = '<p class="empty-state">No players match the selected role filter.</p>';
+    return;
+  }
+  visiblePlayers.forEach(p => {
     const row = document.createElement("div");
     row.className = "roster-row";
     // Notable things from Ben's own Player Profiles scouting — role(s) plus build, but only when
@@ -1307,13 +1338,19 @@ function renderBalanceResults() {
           roleCounts[role] = (roleCounts[role] || 0) + 1;
         });
       });
-      const roleSummary = Object.entries(roleCounts).map(([role, count]) => `${count} ${PHYSICAL_ROLE_LABELS[role]}${count > 1 ? "s" : ""}`).join(", ");
-      const parts = [
+      // Same colored .profile-tag pills as the Players tab (physicalProfileTags()), not a plain
+      // text list — one glance at a team card now shows the same role colors used everywhere
+      // else a role shows up, instead of two different visual languages for the same data.
+      const roleTagsHtml = Object.keys(roleCounts).length > 0
+        ? `<span class="profile-tags">${Object.entries(roleCounts).map(([role, count]) => `<span class="profile-tag profile-tag-${role}">${count} ${PHYSICAL_ROLE_LABELS[role]}${count > 1 ? "s" : ""}</span>`).join("")}</span>`
+        : "";
+      const avgText = [
         avgHeightLabel ? `Avg height: ${avgHeightLabel}` : "",
-        avgBuildLabel ? `Avg build: ${avgBuildLabel}` : "",
-        roleSummary
-      ].filter(Boolean);
-      const physicalLine = parts.length > 0 ? `<div class="balance-team-physical">${parts.join(" · ")}</div>` : "";
+        avgBuildLabel ? `Avg build: ${avgBuildLabel}` : ""
+      ].filter(Boolean).join(" · ");
+      const physicalLine = avgText || roleTagsHtml
+        ? `<div class="balance-team-physical">${avgText ? `<div>${avgText}</div>` : ""}${roleTagsHtml}</div>`
+        : "";
       const chem = teamChemistryAdjustment(team, liftMap);
       const chemGamesNote = chem.minGp !== null ? ` (min ${chem.minGp} game${chem.minGp === 1 ? "" : "s"} together)` : "";
       const chemLine = Math.abs(chem.value) >= 0.1

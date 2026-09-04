@@ -740,6 +740,22 @@ button:disabled {
   border-color: var(--primary-dark);
   color: var(--primary-dark);
 }
+
+/* Players tab role filter — reuses .profile-tag-<kind>'s own colors (so a chip's color always
+   matches the tag it filters for) but sized as a real tap target, dimmed until picked so an
+   all-off "showing everyone" state doesn't read as five different active filters. */
+.role-filter-chip {
+  cursor: pointer;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.role-filter-chip:hover { opacity: 0.75; }
+.role-filter-chip.active {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--primary-dark) inset;
+}
 .balance-controls {
   display: flex;
   align-items: center;
@@ -806,6 +822,9 @@ button:disabled {
   border-top: 1px dashed var(--border);
   font-size: 0.78rem;
   color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 .balance-preview-wrap {
   margin-top: 10px;

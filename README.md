@@ -21,12 +21,15 @@ individual player, not a team.
 1. **Players** — add everyone in the league once. Anyone with a hand-transcribed scouting profile
    (see Balance Teams below) shows color-coded role tags next to their name (Scorer, Defender,
    Physical, Playmaker, Role Player) — height and build still feed the Balance Teams tiebreak but
-   aren't surfaced as their own tag here. **Edit Tags** opens an inline editor (height, build,
-   role checkboxes) right under that player's row — Save replaces their profile outright (not a
-   partial merge, so it never mixes an edited role with a stale height), and **Reset to Default**
-   clears a saved edit and falls back to the original hand-transcribed profile. Edits are saved
-   per-player in `localStorage` and feed the same Balance Teams tiebreak everything else in this
-   section describes.
+   aren't surfaced as their own tag here. A row of the same five role chips above the roster
+   filters it down to players carrying any of the roles picked (click one or more to narrow,
+   click again to clear) — handy once the roster's long enough that scanning for "who are my
+   defenders" isn't a one-glance thing anymore. **Edit Tags** opens an inline editor (height,
+   build, role checkboxes) right under that player's row — Save replaces their profile outright
+   (not a partial merge, so it never mixes an edited role with a stale height), and **Reset to
+   Default** clears a saved edit and falls back to the original hand-transcribed profile. Edits
+   are saved per-player in `localStorage` and feed the same Balance Teams tiebreak everything
+   else in this section describes.
 2. **Games** — create a game (date, optional video URL, notes), then click it to open Stat Entry.
    Games are listed in chronological order (oldest first), each card headed by the actual player
    names on each side (not "Team A"/"Team B" — those labels only show for a freshly-created game
@@ -94,8 +97,9 @@ individual player, not a team.
    disadvantage in this league. It's still not absolute — a split that's clearly better-balanced
    on quality can still win even if it misses the height guideline — but among options that are
    already tied on quality, one that clears the bar always beats one that doesn't. Each team card
-   in the results shows its own average height, average build, and role mix so this reasoning is
-   visible, not a black box.
+   in the results shows its own average height, average build, and role mix (as the same
+   color-coded tags as the Players tab, not plain text) so this reasoning is visible, not a black
+   box.
 
    Real chemistry factors in too, but unlike height/build/role, it's folded directly into each
    team's quality average rather than sitting outside it as a tiebreaker — this is the one place

@@ -1254,6 +1254,20 @@ under that player's row (`editingPhysicalProfileId`, a module-level variable so 
 number inputs, build as a `<select>` over `BUILD_LABELS`, roles as one checkbox per
 `PHYSICAL_ROLE_LABELS` entry, and a free-text note input.
 
+**`renderPlayersRoleFilter()` (right above `renderPlayers()`) renders the same five role labels
+as clickable `.profile-tag-<kind>.role-filter-chip` buttons above the roster** — `playersRoleFilter`
+(a module-level `Set<roleKey>`) toggles membership per click and calls `renderPlayers()`, which
+filters `state.players` down to anyone whose `getPlayerPhysicalData(id).roles` intersects the
+set (OR semantics — any picked role matches, not all of them) before the existing name-sort and
+row-render loop runs; an empty set (the default) shows everyone, same "no filter active"
+convention as the Games tab's own Advanced Filters. `.role-filter-chip` reuses `.profile-tag-
+<kind>`'s own color (so a chip's color always matches the tag it filters for) but dimmed via
+`opacity` until `.active`, so an all-off "showing everyone" state doesn't read as five active
+filters at once. Balance Teams' own team cards got the same tag treatment at the same time —
+`renderBalanceResults()`'s per-team role-count summary (`roleCounts`) now renders as
+`.profile-tag-<kind>` pills (`1 Defender`, `2 Scorers`, …) instead of a plain comma-joined string,
+so the same role reads the same color everywhere it shows up in the app.
+
 **Two mechanisms read `PLAYER_PHYSICAL_DATA`, both in `generateBalancedTeamSets()`, and both are
 explicitly scoped to never override quality — Ben was direct about this when it was built:
 Two-Way/20 (real or reputation-estimated, itself now also chemistry- and win-rate-adjusted — see
