@@ -1192,17 +1192,22 @@ well-reasoned one) without flagging which is which would be misleading.
 spreadsheet's "Player Profiles" sheet after all — at Ben's explicit request, reversing the
 original "deliberately does not" stance above; that stance was about not doing this
 *unprompted*, not a permanent rule.** Same hand-transcription pattern as
-`PLAYER_REPUTATION_DATA`: a plain object keyed by player id, `{ heightIn, build, role, note }`
+`PLAYER_REPUTATION_DATA`: a plain object keyed by player id, `{ heightIn, build, roles, note }`
 per entry. `heightIn` is parsed by hand from the sheet's "Height/Build" column's feet/inches
 (e.g. `6'0", 175 lbs` → `72`); `build` is Claude's own 1-5 read of that same column's
 qualitative half (skinny through very muscular — a bare pounds figure like "175 lbs" isn't used
 on its own, just folded into the same judgment call, since weight means nothing without a frame
-to compare it against). `role` is Claude's own five-bucket read of the "Preferred Role" column's
-free text (`scorer` / `defender` / `rebounder` / `playmaker` / `role-player`) — an
-interpretation, not Ben's own explicit tag — with `note` keeping the original sentence
-specifically so a mismatched categorization is visible (surfaced as a tooltip in the UI) rather
-than hidden inside a score. A player missing from this table (no Player Profiles row) just
-doesn't contribute to any part of what it feeds.
+to compare it against). `roles` is Claude's own five-bucket read of the "Preferred Role" column's
+free text (`scorer` / `defender` / `rebounder` / `playmaker` / `role-player`), stored as an array
+— an interpretation, not Ben's own explicit tag. Most players get one entry; a handful whose
+notes clearly describe two distinct contributions (e.g. Ben: "lockdown defender... facilitator/
+passer on offense" → `["defender", "playmaker"]`) carry two, at Ben's explicit request that
+players not be forced into a single bucket — every consumer of `roles` (`scorePhysicalBalance()`'s
+role-variance tally, the results UI's role-count summary and hover tooltip) treats a two-role
+player as counting toward both roles, never splitting credit between them. `note` keeps the
+original sentence specifically so a mismatched categorization is visible (surfaced as a tooltip
+in the UI) rather than hidden inside a score. A player missing from this table (no Player
+Profiles row) just doesn't contribute to any part of what it feeds.
 
 **Two mechanisms read `PLAYER_PHYSICAL_DATA`, both in `generateBalancedTeamSets()`, and both are
 explicitly scoped to never override quality — Ben was direct about this when it was built:
@@ -1211,16 +1216,18 @@ below) decides first, physical/role only breaks ties.**
 
 `scorePhysicalBalance(teams)` (called from `scoreTeamSet()`) sums three components into one
 `physicalScore` per candidate split, via a shared `avgOf(field)` helper: the spread between
-teams' *average* height, the spread between teams' *average* build (weighted **down** to 0.75×
-— originally shipped at 2× and explicitly walked back after Ben flagged build as the weakest of
-the three signals to lean on; it's Claude's own coarsest read of the three, a single-digit guess
-at vague prose like "decently sized", so it should carry the least say, not the most) — both
-mirror `scoreTeamSet()`'s own average-not-total reasoning, uneven team sizes shouldn't read a
-bigger team as automatically "taller" or "stronger" — and, weighted 1.5× higher, the summed
-*variance* of each role tag's per-team count (so a split that puts every `defender`-tagged player
-on one team and none on the other scores worse than one where they're spread out; role carries
-the most weight of the three, height sits at the implicit 1× baseline in between). This score
-only ever gets consulted as a tiebreaker: `generateBalancedTeamSets()`
+teams' *average* height (weighted 0.75×, walked down from an initial 1× per direct feedback that
+height "shouldn't be a gigantic factor"), the spread between teams' *average* build (also
+weighted 0.75× — originally shipped at 2×, explicitly walked back after Ben flagged build as the
+weakest of the three signals to lean on, then set equal to height's own weight per his follow-up
+"make height and weight equal"; build is Claude's own coarsest read of the three, a single-digit
+guess at vague prose like "decently sized") — both mirror `scoreTeamSet()`'s own
+average-not-total reasoning, uneven team sizes shouldn't read a bigger team as automatically
+"taller" or "stronger" — and, weighted 1.5× higher than either, the summed *variance* of each
+role tag's per-team count, tallied via `(PLAYER_PHYSICAL_DATA[id]?.roles || []).includes(role)`
+so a player with two roles (see above) counts toward each one's own variance independently (role
+carries the most weight of the three; height and build are now tied for second, both
+deliberately light). This score only ever gets consulted as a tiebreaker: `generateBalancedTeamSets()`
 computes `tieTolerance = 0.1 + reputationShare * 0.9` (`reputationShare` = the fraction of
 today's attendees who are reputation-estimated rather than `gp > 0`), then re-sorts only the
 best-spread candidates (`scored.slice(0, 30)`, not the full 300+ pool, so the tolerance check
@@ -1262,16 +1269,20 @@ entry at all (not a zero — unknown, not assumed neutral). The map is intention
 as the Teammate Lift Matrix's own row/column asymmetry, since "how did A do with B" and "how did
 B do with A" are different facts about different players' games.
 
-`teamChemistryAdjustment(team, liftMap)` averages every known pairwise lift among a team's own
-players (both directions counted separately) and `scoreTeamSet()` adds that adjustment directly
-to each team's base quality average *before* computing `spread` — meaning a strong observed
-chemistry effect between two attendees can change which split ranks best, not just which one wins
-a tiebreak among near-equal options. `computeChemistryLiftMap()` is computed once per
+`teamChemistryAdjustment(team, liftMap)` returns `{ value, minGp }`, not a plain number: `value`
+averages every known pairwise lift among a team's own players (both directions counted
+separately), and `minGp` tracks the smallest `gp` (games together) among the pairs that
+contributed to that average — the weakest-tested pairing driving the number, surfaced so the UI
+doesn't quietly treat a single shared game the same as ten. `scoreTeamSet()` adds `.value`
+directly to each team's base quality average *before* computing `spread` — meaning a strong
+observed chemistry effect between two attendees can change which split ranks best, not just which
+one wins a tiebreak among near-equal options. `computeChemistryLiftMap()` is computed once per
 `generateBalancedTeamSets()` call (all candidates share the same attendee pool, so the same map
 applies to every one of them) and passed through to `scoreTeamSet()` per candidate.
-`renderBalanceResults()` recomputes the same map once more for display (a `Chemistry: ±X.X` line
-on any team card where `Math.abs(adjustment) >= 0.1`) — cheap enough at this attendee-pool size
-that a second call isn't worth threading the first one through as extra render-function state.
+`renderBalanceResults()` recomputes the same map once more for display (a `Chemistry: ±X.X (min N
+games together)` line on any team card where `Math.abs(adjustment.value) >= 0.1`) — cheap enough
+at this attendee-pool size that a second call isn't worth threading the first one through as extra
+render-function state.
 
 **`computeTeamWinRateMap(attendeeIds)`, right after the chemistry functions, is the second half
 of the same "past teams, not just past scores" request — whether teams built around a given pair
@@ -1288,14 +1299,32 @@ calibration (10 percentage points ≈ 1 point of Two-Way/20) rather than inventi
 count as half a win in `winPct`, matching how win% is computed everywhere else in this tool.
 `confidence` is the same `Math.min(1, gp / 3)` dampening curve as chemistry's, for the same
 reason — a 1-2 game record isn't settled yet — and a pair with zero shared games gets no entry at
-all. `teamWinRateAdjustment(team, winRateMap)` averages every known pairwise entry among a team's
-own players (looking up whichever of `"a|b"`/`"b|a"` the ids sort into) and `scoreTeamSet()`
-*sums* it with `teamChemistryAdjustment()`'s own result — not an average of the two — into the
-same primary-ranking nudge: a pairing that's both shown a real individual lift *and* a real
-winning record together is doubly-confirmed by two independent signals, not double-counted, since
-each is already dampened by its own sample size before the two are combined. Shown in the UI as
-its own `Past record: ±X.X` line, same `>= 0.1` display threshold as Chemistry, right underneath
-it on each team card.
+all. `teamWinRateAdjustment(team, winRateMap)` returns the same `{ value, minGp }` shape as
+`teamChemistryAdjustment()`, for the same reason: `value` averages every known pairwise entry
+among a team's own players (looking up whichever of `"a|b"`/`"b|a"` the ids sort into) and
+`scoreTeamSet()` *sums* `.value` with `teamChemistryAdjustment()`'s own `.value` — not an average
+of the two — into the same primary-ranking nudge: a pairing that's both shown a real individual
+lift *and* a real winning record together is doubly-confirmed by two independent signals, not
+double-counted, since each is already dampened by its own sample size before the two are
+combined. Shown in the UI as its own `Past record: ±X.X (min N games together)` line, same `>=
+0.1` display threshold as Chemistry, right underneath it on each team card.
+
+**`localSearchRefine(teams, qualityById, liftMap, winRateMap, iterations)` (`app.js`, right
+before `generateBalancedTeamSets()`) closes a gap the post-hoc scoring above leaves open: chemistry
+and win-rate only ever entered the picture when scoring whatever `randomGreedyTeams()` happened to
+generate, which only ever optimizes individual quality while building a candidate — a split that
+would've been genuinely great on chemistry or past record could go completely ungenerated.**
+`generateBalancedTeamSets()` takes the best 30 candidates by the initial quality+chemistry+
+win-rate `spread`, and for each one calls `localSearchRefine()`, which deep-copies the team
+arrays and, for `iterations` (30 candidates × 25 iterations each in practice) attempts, picks two
+random teams and one random player from each, tries the swap, rescoring via
+`scoreTeamSet(...).spread`, and keeps it only if the spread drops — a simple hill-climb, not an
+exhaustive search, refining already-decent starting points rather than searching from scratch.
+The refined candidates are deduped (`teamSetSignature()`) and re-sorted the same way as the
+original pool, and `generateBalancedTeamSets()`'s final `pool` (the one the tie-tolerance +
+height-floor comparator sorts) is built from this `refined` array, not the original `scored` one.
+Deliberately targets `spread` only, never `physicalScore` — height/build/role stay a pure
+post-hoc tiebreak, untouched by this refinement step, same as before.
 
 **Matchup Preview, on any 2-team Balance Teams result, is not new data either — it's
 `computeMatchupGrid()`'s existing per-pair FG data, filtered down to one specific matchup.**

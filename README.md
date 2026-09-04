@@ -70,23 +70,26 @@ individual player, not a team.
    "close" itself stretches with how much of the group is a reputation-based guess rather than a
    real number — the less trustworthy the quality spread is (an all-reputation-estimated group),
    the more say physical/role gets, on the theory that hundredths-of-a-point differences between
-   guesses aren't worth treating as settled. Three things feed the tiebreak: how far apart each
-   team's *average* height lands (parsed from the sheet's "Height/Build" column's feet/inches),
-   how far apart each team's *average* build lands (Claude's own 1-5 read of that same column's
-   qualitative half — skinny through very muscular, weighted the lightest of the three, since it's
-   the softest signal — a coarse read of vague prose like "decently sized"), and how evenly
-   Claude's own five-bucket read of each player's "Preferred Role" note (scorer / defender /
-   rebounder / playmaker / role player — hover a name in the results for the original sentence it
-   came from) spreads across teams, so one side doesn't end up with every tagged defender and the
-   other with none — role carries the most weight of the three. One exception sits a level above
-   the rest of the
-   tiebreak, closer to a real guideline than a nice-to-have: every team should have someone taller
-   than today's attendee-group's own average height, since a team with nobody above that line is
-   a real disadvantage in this league. It's still not absolute — a split that's clearly
-   better-balanced on quality can still win even if it misses the height guideline — but among
-   options that are already tied on quality, one that clears the bar always beats one that
-   doesn't. Each team card in the results shows its own average height, average build, and role
-   mix so this reasoning is visible, not a black box.
+   guesses aren't worth treating as settled. Three things feed the tiebreak, weighted role (1.5x)
+   > height (0.75x) == build (0.75x) — how evenly Claude's own five-bucket read of each player's
+   "Preferred Role" note (scorer / defender / rebounder / playmaker / role player — hover a name
+   in the results for the original sentence it came from) spreads across teams, so one side
+   doesn't end up with every tagged defender and the other with none; a small number of players
+   whose notes clearly describe two distinct contributions (e.g. a lockdown defender who also
+   facilitates on offense) carry two roles, counting toward both when this is tallied; how far
+   apart each team's *average* height lands (parsed from the sheet's "Height/Build" column's
+   feet/inches); and how far apart each team's *average* build lands (Claude's own 1-5 read of
+   that same column's qualitative half — skinny through very muscular, a coarse read of vague
+   prose like "decently sized") — height and build carry the same, deliberately light weight, a
+   small nudge each rather than a deciding factor, well below role. One exception sits a level
+   above the rest of the tiebreak, closer to a real
+   guideline than a nice-to-have: every team should have someone taller than today's
+   attendee-group's own average height, since a team with nobody above that line is a real
+   disadvantage in this league. It's still not absolute — a split that's clearly better-balanced
+   on quality can still win even if it misses the height guideline — but among options that are
+   already tied on quality, one that clears the bar always beats one that doesn't. Each team card
+   in the results shows its own average height, average build, and role mix so this reasoning is
+   visible, not a black box.
 
    Real chemistry factors in too, but unlike height/build/role, it's folded directly into each
    team's quality average rather than sitting outside it as a tiebreaker — this is the one place
@@ -98,8 +101,9 @@ individual player, not a team.
    nothing, not a penalty for being untested. It's asymmetric on purpose: player A's lift from
    playing with B is a different number from B's lift from playing with A, since those are
    different facts about different players' own games. A team card shows its own **Chemistry**
-   line whenever the adjustment is large enough to matter, so it's visible on top of the blended
-   average, not hidden inside it.
+   line whenever the adjustment is large enough to matter, alongside the pairing's own shared game
+   count (e.g. "min 2 games together") so it's clear at a glance how settled that number actually
+   is, rather than treating a single shared game the same as ten.
 
    A pairing's actual **win rate** together factors in the same way — folded into the primary
    average, not a tiebreaker. Unlike Chemistry, this one's about whether *teams* built around
@@ -108,15 +112,25 @@ individual player, not a team.
    to a Two-Way/20-scale adjustment with the same formula the reputation-percentile estimate
    already uses (10 percentage points of win rate ≈ 1 point of Two-Way/20), and dampened by games
    played together the same way Chemistry is — a pair's record over just one or two shared games
-   isn't settled yet. Shown as its own **Past record** line, right under Chemistry, whenever it's
-   large enough to matter. For any 2-team
-   split, **Preview
-   Matchups** expands real head-to-head history between the two rosters about to face each
-   other — every scorer/defender pair from either side with real logged shots between them,
-   sorted by attempts, both directions (each side's shooters against the other's defenders).
-   Reuses the same data as the league-wide Head-to-Head Matchup Grid further down, just scoped to
-   these specific players instead of the whole roster — a pairing with no history yet just says
-   so rather than showing a grid of empty cells.
+   isn't settled yet. Shown as its own **Past record** line, right under Chemistry, with the same
+   game-count note, whenever it's large enough to matter.
+
+   Chemistry and win rate don't just re-rank whatever candidates come out of the generator —
+   each of the top 30 candidates by quality+chemistry+win-rate spread gets hill-climbed
+   afterward, trying random single-player swaps between two of its own teams and keeping any swap
+   that lowers that same spread. Without this step, a split that would've been genuinely great on
+   chemistry or past record could go ungenerated entirely, since the initial randomized search
+   only ever optimizes individual quality while building a candidate; this refinement gives real
+   history from actual games played a chance to shape which splits get proposed, not just decide
+   between whatever showed up. It never touches height/build/role's own physical score — that
+   stays a pure tiebreak applied after refinement, same as before.
+
+   For any 2-team split, **Preview Matchups** expands real head-to-head history between the two
+   rosters about to face each other — every scorer/defender pair from either side with real
+   logged shots between them, sorted by attempts, both directions (each side's shooters against
+   the other's defenders). Reuses the same data as the league-wide Head-to-Head Matchup Grid
+   further down, just scoped to these specific players instead of the whole roster — a pairing
+   with no history yet just says so rather than showing a grid of empty cells.
 3. **Stat Entry** — this is where you sit while reviewing the video:
    - If one recording covers several games back-to-back, use **Session video**: upload it once
      under any of those games (give it a name when prompted) and then pick that same session
