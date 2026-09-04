@@ -657,7 +657,7 @@ const PLAYER_PHYSICAL_DATA = {
   "g-ian": { heightIn: 70, build: 4, roles: ["rebounder"], note: "Physical presence/rebounder; inconsistent on both ends otherwise" },
   "g-michael-t": { heightIn: 70, build: 2, roles: ["scorer"], note: "Shoots everything; low shot discipline" },
   "g-lukas": { heightIn: 67, build: 3, roles: ["rebounder"], note: "Comfortable in the post" },
-  reilly: { heightIn: 71, build: 3, roles: ["scorer", "defender"], note: "Midrange threat; plays fine defense" },
+  reilly: { heightIn: 71, build: 3, roles: ["scorer"], note: "Midrange threat; plays fine defense" },
   viraj: { heightIn: 69, build: 2, roles: ["role-player"], note: "Third option on almost every team he's on" },
   sean: { heightIn: 72, build: 4, roles: ["defender", "scorer"], note: "On-ball pest defensively; post scorer, doesn't shoot much" },
   will: { heightIn: 68, build: 4, roles: ["rebounder"], note: "Physical, clears space; fouls a lot; not much skill either end" },
