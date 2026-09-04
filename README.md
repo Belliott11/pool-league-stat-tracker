@@ -18,7 +18,15 @@ individual player, not a team.
 
 ## Workflow
 
-1. **Players** — add everyone in the league once.
+1. **Players** — add everyone in the league once. Anyone with a hand-transcribed scouting profile
+   (see Balance Teams below) shows color-coded role tags next to their name (Scorer, Defender,
+   Physical, Playmaker, Role Player) — height and build still feed the Balance Teams tiebreak but
+   aren't surfaced as their own tag here. **Edit Tags** opens an inline editor (height, build,
+   role checkboxes) right under that player's row — Save replaces their profile outright (not a
+   partial merge, so it never mixes an edited role with a stale height), and **Reset to Default**
+   clears a saved edit and falls back to the original hand-transcribed profile. Edits are saved
+   per-player in `localStorage` and feed the same Balance Teams tiebreak everything else in this
+   section describes.
 2. **Games** — create a game (date, optional video URL, notes), then click it to open Stat Entry.
    Games are listed in chronological order (oldest first), each card headed by the actual player
    names on each side (not "Team A"/"Team B" — those labels only show for a freshly-created game
@@ -63,25 +71,23 @@ individual player, not a team.
    the exact number and source). Truly no-data players (never logged a game *or* a real-life
    party) still fall back to a neutral 0.0.
 
-   Height, build, and role — from the same spreadsheet's "Player Profiles" sheet, hand-
-   transcribed into `PLAYER_PHYSICAL_DATA` at Ben's explicit request — factor in too, but
-   strictly as a tiebreaker: **quality (Two-Way/20, real or estimated) always decides first.**
-   Physical/role only gets to choose between options that are already close on quality, and
-   "close" itself stretches with how much of the group is a reputation-based guess rather than a
-   real number — the less trustworthy the quality spread is (an all-reputation-estimated group),
-   the more say physical/role gets, on the theory that hundredths-of-a-point differences between
-   guesses aren't worth treating as settled. Three things feed the tiebreak, weighted role (1.5x)
-   > height (0.75x) == build (0.75x) — how evenly Claude's own five-bucket read of each player's
-   "Preferred Role" note (scorer / defender / rebounder / playmaker / role player — hover a name
-   in the results for the original sentence it came from) spreads across teams, so one side
-   doesn't end up with every tagged defender and the other with none; a small number of players
-   whose notes clearly describe two distinct contributions (e.g. a lockdown defender who also
-   facilitates on offense) carry two roles, counting toward both when this is tallied; how far
-   apart each team's *average* height lands (parsed from the sheet's "Height/Build" column's
-   feet/inches); and how far apart each team's *average* build lands (Claude's own 1-5 read of
-   that same column's qualitative half — skinny through very muscular, a coarse read of vague
-   prose like "decently sized") — height and build carry the same, deliberately light weight, a
-   small nudge each rather than a deciding factor, well below role. One exception sits a level
+   Height, build, and role — originally hand-transcribed from the same spreadsheet's "Player
+   Profiles" sheet into `PLAYER_PHYSICAL_DATA` at Ben's explicit request, now editable straight
+   from the **Players** tab (see "Editing player tags" below) — factor in too, but strictly as a
+   tiebreaker: **quality (Two-Way/20, real or estimated) always decides first.** Physical/role
+   only gets to choose between options that are already close on quality, and "close" itself
+   stretches with how much of the group is a reputation-based guess rather than a real number —
+   the less trustworthy the quality spread is (an all-reputation-estimated group), the more say
+   physical/role gets, on the theory that hundredths-of-a-point differences between guesses
+   aren't worth treating as settled. Three things feed the tiebreak, weighted role (1.5x) >
+   height (0.75x) == build (0.75x) — how evenly each player's role tag(s) (Scorer / Defender /
+   Physical / Playmaker / Role Player) spread across teams, so one side doesn't end up with every
+   tagged Defender and the other with none; a small number of players carry two roles (e.g. a
+   lockdown defender who also facilitates on offense), counting toward both when this is
+   tallied; how far apart each team's *average* height lands; and how far apart each team's
+   *average* build lands (skinny through very muscular) — height and build carry the same,
+   deliberately light weight, a small nudge each rather than a deciding factor, well below role.
+   One exception sits a level
    above the rest of the tiebreak, closer to a real
    guideline than a nice-to-have: every team should have someone taller than today's
    attendee-group's own average height, since a team with nobody above that line is a real
@@ -751,13 +757,17 @@ ranking tables (below) and the locally-stored video files are actually gone for 
 2. **Export → Data Management → Start New Season.** Prompts for a label (e.g. "Summer 2026") and
    archives every current game behind today's date — they stay in the file, they're just no
    longer "current." Clears locally-stored video files (large, and re-watching last season's
-   footage isn't the point of keeping the stats), and the player roster is untouched, same as
-   always. This is a different button from **Reset All Data** right next to it — that one's the
-   actual nuclear option, wiping the roster and everything else back to a genuinely empty tracker.
-   - The **Include Past Seasons** toggle, next to the other two on the Leaderboard, blends every
-     archived season back into the live Leaderboard/awards/Player Detail/Balance Teams numbers
-     when it's on — off by default, so a new season starts clean. Disabled with an explanatory
-     tooltip until a season's actually been closed at least once.
+   footage isn't the point of keeping the stats), and the player roster — including every
+   player's height/build/role tags, whether hand-transcribed or edited in-app — is untouched,
+   same as always. This is a different button from **Reset All Data** right next to it — that
+   one's the actual nuclear option, wiping the roster and everything else back to a genuinely
+   empty tracker.
+   - The **Include Past Seasons** toggle blends every archived season back into the live
+     Leaderboard/awards/Player Detail/Balance Teams numbers when it's on — off by default, so a
+     new season starts clean. It's a single shared setting with two buttons that stay in sync:
+     one on the Leaderboard, one on each player's own Past Seasons panel (Player Detail), so
+     combining a specific player's history doesn't require hopping back to the Leaderboard first.
+     Disabled with an explanatory tooltip until a season's actually been closed at least once.
    - Every player's **Past Seasons** panel, on their own Player Detail page, shows one row per
      closed season regardless of the toggle — GP, record, Off/Def/Two-Way Rating, computed live
      off the archived games (not a frozen snapshot, so these stay correct if a stat's formula

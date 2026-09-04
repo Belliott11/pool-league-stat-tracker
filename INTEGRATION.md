@@ -254,16 +254,23 @@ the imbalanced-games work above, extending it here was the entire change needed 
 of those panels respect the season boundary and its own toggle — no new call sites to touch.
 `includePastSeasons` (`localStorage["poolLeagueIncludePastSeasons"]`) is the toggle itself, same
 default-off/persisted/button-relabels-itself pattern as `includeImbalancedGames`, with one
-addition: the button (`togglePastSeasonsBtn`) is disabled with an explanatory `title` whenever
-`state.currentSeasonStartedAt` is `null`, since the toggle is a genuine no-op until a season's
-been closed at least once (`updatePastSeasonsBtnLabel()` handles both the label and the
-disabled state, called from `renderLeaderboard()` same as the other two button-label updaters).
+addition: disabled with an explanatory `title` whenever `state.currentSeasonStartedAt` is `null`,
+since the toggle is a genuine no-op until a season's been closed at least once. **Two buttons
+drive this one flag** — `togglePastSeasonsBtn` (Leaderboard) and `togglePastSeasonsBtnPlayer`
+(Player Detail's own Past Seasons panel, added so combining a specific player's history doesn't
+require switching to the Leaderboard first) — both listed in `PAST_SEASONS_TOGGLE_BTN_IDS` and
+kept in sync by one shared `togglePastSeasonsInclusion()` handler: it flips `includePastSeasons`,
+persists it, calls `updatePastSeasonsBtnLabel()` (which now loops both ids, relabeling/disabling
+whichever exist), then re-renders `renderLeaderboard()` unconditionally and `renderPlayerDetail()`
+only if `currentPlayerId` is set — so the view not currently on screen still ends up correct
+without an extra render call showing up as a visible cost.
 
 **Export → Data Management → Start New Season** (`app.js`, near `resetDataBtn`) is the only thing
 that writes to these two fields: it `prompt()`s for a label, pushes `{label, startedAt:
 state.currentSeasonStartedAt, endedAt: today}` onto `seasonHistory`, and sets
 `currentSeasonStartedAt = today` — that's the entire "close a season" operation as far as game/stat
-data goes. It does **not** touch `state.games`, `state.players`, or any player's stats; it only
+data goes. It does **not** touch `state.games`, `state.players`, `state.playerPhysicalOverrides`
+(a player's height/build/role edits from the Players tab), or any player's stats; it only
 also deletes every locally-stored video blob (`getAllStoredVideoIds()` → `deleteVideoFile()` for
 each) and clears `state.masterVideos`, since those are large and re-watching last season's footage
 isn't the point of keeping the stats — a past game's `masterVideoId`/local video reference just
@@ -1198,16 +1205,54 @@ per entry. `heightIn` is parsed by hand from the sheet's "Height/Build" column's
 qualitative half (skinny through very muscular — a bare pounds figure like "175 lbs" isn't used
 on its own, just folded into the same judgment call, since weight means nothing without a frame
 to compare it against). `roles` is Claude's own five-bucket read of the "Preferred Role" column's
-free text (`scorer` / `defender` / `rebounder` / `playmaker` / `role-player`), stored as an array
-— an interpretation, not Ben's own explicit tag. Most players get one entry; a handful whose
-notes clearly describe two distinct contributions (e.g. Ben: "lockdown defender... facilitator/
-passer on offense" → `["defender", "playmaker"]`) carry two, at Ben's explicit request that
-players not be forced into a single bucket — every consumer of `roles` (`scorePhysicalBalance()`'s
-role-variance tally, the results UI's role-count summary and hover tooltip) treats a two-role
-player as counting toward both roles, never splitting credit between them. `note` keeps the
-original sentence specifically so a mismatched categorization is visible (surfaced as a tooltip
-in the UI) rather than hidden inside a score. A player missing from this table (no Player
-Profiles row) just doesn't contribute to any part of what it feeds.
+free text (`scorer` / `defender` / `physical` / `playmaker` / `role-player` — `physical` was
+`rebounder` originally, renamed at Ben's request since it covers more than just rebounding),
+stored as an array — an interpretation, not Ben's own explicit tag (though a few, like Adam's and
+Zach's defense, are now Ben's own qualifiers added straight to the sheet's Preferred Role
+column). Most players get one entry; a handful whose scouting clearly describes two distinct,
+genuinely-strong contributions (e.g. Ben: "lockdown defender... facilitator/passer on offense" →
+`["defender", "playmaker"]`) carry two — hedging language ("mediocre", "average", "fine") is
+deliberately not enough to earn a second role on its own. Every consumer of `roles`
+(`scorePhysicalBalance()`'s role-variance tally, the results UI's role-count summary and hover
+tooltip, the Players tab tag list) treats a two-role player as counting toward both roles, never
+splitting credit between them. `note` originally kept the scouting sentence a categorization came
+from; cleared to `""` for every entry at Ben's explicit request, so tags display with no hover
+text by default — still a real field (the editor below still writes to it), just empty out of
+the box. A player missing from this table (no Player Profiles row) just doesn't contribute to
+any part of what it feeds.
+
+**`state.playerPhysicalOverrides` (`loadState()`, `app.js`) lets any of this be edited from the
+Players tab instead of by hand-editing `PLAYER_PHYSICAL_DATA` in the source — added when Ben
+asked for "the ability to edit tags in app."** A plain object keyed by player id, same shape as a
+`PLAYER_PHYSICAL_DATA` entry. Every reader of a player's physical profile goes through
+`getPlayerPhysicalData(id)` (`app.js`, right after `PHYSICAL_ROLE_LABELS`/`BUILD_LABELS`) —
+`state.playerPhysicalOverrides[id] || PLAYER_PHYSICAL_DATA[id]` — never straight at
+`PLAYER_PHYSICAL_DATA`, so a saved edit is picked up everywhere (Balance Teams' tiebreak, the
+Players tab tag list) with one change. An override is a **whole-object replacement**, not a
+partial merge: `renderPhysicalProfileEditor()`'s Save handler always writes all four fields
+(`heightIn`, `build`, `roles`, `note`) together, so there's never a question of which fields came
+from the sheet vs. the UI, and an edited role can never accidentally pair with a stale hardcoded
+height. Reset to Default just `delete`s the override key, falling back to whatever
+`PLAYER_PHYSICAL_DATA[id]` already had (or to no profile at all, for a player who was never in
+the original sheet) — Start New Season never touches this key either, so an edited profile
+survives a season close the same way the roster and games do.
+
+**The Players tab itself (`renderPlayers()`) now shows a color-coded tag row per player, driven
+by `physicalProfileTags(phys)`** — one `{label, kind}` entry per role. Height and build stay real
+fields (still feed the Balance Teams tiebreak, still editable in the form below) but deliberately
+aren't surfaced as their own tag here — an earlier version added a build tag too, walked back per
+direct feedback that a roster scan doesn't need a "Strong"/"Skinny" chip alongside role. `kind`
+maps straight to a `.profile-tag-<kind>` CSS class (`style.css`), each backed by its own
+`--tag-*-bg`/
+`--tag-*-text` custom property pair in `theme.css` (defined for light, `prefers-color-scheme:
+dark`, and the explicit `data-theme="dark"` override, same three-block pattern every other token
+in that file follows) — `role-player` deliberately has no dedicated hue and falls through to
+`.profile-tag`'s own neutral default, since it's the "nothing stands out" catch-all rather than a
+real specialization. **Edit Tags** toggles `renderPhysicalProfileEditor(p, phys)` open right
+under that player's row (`editingPhysicalProfileId`, a module-level variable so it survives
+`renderPlayers()`'s full-list rebuild on every add/remove/edit) — height as separate feet/inches
+number inputs, build as a `<select>` over `BUILD_LABELS`, roles as one checkbox per
+`PHYSICAL_ROLE_LABELS` entry, and a free-text note input.
 
 **Two mechanisms read `PLAYER_PHYSICAL_DATA`, both in `generateBalancedTeamSets()`, and both are
 explicitly scoped to never override quality — Ben was direct about this when it was built:
@@ -1224,7 +1269,7 @@ weakest of the three signals to lean on, then set equal to height's own weight p
 guess at vague prose like "decently sized") — both mirror `scoreTeamSet()`'s own
 average-not-total reasoning, uneven team sizes shouldn't read a bigger team as automatically
 "taller" or "stronger" — and, weighted 1.5× higher than either, the summed *variance* of each
-role tag's per-team count, tallied via `(PLAYER_PHYSICAL_DATA[id]?.roles || []).includes(role)`
+role tag's per-team count, tallied via `(getPlayerPhysicalData(id)?.roles || []).includes(role)`
 so a player with two roles (see above) counts toward each one's own variance independently (role
 carries the most weight of the three; height and build are now tied for second, both
 deliberately light). This score only ever gets consulted as a tiebreaker: `generateBalancedTeamSets()`

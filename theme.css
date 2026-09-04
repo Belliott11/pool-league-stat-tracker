@@ -40,6 +40,19 @@
   --glow-1: #e2f3f1;
   --glow-2: #eef4e9;
 
+  /* Player-profile role tags (Players tab) — one hue per role so a roster scan reads by color,
+     not just label text. role-player deliberately stays neutral (the --surface-tint/--muted
+     pairing everything else on the page already uses) since it's the "nothing stands out"
+     catch-all, not a real specialization. */
+  --tag-scorer-bg: #fde6d0;
+  --tag-scorer-text: #9a5412;
+  --tag-defender-bg: #dbe9fb;
+  --tag-defender-text: #1f5599;
+  --tag-physical-bg: #ede2fb;
+  --tag-physical-text: #6b3fa0;
+  --tag-playmaker-bg: #ddf3df;
+  --tag-playmaker-text: #257a3e;
+
   /* Shape + elevation — small radius, flat resting state (badges/pills stay full-round
      regardless of this token, see .badge in style.css) */
   --radius: 8px;
@@ -82,6 +95,14 @@
     --glow-2: rgba(51, 203, 192, 0.04);
     --shadow-sm: none;
     --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.35);
+    --tag-scorer-bg: #3a2712;
+    --tag-scorer-text: #f2ad5c;
+    --tag-defender-bg: #16283f;
+    --tag-defender-text: #7fb4f2;
+    --tag-physical-bg: #2a1f3f;
+    --tag-physical-text: #c9a3f2;
+    --tag-playmaker-bg: #14301c;
+    --tag-playmaker-text: #6fdb8a;
   }
 }
 
@@ -111,4 +132,12 @@
   --glow-2: rgba(51, 203, 192, 0.04);
   --shadow-sm: none;
   --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --tag-scorer-bg: #3a2712;
+  --tag-scorer-text: #f2ad5c;
+  --tag-defender-bg: #16283f;
+  --tag-defender-text: #7fb4f2;
+  --tag-physical-bg: #2a1f3f;
+  --tag-physical-text: #c9a3f2;
+  --tag-playmaker-bg: #14301c;
+  --tag-playmaker-text: #6fdb8a;
 }

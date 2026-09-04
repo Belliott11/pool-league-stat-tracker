@@ -577,6 +577,88 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
 }
+.roster-row-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.profile-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.profile-tag {
+  /* Default = role-player / no specific hue below: the same neutral surface/muted pairing used
+     elsewhere on the page, since "role-player" is the catch-all "nothing stands out" bucket, not
+     a fourth real specialization deserving its own color. */
+  background: var(--surface-tint);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.profile-tag-scorer { background: var(--tag-scorer-bg); color: var(--tag-scorer-text); border-color: transparent; }
+.profile-tag-defender { background: var(--tag-defender-bg); color: var(--tag-defender-text); border-color: transparent; }
+.profile-tag-physical { background: var(--tag-physical-bg); color: var(--tag-physical-text); border-color: transparent; }
+.profile-tag-playmaker { background: var(--tag-playmaker-bg); color: var(--tag-playmaker-text); border-color: transparent; }
+
+/* Inline "Edit Tags" form (Players tab) — appended as its own row right under the player it
+   edits, not a modal, so it stays anchored to the roster list it's changing. */
+.physical-profile-editor {
+  background: var(--surface-tint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin: 4px 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.physical-profile-editor-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+.physical-profile-editor-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.physical-profile-height-inputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 400;
+}
+.physical-profile-height-inputs input { width: 52px; }
+.physical-profile-note-label { flex: 1; min-width: 220px; }
+.physical-profile-note-label input { width: 100%; }
+.physical-profile-roles {
+  gap: 12px;
+}
+.physical-profile-role-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+.physical-profile-role-check input { width: auto; }
+.physical-profile-editor-actions {
+  display: flex;
+  gap: 8px;
+}
 
 /* Roster assignment per game */
 .roster-assignment {

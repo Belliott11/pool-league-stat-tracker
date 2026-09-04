@@ -165,6 +165,12 @@ function loadState() {
   // that could drift out of sync with a formula change later.
   s.seasonHistory = s.seasonHistory || [];
   s.currentSeasonStartedAt = s.currentSeasonStartedAt || null;
+  // Per-player edits to the hand-transcribed PLAYER_PHYSICAL_DATA below, made from the Players
+  // tab UI. Keyed by player id, same shape as a PLAYER_PHYSICAL_DATA entry ({ heightIn, build,
+  // roles, note }) — a full replacement when present, not a partial merge, so there's never a
+  // question of which fields came from the sheet vs. the UI. Lets Ben correct or extend a
+  // read without editing app.js by hand.
+  s.playerPhysicalOverrides = s.playerPhysicalOverrides || {};
   return s;
 }
 
@@ -280,6 +286,20 @@ document.getElementById("addPlayerForm").addEventListener("submit", e => {
   renderPlayers();
 });
 
+// One entry per role a player has — each tagged with its own `kind` so the renderer can
+// color-code it (see .profile-tag-* in style.css). Build/height stay real fields (still feed the
+// Balance Teams tiebreak, still editable below) but aren't surfaced as their own tag here, per
+// direct feedback that a roster scan doesn't need a "Strong"/"Skinny" chip alongside role.
+function physicalProfileTags(phys) {
+  if (!phys) return [];
+  return phys.roles.map(r => ({ label: PHYSICAL_ROLE_LABELS[r], kind: r }));
+}
+
+// Only one player's tag editor open at a time — renderPlayers() rebuilds the whole list on every
+// call (add/remove/edit), so this needs to survive that rebuild rather than living as local state
+// inside it.
+let editingPhysicalProfileId = null;
+
 function renderPlayers() {
   const list = document.getElementById("playersList");
   list.innerHTML = "";
@@ -290,7 +310,28 @@ function renderPlayers() {
   [...state.players].sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
     const row = document.createElement("div");
     row.className = "roster-row";
-    row.innerHTML = `<span>${escapeHtml(p.name)}</span>`;
+    // Notable things from Ben's own Player Profiles scouting — role(s) plus build, but only when
+    // build is notable (skinny/strong end of the scale, not "Average") — a quick visual scan of
+    // who's who on the roster, same profile data the Balance Teams tiebreak already reads, just
+    // surfaced here too, editable from this tab (see renderPhysicalProfileEditor() below). Hover
+    // any tag for Ben's original scouting sentence.
+    const phys = getPlayerPhysicalData(p.id);
+    const tags = physicalProfileTags(phys);
+    const tagsTitle = phys?.note ? ` title="${escapeHtml(phys.note)}"` : "";
+    const tagsHtml = tags.length > 0
+      ? `<span class="profile-tags"${tagsTitle}>${tags.map(t => `<span class="profile-tag profile-tag-${t.kind}">${escapeHtml(t.label)}</span>`).join("")}</span>`
+      : "";
+    row.innerHTML = `<span class="roster-row-name">${escapeHtml(p.name)}${tagsHtml}</span>`;
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "icon-btn";
+    editBtn.textContent = editingPhysicalProfileId === p.id ? "Close" : "Edit Tags";
+    editBtn.addEventListener("click", () => {
+      editingPhysicalProfileId = editingPhysicalProfileId === p.id ? null : p.id;
+      renderPlayers();
+    });
+    row.appendChild(editBtn);
+
     const delBtn = document.createElement("button");
     delBtn.className = "icon-btn";
     delBtn.textContent = "Remove";
@@ -302,7 +343,86 @@ function renderPlayers() {
     });
     row.appendChild(delBtn);
     list.appendChild(row);
+
+    if (editingPhysicalProfileId === p.id) {
+      list.appendChild(renderPhysicalProfileEditor(p, phys));
+    }
   });
+}
+
+// Inline height/build/role/note editor for one player, appended right under their roster row.
+// Always writes a full replacement object to state.playerPhysicalOverrides[id] on Save — never a
+// partial merge — so a saved profile is always internally consistent rather than mixing an
+// edited role with a stale hardcoded height. "Reset to Default" clears the override outright,
+// falling back to the hand-transcribed PLAYER_PHYSICAL_DATA (or to no profile at all, for a
+// player who was never in the original sheet) rather than leaving an empty override behind.
+function renderPhysicalProfileEditor(p, phys) {
+  const wrap = document.createElement("div");
+  wrap.className = "physical-profile-editor";
+  const heightFt = phys ? Math.floor(phys.heightIn / 12) : 5;
+  const heightIn = phys ? phys.heightIn % 12 : 10;
+  const build = phys?.build ?? 3;
+  const roles = phys?.roles ?? [];
+  const note = phys?.note ?? "";
+  const hasOverride = !!state.playerPhysicalOverrides[p.id];
+
+  wrap.innerHTML = `
+    <div class="physical-profile-editor-row">
+      <label>Height
+        <span class="physical-profile-height-inputs">
+          <input type="number" min="3" max="8" class="physHeightFt" value="${heightFt}"> ft
+          <input type="number" min="0" max="11" class="physHeightIn" value="${heightIn}"> in
+        </span>
+      </label>
+      <label>Build
+        <select class="physBuild">
+          ${Object.entries(BUILD_LABELS).map(([v, label]) => `<option value="${v}" ${Number(v) === build ? "selected" : ""}>${escapeHtml(label)}</option>`).join("")}
+        </select>
+      </label>
+      <label class="physical-profile-note-label">Note
+        <input type="text" class="physNote" value="${escapeHtml(note)}" placeholder="e.g. Lockdown defender on top opponent">
+      </label>
+    </div>
+    <div class="physical-profile-editor-row physical-profile-roles">
+      ${Object.entries(PHYSICAL_ROLE_LABELS).map(([key, label]) => `
+        <label class="physical-profile-role-check">
+          <input type="checkbox" class="physRole" value="${key}" ${roles.includes(key) ? "checked" : ""}>
+          ${escapeHtml(label)}
+        </label>
+      `).join("")}
+    </div>
+    <div class="physical-profile-editor-actions">
+      <button type="button" class="secondary-btn physSaveBtn">Save</button>
+      <button type="button" class="icon-btn physCancelBtn">Cancel</button>
+      ${hasOverride ? '<button type="button" class="icon-btn physResetBtn">Reset to Default</button>' : ""}
+    </div>
+  `;
+
+  wrap.querySelector(".physSaveBtn").addEventListener("click", () => {
+    const ft = parseInt(wrap.querySelector(".physHeightFt").value, 10) || 0;
+    const inches = parseInt(wrap.querySelector(".physHeightIn").value, 10) || 0;
+    const buildVal = parseInt(wrap.querySelector(".physBuild").value, 10);
+    const selectedRoles = Array.from(wrap.querySelectorAll(".physRole:checked")).map(cb => cb.value);
+    const noteVal = wrap.querySelector(".physNote").value.trim();
+    state.playerPhysicalOverrides[p.id] = { heightIn: ft * 12 + inches, build: buildVal, roles: selectedRoles, note: noteVal };
+    saveState();
+    editingPhysicalProfileId = null;
+    renderPlayers();
+  });
+  wrap.querySelector(".physCancelBtn").addEventListener("click", () => {
+    editingPhysicalProfileId = null;
+    renderPlayers();
+  });
+  const resetBtn = wrap.querySelector(".physResetBtn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      delete state.playerPhysicalOverrides[p.id];
+      saveState();
+      editingPhysicalProfileId = null;
+      renderPlayers();
+    });
+  }
+  return wrap;
 }
 
 // ---------- Games ----------
@@ -637,45 +757,62 @@ PLAYER_REPUTATION_DATA.forEach(r => { PLAYER_REPUTATION_BY_ID[r.slug] = r; });
 // 5 very muscular or bigger-and-physical) — the numeric weight when given (e.g. "175 lbs") isn't
 // itself used, just folded into the same 1-5 judgment call, since a bare pounds figure means
 // nothing without a frame to compare it against. roles is Claude's own read of the "Preferred
-// Role" column's free text, bucketed into five rough categories (scorer / defender / rebounder /
-// playmaker / role-player) purely so there's something to spread evenly across teams below — not
-// Ben's own explicit tag. Most players get one role; a few whose notes clearly describe two
-// distinct contributions (e.g. Ben: lockdown defender AND facilitator) carry a second — a player
-// with two roles counts toward both when roleImbalance is tallied, so listing both here can only
-// ever make more of a team's coverage visible, never invent a role a player doesn't have. `note`
-// keeps the original sentence specifically so a categorization that reads wrong is obvious at a
-// glance (hover a chip) rather than buried in a black-box score — relabel any of these by hand if
-// they don't match. All three are only ever a *tiebreaker* (see scorePhysicalBalance()) — real
+// Role" column's free text, bucketed into five rough categories (scorer / defender / physical /
+// playmaker / role-player) purely so there's something to spread evenly across teams below —
+// mostly Claude's own read, though a few (e.g. Adam/Zach's defense) are now Ben's own explicit
+// added qualifiers straight from the sheet. Most players get one role; a few whose notes clearly
+// describe a second *genuine strength*, not just a mention, carry a second (e.g. Ben: "lockdown
+// defender" AND "facilitator/passer"; Adam: "strong defender"; Lukas: "a pest on defense") — a
+// player with two roles counts toward both when roleImbalance is tallied, so listing both here
+// can only ever make more of a team's coverage visible, never invent a role a player doesn't
+// have. Hedging language ("mediocre", "average", "below-average", "fine", "modest") is
+// deliberately NOT enough to earn a role on its own (e.g. Zach and Alex's defense is explicitly
+// "mediocre" per Ben, Reilly's is "fine") — the whole point of a role tag is a real
+// specialization to spread across teams, and mediocre-at-something isn't that. `note` used to
+// keep the original scouting sentence behind each categorization (so a tag that read wrong was
+// obvious at a glance, hovering a chip); cleared to "" at Ben's explicit request, so tags stand
+// on their own now with no hover text. Still a real field — the Players tab editor still writes
+// to it — just empty by default here. All three are only ever a *tiebreaker* (see
+// scorePhysicalBalance()) — real
 // Two-Way spread always wins when the two disagree. A player missing here (no Player Profiles
 // row) just doesn't contribute to any part of the tiebreak.
 const PLAYER_PHYSICAL_DATA = {
-  ben: { heightIn: 72, build: 3, roles: ["defender", "playmaker"], note: "Lockdown defender on top opponent; facilitator/passer on offense" },
-  adam: { heightIn: 64, build: 5, roles: ["scorer"], note: "Catch-and-shoot threat" },
-  zach: { heightIn: 67, build: 1, roles: ["scorer"], note: "High-volume shooter" },
-  alex: { heightIn: 72, build: 3, roles: ["scorer"], note: "Ball-dominant scorer; doesn't pass frequently" },
-  evan: { heightIn: 69, build: 4, roles: ["scorer"], note: "Physical finisher around the rim; doesn't playmake much" },
-  "g-ian": { heightIn: 70, build: 4, roles: ["rebounder"], note: "Physical presence/rebounder; inconsistent on both ends otherwise" },
-  "g-michael-t": { heightIn: 70, build: 2, roles: ["scorer"], note: "Shoots everything; low shot discipline" },
-  "g-lukas": { heightIn: 67, build: 3, roles: ["rebounder"], note: "Comfortable in the post" },
-  reilly: { heightIn: 71, build: 3, roles: ["scorer"], note: "Midrange threat; plays fine defense" },
-  viraj: { heightIn: 69, build: 2, roles: ["role-player"], note: "Third option on almost every team he's on" },
-  sean: { heightIn: 72, build: 4, roles: ["defender", "scorer"], note: "On-ball pest defensively; post scorer, doesn't shoot much" },
-  will: { heightIn: 68, build: 4, roles: ["rebounder"], note: "Physical, clears space; fouls a lot; not much skill either end" },
-  phillip: { heightIn: 73, build: 4, roles: ["scorer", "defender"], note: "Shoots from anywhere; can drive and dunk; blocks (sometimes goaltends)" },
-  jason: { heightIn: 70, build: 2, roles: ["defender"], note: "Defensive pest; can't shoot, occasional dunk as only real scoring source" },
-  "logan-hoskins": { heightIn: 72, build: 4, roles: ["defender", "scorer"], note: "Great on-ball defender; midrange threat" },
-  "logan-watson": { heightIn: 69, build: 3, roles: ["role-player"], note: "Decently physical; modest midrange shooter" },
-  kayla: { heightIn: 67, build: 3, roles: ["role-player"], note: "Takes up space; no developed skill in any facet" },
-  ryder: { heightIn: 70, build: 2, roles: ["playmaker"], note: "Passes well, finds open space; not very talented on either end" },
-  "g-danny": { heightIn: 70, build: 5, roles: ["rebounder"], note: "Plays physical well; no real basketball talent" },
-  "g-michael-k": { heightIn: 70, build: 2, roles: ["scorer"], note: "Shoots a lot, not very accurately; not very physical" }
+  ben: { heightIn: 72, build: 3, roles: ["defender", "playmaker"], note: "" },
+  adam: { heightIn: 64, build: 5, roles: ["scorer", "defender"], note: "" },
+  zach: { heightIn: 67, build: 1, roles: ["scorer"], note: "" },
+  alex: { heightIn: 72, build: 3, roles: ["scorer"], note: "" },
+  evan: { heightIn: 69, build: 4, roles: ["scorer"], note: "" },
+  "g-ian": { heightIn: 70, build: 4, roles: ["physical"], note: "" },
+  "g-michael-t": { heightIn: 70, build: 2, roles: ["scorer"], note: "" },
+  "g-lukas": { heightIn: 67, build: 3, roles: ["physical", "defender"], note: "" },
+  reilly: { heightIn: 71, build: 3, roles: ["scorer"], note: "" },
+  viraj: { heightIn: 69, build: 2, roles: ["role-player"], note: "" },
+  sean: { heightIn: 72, build: 4, roles: ["defender", "scorer"], note: "" },
+  will: { heightIn: 68, build: 4, roles: ["physical"], note: "" },
+  phillip: { heightIn: 73, build: 4, roles: ["scorer", "defender"], note: "" },
+  jason: { heightIn: 70, build: 2, roles: ["defender"], note: "" },
+  "logan-hoskins": { heightIn: 72, build: 4, roles: ["defender", "scorer"], note: "" },
+  "logan-watson": { heightIn: 69, build: 3, roles: ["role-player"], note: "" },
+  kayla: { heightIn: 67, build: 3, roles: ["role-player"], note: "" },
+  ryder: { heightIn: 70, build: 2, roles: ["playmaker"], note: "" },
+  "g-danny": { heightIn: 70, build: 5, roles: ["physical"], note: "" },
+  "g-michael-k": { heightIn: 70, build: 2, roles: ["scorer"], note: "" }
 };
 function formatHeightIn(totalInches) {
   const rounded = Math.round(totalInches);
   return `${Math.floor(rounded / 12)}'${rounded % 12}"`;
 }
-const PHYSICAL_ROLE_LABELS = { scorer: "Scorer", defender: "Defender", rebounder: "Rebounder", playmaker: "Playmaker", "role-player": "Role Player" };
+const PHYSICAL_ROLE_LABELS = { scorer: "Scorer", defender: "Defender", physical: "Physical", playmaker: "Playmaker", "role-player": "Role Player" };
 const BUILD_LABELS = { 1: "Very Skinny", 2: "Skinny", 3: "Average", 4: "Strong", 5: "Very Strong" };
+
+// Every reader of a player's physical/role profile goes through here, never straight at
+// PLAYER_PHYSICAL_DATA — state.playerPhysicalOverrides (edited from the Players tab) wins
+// whole-object when present, so an edited player's entry never accidentally blends a UI-edited
+// role with a stale hardcoded height. undefined (not null) when neither has an entry, matching
+// PLAYER_PHYSICAL_DATA[id]'s own lookup-miss behavior everywhere this used to be called directly.
+function getPlayerPhysicalData(id) {
+  return state.playerPhysicalOverrides?.[id] || PLAYER_PHYSICAL_DATA[id];
+}
 
 // Converts a season-average power-ranking percentile (0-100, 50 = exactly average that night)
 // into a Two-Way/20-equivalent estimate. Calibrated against the real spread of this roster's own
@@ -941,7 +1078,7 @@ function teamWinRateAdjustment(team, winRateMap) {
 function scorePhysicalBalance(teams) {
   const avgOf = field => {
     const vals = teams
-      .map(team => team.map(id => PLAYER_PHYSICAL_DATA[id]?.[field]).filter(v => v !== undefined))
+      .map(team => team.map(id => getPlayerPhysicalData(id)?.[field]).filter(v => v !== undefined))
       .filter(known => known.length > 0)
       .map(known => known.reduce((a, b) => a + b, 0) / known.length);
     return vals.length >= 2 ? Math.max(...vals) - Math.min(...vals) : 0;
@@ -953,7 +1090,7 @@ function scorePhysicalBalance(teams) {
   // "does each team have coverage of this role," which a two-role player satisfies for either.
   let roleImbalance = 0;
   Object.keys(PHYSICAL_ROLE_LABELS).forEach(role => {
-    const countsPerTeam = teams.map(team => team.filter(id => (PLAYER_PHYSICAL_DATA[id]?.roles || []).includes(role)).length);
+    const countsPerTeam = teams.map(team => team.filter(id => (getPlayerPhysicalData(id)?.roles || []).includes(role)).length);
     const total = countsPerTeam.reduce((a, b) => a + b, 0);
     if (total === 0) return;
     const mean = total / teams.length;
@@ -980,12 +1117,12 @@ function scorePhysicalBalance(teams) {
 // league roster. null when nobody in the group has height data at all (the height-floor
 // constraint below is a no-op in that case, same as it would be for any group with zero signal).
 function averageAttendeeHeight(attendeeIds) {
-  const heights = attendeeIds.map(id => PLAYER_PHYSICAL_DATA[id]?.heightIn).filter(h => h !== undefined);
+  const heights = attendeeIds.map(id => getPlayerPhysicalData(id)?.heightIn).filter(h => h !== undefined);
   return heights.length > 0 ? heights.reduce((a, b) => a + b, 0) / heights.length : null;
 }
 function teamHasAboveAverageHeight(team, avgHeight) {
   if (avgHeight === null) return true;
-  return team.some(id => (PLAYER_PHYSICAL_DATA[id]?.heightIn ?? -Infinity) > avgHeight);
+  return team.some(id => (getPlayerPhysicalData(id)?.heightIn ?? -Infinity) > avgHeight);
 }
 
 // Hill-climb refinement so chemistry/win-rate can actually shape which team compositions come
@@ -1160,13 +1297,13 @@ function renderBalanceResults() {
     // small callout when it's large enough to matter, so that part of the ranking isn't hidden
     // inside one blended number either.
     const teamsHtml = r.teams.map((team, ti) => {
-      const heights = team.map(id => PLAYER_PHYSICAL_DATA[id]?.heightIn).filter(h => h !== undefined);
+      const heights = team.map(id => getPlayerPhysicalData(id)?.heightIn).filter(h => h !== undefined);
       const avgHeightLabel = heights.length > 0 ? formatHeightIn(heights.reduce((a, b) => a + b, 0) / heights.length) : null;
-      const builds = team.map(id => PLAYER_PHYSICAL_DATA[id]?.build).filter(b => b !== undefined);
+      const builds = team.map(id => getPlayerPhysicalData(id)?.build).filter(b => b !== undefined);
       const avgBuildLabel = builds.length > 0 ? BUILD_LABELS[Math.round(builds.reduce((a, b) => a + b, 0) / builds.length)] : null;
       const roleCounts = {};
       team.forEach(id => {
-        (PLAYER_PHYSICAL_DATA[id]?.roles || []).forEach(role => {
+        (getPlayerPhysicalData(id)?.roles || []).forEach(role => {
           roleCounts[role] = (roleCounts[role] || 0) + 1;
         });
       });
@@ -1193,9 +1330,10 @@ function renderBalanceResults() {
           <ul>${team.map(id => {
             const name = state.players.find(p => p.id === id)?.name || "?";
             const marker = qualityMap[id]?.source === "reputation" ? " *" : "";
-            const phys = PLAYER_PHYSICAL_DATA[id];
+            const phys = getPlayerPhysicalData(id);
             const roleLabel = phys ? phys.roles.map(r => PHYSICAL_ROLE_LABELS[r]).join("/") : "";
-            const title = phys ? ` title="${escapeHtml(formatHeightIn(phys.heightIn))}, ${escapeHtml(BUILD_LABELS[phys.build])}, ${escapeHtml(roleLabel)} — ${escapeHtml(phys.note)}"` : "";
+            const titleText = phys ? `${formatHeightIn(phys.heightIn)}, ${BUILD_LABELS[phys.build]}, ${roleLabel}${phys.note ? " — " + phys.note : ""}` : "";
+            const title = phys ? ` title="${escapeHtml(titleText)}"` : "";
             return `<li${title}>${escapeHtml(name)}${marker}</li>`;
           }).join("")}</ul>
           ${physicalLine}
@@ -5082,25 +5220,38 @@ document.getElementById("toggleImbalancedGamesBtn").addEventListener("click", ()
   renderLeaderboard();
 });
 
+// Two buttons drive the same one global includePastSeasons flag — the original on the
+// Leaderboard, and a second on Player Detail's own Past Seasons panel (added so combining a
+// player's history doesn't require hopping back to the Leaderboard first just to flip it). Both
+// stay in sync automatically since they share this one updater and one flag.
+const PAST_SEASONS_TOGGLE_BTN_IDS = ["togglePastSeasonsBtn", "togglePastSeasonsBtnPlayer"];
 function updatePastSeasonsBtnLabel() {
-  const btn = document.getElementById("togglePastSeasonsBtn");
-  if (!btn) return;
-  if (!state.currentSeasonStartedAt) {
-    btn.textContent = "Include Past Seasons";
-    btn.disabled = true;
-    btn.title = "No season has been closed yet (Export → Data Management → Start New Season) — nothing archived to include.";
-    return;
-  }
-  btn.disabled = false;
-  btn.title = "";
-  btn.textContent = includePastSeasons ? "Exclude Past Seasons" : "Include Past Seasons";
+  PAST_SEASONS_TOGGLE_BTN_IDS.forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    if (!state.currentSeasonStartedAt) {
+      btn.textContent = "Include Past Seasons";
+      btn.disabled = true;
+      btn.title = "No season has been closed yet (Export → Data Management → Start New Season) — nothing archived to include.";
+      return;
+    }
+    btn.disabled = false;
+    btn.title = "";
+    btn.textContent = includePastSeasons ? "Exclude Past Seasons" : "Include Past Seasons";
+  });
 }
-document.getElementById("togglePastSeasonsBtn").addEventListener("click", () => {
+function togglePastSeasonsInclusion() {
   includePastSeasons = !includePastSeasons;
   localStorage.setItem(INCLUDE_PAST_SEASONS_KEY, String(includePastSeasons));
   updatePastSeasonsBtnLabel();
+  // isQualifyingGame() feeds both views off the same flag, so both need a fresh render — cheap
+  // even for the one not currently on screen, and keeps it correct whenever the user switches
+  // back rather than re-deriving on tab switch.
   renderLeaderboard();
-});
+  if (currentPlayerId) renderPlayerDetail();
+}
+document.getElementById("togglePastSeasonsBtn").addEventListener("click", togglePastSeasonsInclusion);
+document.getElementById("togglePastSeasonsBtnPlayer").addEventListener("click", togglePastSeasonsInclusion);
 
 // Nulls (no attempts yet, etc.) always sort last regardless of direction.
 function compareForSort(a, b, dir) {
@@ -6393,7 +6544,7 @@ document.getElementById("startNewSeasonBtn").addEventListener("click", async () 
   const today = new Date().toISOString().slice(0, 10);
   const label = prompt('Name the season that\'s ending (shown on player profiles and the "Include Past Seasons" toggle) — e.g. "Summer 2026":', "");
   if (label === null) return;
-  if (!confirm("This archives every current game behind today's date and clears locally-stored video files. Games, stats, and the player roster are all kept — download JSON first if you want a full backup anyway. Continue?")) return;
+  if (!confirm("This archives every current game behind today's date and clears locally-stored video files. Games, stats, the player roster, and every player's height/build/role tags are all kept — download JSON first if you want a full backup anyway. Continue?")) return;
   state.seasonHistory.push({ label: label.trim() || `Season ending ${today}`, startedAt: state.currentSeasonStartedAt, endedAt: today });
   state.currentSeasonStartedAt = today;
   saveState();
@@ -6410,7 +6561,7 @@ document.getElementById("startNewSeasonBtn").addEventListener("click", async () 
 
 document.getElementById("resetDataBtn").addEventListener("click", () => {
   if (!confirm("This will permanently delete all players, games, and stats. Continue?")) return;
-  state = { players: [], games: [], masterVideos: [], seasonHistory: [], currentSeasonStartedAt: null };
+  state = { players: [], games: [], masterVideos: [], seasonHistory: [], currentSeasonStartedAt: null, playerPhysicalOverrides: {} };
   saveState();
   renderPlayers();
   renderGames();
