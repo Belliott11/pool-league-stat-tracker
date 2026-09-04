@@ -348,7 +348,12 @@ function renderPlayers() {
     // any tag for Ben's original scouting sentence.
     const phys = getPlayerPhysicalData(p.id);
     const tags = physicalProfileTags(phys);
-    const tagsTitle = phys?.note ? ` title="${escapeHtml(phys.note)}"` : "";
+    // Effort deliberately never becomes its own tag pill (see PLAYER_PHYSICAL_DATA's own
+    // comment) — this hover title is the one place it's visible on this row.
+    const tagsTitleText = phys?.effort !== undefined
+      ? `Effort: ${EFFORT_LABELS[phys.effort]}${phys.note ? " — " + phys.note : ""}`
+      : (phys?.note || "");
+    const tagsTitle = tagsTitleText ? ` title="${escapeHtml(tagsTitleText)}"` : "";
     const tagsHtml = tags.length > 0
       ? `<span class="profile-tags"${tagsTitle}>${tags.map(t => `<span class="profile-tag profile-tag-${t.kind}">${escapeHtml(t.label)}</span>`).join("")}</span>`
       : "";
@@ -393,6 +398,7 @@ function renderPhysicalProfileEditor(p, phys) {
   const heightFt = phys ? Math.floor(phys.heightIn / 12) : 5;
   const heightIn = phys ? phys.heightIn % 12 : 10;
   const build = phys?.build ?? 3;
+  const effort = phys?.effort ?? 2;
   const roles = phys?.roles ?? [];
   const note = phys?.note ?? "";
   const hasOverride = !!state.playerPhysicalOverrides[p.id];
@@ -408,6 +414,11 @@ function renderPhysicalProfileEditor(p, phys) {
       <label>Build
         <select class="physBuild">
           ${Object.entries(BUILD_LABELS).map(([v, label]) => `<option value="${v}" ${Number(v) === build ? "selected" : ""}>${escapeHtml(label)}</option>`).join("")}
+        </select>
+      </label>
+      <label>Effort
+        <select class="physEffort">
+          ${Object.entries(EFFORT_LABELS).map(([v, label]) => `<option value="${v}" ${Number(v) === effort ? "selected" : ""}>${escapeHtml(label)}</option>`).join("")}
         </select>
       </label>
       <label class="physical-profile-note-label">Note
@@ -433,9 +444,10 @@ function renderPhysicalProfileEditor(p, phys) {
     const ft = parseInt(wrap.querySelector(".physHeightFt").value, 10) || 0;
     const inches = parseInt(wrap.querySelector(".physHeightIn").value, 10) || 0;
     const buildVal = parseInt(wrap.querySelector(".physBuild").value, 10);
+    const effortVal = parseInt(wrap.querySelector(".physEffort").value, 10);
     const selectedRoles = Array.from(wrap.querySelectorAll(".physRole:checked")).map(cb => cb.value);
     const noteVal = wrap.querySelector(".physNote").value.trim();
-    state.playerPhysicalOverrides[p.id] = { heightIn: ft * 12 + inches, build: buildVal, roles: selectedRoles, note: noteVal };
+    state.playerPhysicalOverrides[p.id] = { heightIn: ft * 12 + inches, build: buildVal, effort: effortVal, roles: selectedRoles, note: noteVal };
     saveState();
     editingPhysicalProfileId = null;
     renderPlayers();
@@ -803,31 +815,38 @@ PLAYER_REPUTATION_DATA.forEach(r => { PLAYER_REPUTATION_BY_ID[r.slug] = r; });
 // keep the original scouting sentence behind each categorization (so a tag that read wrong was
 // obvious at a glance, hovering a chip); cleared to "" at Ben's explicit request, so tags stand
 // on their own now with no hover text. Still a real field — the Players tab editor still writes
-// to it — just empty by default here. All three are only ever a *tiebreaker* (see
-// scorePhysicalBalance()) — real
+// to it — just empty by default here. effort is hand-transcribed from the sheet's own "Effort"
+// column (Low/Medium/High/Very High) on a 1-4 scale, added per direct request that it factor in
+// as a tiebreaker WITHOUT becoming a visible tag — unlike height/build/role it never shows as a
+// .profile-tag pill anywhere (physicalProfileTags() doesn't read it at all); it only surfaces in
+// the Players tab editor and Balance Teams' plain-text "Avg effort" line, same treatment as
+// height/build get there. Reilly's sheet entry is irregular prose ("Starts high, varies by
+// teammates — will sometimes bail mid-session") rather than a clean tier, bucketed to Medium (2)
+// as the closest fit for "inconsistent, not reliably high." All four (height/build/roles/effort)
+// are only ever a *tiebreaker* (see scorePhysicalBalance()) — real
 // Two-Way spread always wins when the two disagree. A player missing here (no Player Profiles
 // row) just doesn't contribute to any part of the tiebreak.
 const PLAYER_PHYSICAL_DATA = {
-  ben: { heightIn: 72, build: 3, roles: ["defender", "playmaker"], note: "" },
-  adam: { heightIn: 64, build: 5, roles: ["scorer", "defender"], note: "" },
-  zach: { heightIn: 67, build: 1, roles: ["scorer"], note: "" },
-  alex: { heightIn: 72, build: 3, roles: ["scorer"], note: "" },
-  evan: { heightIn: 69, build: 4, roles: ["scorer"], note: "" },
-  "g-ian": { heightIn: 70, build: 4, roles: ["physical"], note: "" },
-  "g-michael-t": { heightIn: 70, build: 2, roles: ["scorer"], note: "" },
-  "g-lukas": { heightIn: 67, build: 3, roles: ["physical", "defender"], note: "" },
-  reilly: { heightIn: 71, build: 3, roles: ["scorer"], note: "" },
-  viraj: { heightIn: 69, build: 2, roles: ["role-player"], note: "" },
-  sean: { heightIn: 72, build: 4, roles: ["defender", "scorer"], note: "" },
-  will: { heightIn: 68, build: 4, roles: ["physical"], note: "" },
-  phillip: { heightIn: 73, build: 4, roles: ["scorer", "defender"], note: "" },
-  jason: { heightIn: 70, build: 2, roles: ["defender"], note: "" },
-  "logan-hoskins": { heightIn: 72, build: 4, roles: ["defender", "scorer"], note: "" },
-  "logan-watson": { heightIn: 69, build: 3, roles: ["role-player"], note: "" },
-  kayla: { heightIn: 67, build: 3, roles: ["role-player"], note: "" },
-  ryder: { heightIn: 70, build: 2, roles: ["playmaker"], note: "" },
-  "g-danny": { heightIn: 70, build: 5, roles: ["physical"], note: "" },
-  "g-michael-k": { heightIn: 70, build: 2, roles: ["scorer"], note: "" }
+  ben: { heightIn: 72, build: 3, effort: 4, roles: ["defender", "playmaker"], note: "" },
+  adam: { heightIn: 64, build: 5, effort: 4, roles: ["scorer", "defender"], note: "" },
+  zach: { heightIn: 67, build: 1, effort: 4, roles: ["scorer"], note: "" },
+  alex: { heightIn: 72, build: 3, effort: 4, roles: ["scorer"], note: "" },
+  evan: { heightIn: 69, build: 4, effort: 3, roles: ["scorer"], note: "" },
+  "g-ian": { heightIn: 70, build: 4, effort: 3, roles: ["physical"], note: "" },
+  "g-michael-t": { heightIn: 70, build: 2, effort: 2, roles: ["scorer"], note: "" },
+  "g-lukas": { heightIn: 67, build: 3, effort: 3, roles: ["physical", "defender"], note: "" },
+  reilly: { heightIn: 71, build: 3, effort: 2, roles: ["scorer"], note: "" },
+  viraj: { heightIn: 69, build: 2, effort: 2, roles: ["role-player"], note: "" },
+  sean: { heightIn: 72, build: 4, effort: 3, roles: ["defender", "scorer"], note: "" },
+  will: { heightIn: 68, build: 4, effort: 3, roles: ["physical"], note: "" },
+  phillip: { heightIn: 73, build: 4, effort: 4, roles: ["scorer", "defender"], note: "" },
+  jason: { heightIn: 70, build: 2, effort: 3, roles: ["defender"], note: "" },
+  "logan-hoskins": { heightIn: 72, build: 4, effort: 1, roles: ["defender", "scorer"], note: "" },
+  "logan-watson": { heightIn: 69, build: 3, effort: 3, roles: ["role-player"], note: "" },
+  kayla: { heightIn: 67, build: 3, effort: 2, roles: ["role-player"], note: "" },
+  ryder: { heightIn: 70, build: 2, effort: 3, roles: ["playmaker"], note: "" },
+  "g-danny": { heightIn: 70, build: 5, effort: 2, roles: ["physical"], note: "" },
+  "g-michael-k": { heightIn: 70, build: 2, effort: 2, roles: ["scorer"], note: "" }
 };
 function formatHeightIn(totalInches) {
   const rounded = Math.round(totalInches);
@@ -835,6 +854,7 @@ function formatHeightIn(totalInches) {
 }
 const PHYSICAL_ROLE_LABELS = { scorer: "Scorer", defender: "Defender", physical: "Physical", playmaker: "Playmaker", "role-player": "Role Player" };
 const BUILD_LABELS = { 1: "Very Skinny", 2: "Skinny", 3: "Average", 4: "Strong", 5: "Very Strong" };
+const EFFORT_LABELS = { 1: "Low", 2: "Medium", 3: "High", 4: "Very High" };
 
 // Every reader of a player's physical/role profile goes through here, never straight at
 // PLAYER_PHYSICAL_DATA — state.playerPhysicalOverrides (edited from the Players tab) wins
@@ -1116,6 +1136,7 @@ function scorePhysicalBalance(teams) {
   };
   const heightSpread = avgOf("heightIn");
   const buildSpread = avgOf("build");
+  const effortSpread = avgOf("effort");
 
   // A player with two roles (see PLAYER_PHYSICAL_DATA) counts toward both here — the goal is
   // "does each team have coverage of this role," which a two-role player satisfies for either.
@@ -1128,10 +1149,12 @@ function scorePhysicalBalance(teams) {
     roleImbalance += countsPerTeam.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) / teams.length;
   });
 
-  // Weighted role(1.5x) > height(0.75x) == build(0.75x) — height and build carry the same,
-  // deliberately light weight (on top of the separate, still-real height-floor guideline below);
-  // per direct feedback each should nudge a tiebreak, not be a gigantic factor in it.
-  return heightSpread * 0.75 + buildSpread * 0.75 + roleImbalance * 1.5;
+  // Weighted role(1.5x) > height(0.75x) == build(0.75x) == effort(0.75x) — height/build/effort
+  // all carry the same, deliberately light weight (on top of the separate, still-real
+  // height-floor guideline below); per direct feedback each should nudge a tiebreak, not be a
+  // gigantic factor in it. Effort never surfaces as a .profile-tag pill anywhere (unlike the
+  // other three) — it factors into balancing without becoming a visible label on a player.
+  return heightSpread * 0.75 + buildSpread * 0.75 + effortSpread * 0.75 + roleImbalance * 1.5;
 }
 
 // Season Two-Way/20 — or, for a player with no games logged yet, a reputation-based estimate
@@ -1332,6 +1355,8 @@ function renderBalanceResults() {
       const avgHeightLabel = heights.length > 0 ? formatHeightIn(heights.reduce((a, b) => a + b, 0) / heights.length) : null;
       const builds = team.map(id => getPlayerPhysicalData(id)?.build).filter(b => b !== undefined);
       const avgBuildLabel = builds.length > 0 ? BUILD_LABELS[Math.round(builds.reduce((a, b) => a + b, 0) / builds.length)] : null;
+      const efforts = team.map(id => getPlayerPhysicalData(id)?.effort).filter(e => e !== undefined);
+      const avgEffortLabel = efforts.length > 0 ? EFFORT_LABELS[Math.round(efforts.reduce((a, b) => a + b, 0) / efforts.length)] : null;
       const roleCounts = {};
       team.forEach(id => {
         (getPlayerPhysicalData(id)?.roles || []).forEach(role => {
@@ -1346,7 +1371,8 @@ function renderBalanceResults() {
         : "";
       const avgText = [
         avgHeightLabel ? `Avg height: ${avgHeightLabel}` : "",
-        avgBuildLabel ? `Avg build: ${avgBuildLabel}` : ""
+        avgBuildLabel ? `Avg build: ${avgBuildLabel}` : "",
+        avgEffortLabel ? `Avg effort: ${avgEffortLabel}` : ""
       ].filter(Boolean).join(" · ");
       const physicalLine = avgText || roleTagsHtml
         ? `<div class="balance-team-physical">${avgText ? `<div>${avgText}</div>` : ""}${roleTagsHtml}</div>`
@@ -1369,7 +1395,8 @@ function renderBalanceResults() {
             const marker = qualityMap[id]?.source === "reputation" ? " *" : "";
             const phys = getPlayerPhysicalData(id);
             const roleLabel = phys ? phys.roles.map(r => PHYSICAL_ROLE_LABELS[r]).join("/") : "";
-            const titleText = phys ? `${formatHeightIn(phys.heightIn)}, ${BUILD_LABELS[phys.build]}, ${roleLabel}${phys.note ? " — " + phys.note : ""}` : "";
+            const effortLabel = phys?.effort !== undefined ? `${EFFORT_LABELS[phys.effort]} effort, ` : "";
+            const titleText = phys ? `${formatHeightIn(phys.heightIn)}, ${BUILD_LABELS[phys.build]}, ${effortLabel}${roleLabel}${phys.note ? " — " + phys.note : ""}` : "";
             const title = phys ? ` title="${escapeHtml(titleText)}"` : "";
             return `<li${title}>${escapeHtml(name)}${marker}</li>`;
           }).join("")}</ul>

@@ -20,16 +20,17 @@ individual player, not a team.
 
 1. **Players** — add everyone in the league once. Anyone with a hand-transcribed scouting profile
    (see Balance Teams below) shows color-coded role tags next to their name (Scorer, Defender,
-   Physical, Playmaker, Role Player) — height and build still feed the Balance Teams tiebreak but
-   aren't surfaced as their own tag here. A row of the same five role chips above the roster
+   Physical, Playmaker, Role Player) — height, build, and effort still feed the Balance Teams
+   tiebreak but aren't surfaced as their own tag here (hover the tags for effort, height, build,
+   and the original note in one tooltip). A row of the same five role chips above the roster
    filters it down to players carrying any of the roles picked (click one or more to narrow,
    click again to clear) — handy once the roster's long enough that scanning for "who are my
    defenders" isn't a one-glance thing anymore. **Edit Tags** opens an inline editor (height,
-   build, role checkboxes) right under that player's row — Save replaces their profile outright
-   (not a partial merge, so it never mixes an edited role with a stale height), and **Reset to
-   Default** clears a saved edit and falls back to the original hand-transcribed profile. Edits
-   are saved per-player in `localStorage` and feed the same Balance Teams tiebreak everything
-   else in this section describes.
+   build, effort, role checkboxes) right under that player's row — Save replaces their profile
+   outright (not a partial merge, so it never mixes an edited role with a stale height), and
+   **Reset to Default** clears a saved edit and falls back to the original hand-transcribed
+   profile. Edits are saved per-player in `localStorage` and feed the same Balance Teams
+   tiebreak everything else in this section describes.
 2. **Games** — create a game (date, optional video URL, notes), then click it to open Stat Entry.
    Games are listed in chronological order (oldest first), each card headed by the actual player
    names on each side (not "Team A"/"Team B" — those labels only show for a freshly-created game
@@ -74,23 +75,27 @@ individual player, not a team.
    the exact number and source). Truly no-data players (never logged a game *or* a real-life
    party) still fall back to a neutral 0.0.
 
-   Height, build, and role — originally hand-transcribed from the same spreadsheet's "Player
-   Profiles" sheet into `PLAYER_PHYSICAL_DATA` at Ben's explicit request, now editable straight
-   from the **Players** tab (see "Editing player tags" below) — factor in too, but strictly as a
-   tiebreaker: **quality (Two-Way/20, real or estimated) always decides first.** Physical/role
-   only gets to choose between options that are already close on quality, and "close" itself
-   stretches with how much of the group is a reputation-based guess rather than a real number —
-   the less trustworthy the quality spread is (an all-reputation-estimated group), the more say
-   physical/role gets, on the theory that hundredths-of-a-point differences between guesses
-   aren't worth treating as settled. Three things feed the tiebreak, weighted role (1.5x) >
-   height (0.75x) == build (0.75x) — how evenly each player's role tag(s) (Scorer / Defender /
-   Physical / Playmaker / Role Player) spread across teams, so one side doesn't end up with every
-   tagged Defender and the other with none; a small number of players carry two roles (e.g. a
-   lockdown defender who also facilitates on offense), counting toward both when this is
-   tallied; how far apart each team's *average* height lands; and how far apart each team's
-   *average* build lands (skinny through very muscular) — height and build carry the same,
-   deliberately light weight, a small nudge each rather than a deciding factor, well below role.
-   One exception sits a level
+   Height, build, effort, and role — originally hand-transcribed from the same spreadsheet's
+   "Player Profiles" sheet into `PLAYER_PHYSICAL_DATA` at Ben's explicit request, now editable
+   straight from the **Players** tab (see "Editing player tags" below) — factor in too, but
+   strictly as a tiebreaker: **quality (Two-Way/20, real or estimated) always decides first.**
+   Physical/role only gets to choose between options that are already close on quality, and
+   "close" itself stretches with how much of the group is a reputation-based guess rather than a
+   real number — the less trustworthy the quality spread is (an all-reputation-estimated group),
+   the more say physical/role gets, on the theory that hundredths-of-a-point differences between
+   guesses aren't worth treating as settled. Four things feed the tiebreak, weighted role (1.5x)
+   > height (0.75x) == build (0.75x) == effort (0.75x) — how evenly each player's role tag(s)
+   (Scorer / Defender / Physical / Playmaker / Role Player) spread across teams, so one side
+   doesn't end up with every tagged Defender and the other with none; a small number of players
+   carry two roles (e.g. a lockdown defender who also facilitates on offense), counting toward
+   both when this is tallied; how far apart each team's *average* height lands; how far apart
+   each team's *average* build lands (skinny through very muscular); and how far apart each
+   team's *average* effort level lands (Low through Very High, from the sheet's own "Effort"
+   column — the one factor that deliberately never shows as its own tag pill, so it balances a
+   team's showing-up-and-trying-hard mix without turning into a public "this guy doesn't try"
+   label; still visible on hover and in the Edit Tags editor) — height, build, and effort all
+   carry the same, deliberately light weight, a small nudge each rather than a deciding factor,
+   well below role. One exception sits a level
    above the rest of the tiebreak, closer to a real
    guideline than a nice-to-have: every team should have someone taller than today's
    attendee-group's own average height, since a team with nobody above that line is a real

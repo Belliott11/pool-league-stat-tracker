@@ -1199,12 +1199,21 @@ well-reasoned one) without flagging which is which would be misleading.
 spreadsheet's "Player Profiles" sheet after all — at Ben's explicit request, reversing the
 original "deliberately does not" stance above; that stance was about not doing this
 *unprompted*, not a permanent rule.** Same hand-transcription pattern as
-`PLAYER_REPUTATION_DATA`: a plain object keyed by player id, `{ heightIn, build, roles, note }`
-per entry. `heightIn` is parsed by hand from the sheet's "Height/Build" column's feet/inches
-(e.g. `6'0", 175 lbs` → `72`); `build` is Claude's own 1-5 read of that same column's
+`PLAYER_REPUTATION_DATA`: a plain object keyed by player id, `{ heightIn, build, effort, roles,
+note }` per entry. `heightIn` is parsed by hand from the sheet's "Height/Build" column's
+feet/inches (e.g. `6'0", 175 lbs` → `72`); `build` is Claude's own 1-5 read of that same column's
 qualitative half (skinny through very muscular — a bare pounds figure like "175 lbs" isn't used
 on its own, just folded into the same judgment call, since weight means nothing without a frame
-to compare it against). `roles` is Claude's own five-bucket read of the "Preferred Role" column's
+to compare it against). `effort` is a direct 1-4 transcription of the sheet's own separate
+"Effort" column (Low/Medium/High/Very High) — no interpretation needed since the sheet already
+uses clean tiers, except Reilly's entry ("Starts high, varies by teammates — will sometimes bail
+mid-session"), bucketed to Medium as the closest single-tier fit for "inconsistent, not reliably
+high." `EFFORT_LABELS` maps the 1-4 scale to its display string, same pattern as `BUILD_LABELS`.
+Unlike height/build/roles, `effort` deliberately never feeds `physicalProfileTags()` — it has no
+`.profile-tag-*` color and never renders as a pill anywhere; it only surfaces as plain text
+(Balance Teams' "Avg effort" line) or inside a hover tooltip, at Ben's explicit request that it
+factor into balancing without becoming a visible per-player label. `roles` is Claude's own
+five-bucket read of the "Preferred Role" column's
 free text (`scorer` / `defender` / `physical` / `playmaker` / `role-player` — `physical` was
 `rebounder` originally, renamed at Ben's request since it covers more than just rebounding),
 stored as an array — an interpretation, not Ben's own explicit tag (though a few, like Adam's and
@@ -1251,8 +1260,8 @@ in that file follows) — `role-player` deliberately has no dedicated hue and fa
 real specialization. **Edit Tags** toggles `renderPhysicalProfileEditor(p, phys)` open right
 under that player's row (`editingPhysicalProfileId`, a module-level variable so it survives
 `renderPlayers()`'s full-list rebuild on every add/remove/edit) — height as separate feet/inches
-number inputs, build as a `<select>` over `BUILD_LABELS`, roles as one checkbox per
-`PHYSICAL_ROLE_LABELS` entry, and a free-text note input.
+number inputs, build and effort each as a `<select>` (over `BUILD_LABELS`/`EFFORT_LABELS`),
+roles as one checkbox per `PHYSICAL_ROLE_LABELS` entry, and a free-text note input.
 
 **`renderPlayersRoleFilter()` (right above `renderPlayers()`) renders the same five role labels
 as clickable `.profile-tag-<kind>.role-filter-chip` buttons above the roster** — `playersRoleFilter`
@@ -1273,20 +1282,22 @@ explicitly scoped to never override quality — Ben was direct about this when i
 Two-Way/20 (real or reputation-estimated, itself now also chemistry- and win-rate-adjusted — see
 below) decides first, physical/role only breaks ties.**
 
-`scorePhysicalBalance(teams)` (called from `scoreTeamSet()`) sums three components into one
+`scorePhysicalBalance(teams)` (called from `scoreTeamSet()`) sums four components into one
 `physicalScore` per candidate split, via a shared `avgOf(field)` helper: the spread between
 teams' *average* height (weighted 0.75×, walked down from an initial 1× per direct feedback that
 height "shouldn't be a gigantic factor"), the spread between teams' *average* build (also
 weighted 0.75× — originally shipped at 2×, explicitly walked back after Ben flagged build as the
 weakest of the three signals to lean on, then set equal to height's own weight per his follow-up
 "make height and weight equal"; build is Claude's own coarsest read of the three, a single-digit
-guess at vague prose like "decently sized") — both mirror `scoreTeamSet()`'s own
-average-not-total reasoning, uneven team sizes shouldn't read a bigger team as automatically
-"taller" or "stronger" — and, weighted 1.5× higher than either, the summed *variance* of each
-role tag's per-team count, tallied via `(getPlayerPhysicalData(id)?.roles || []).includes(role)`
-so a player with two roles (see above) counts toward each one's own variance independently (role
-carries the most weight of the three; height and build are now tied for second, both
-deliberately light). This score only ever gets consulted as a tiebreaker: `generateBalancedTeamSets()`
+guess at vague prose like "decently sized"), and the spread between teams' *average* effort
+(also 0.75×, added later at Ben's request that it factor in "but doesn't appear in tag") — all
+three mirror `scoreTeamSet()`'s own average-not-total reasoning, uneven team sizes shouldn't read
+a bigger team as automatically "taller"/"stronger"/"more effort" — and, weighted 1.5× higher than
+any of them, the summed *variance* of each role tag's per-team count, tallied via
+`(getPlayerPhysicalData(id)?.roles || []).includes(role)` so a player with two roles (see above)
+counts toward each one's own variance independently (role carries the most weight of the four;
+height, build, and effort are all tied for second, deliberately light). This score only ever
+gets consulted as a tiebreaker: `generateBalancedTeamSets()`
 computes `tieTolerance = 0.1 + reputationShare * 0.9` (`reputationShare` = the fraction of
 today's attendees who are reputation-estimated rather than `gp > 0`), then re-sorts only the
 best-spread candidates (`scored.slice(0, 30)`, not the full 300+ pool, so the tolerance check
