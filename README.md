@@ -31,7 +31,15 @@ individual player, not a team.
    **Reset to Default** clears a saved edit and falls back to the original hand-transcribed
    profile. Edits are saved per-player in `localStorage` and feed the same Balance Teams
    tiebreak everything else in this section describes.
-2. **Games** — create a game (date, optional video URL, notes), then click it to open Stat Entry.
+2. **Games** — **Who's Coming?**, at the top, is a separate "who said they're showing up" plan
+   for a date, not a game roster — pick a date, check off names, **Save RSVPs**. It doesn't
+   create anything or touch stats by itself; once at least one game is logged for that date,
+   whoever RSVP'd but never ended up on either team's roster that day counts as a miss, shown
+   right in the recent-RSVP list below (Pending until a game exists for that date, then either
+   "Everyone showed" or who was missed) and rolled up into that player's own **Flake %** on their
+   Player Detail page. Saving again for a date already RSVP'd overwrites it rather than
+   duplicating; saving with nobody checked deletes it. Then create a game (date, optional video
+   URL, notes), then click it to open Stat Entry.
    Games are listed in chronological order (oldest first), each card headed by the actual player
    names on each side (not "Team A"/"Team B" — those labels only show for a freshly-created game
    with no roster set yet) and any game with a video attached (URL or local file) shows a 🎥
@@ -347,7 +355,14 @@ individual player, not a team.
    whether that's above or below their season Off Rating/20 (within ±0.5 counts as flat, shown as ●
    rather than a dash, since a dash next to a number reads as a minus sign).
 
-   Right below the main table, **Player Comparison** picks up where a 34-column table stops being
+   Right below the main table, **MVP Score** is a separate, live ranking (not the same thing as
+   the frozen, real-voted Summer 2026 **MVP** award further down, which can't be recomputed) —
+   Two-Way/20 plus an **Attendance Bonus** (0 to +2.0, scaling with games played relative to
+   whoever's played the most this season) added on top, never multiplied or in place of it, so
+   quality still leads and a player who barely plays can't out-rank a clearly better one just by
+   showing up a lot. Click a name to jump to their Player Detail page.
+
+   Right below that, **Player Comparison** picks up where a 34-column table stops being
    readable for "just tell me how these two stack up": two dropdowns, and every column from the
    table above (all 31 of them, including the six advanced ones regardless of whether they're
    currently shown) laid out as rows instead, one player's value next to the other's. Green marks
@@ -568,7 +583,8 @@ individual player, not a team.
    silently-truncated "combined" video seemed more likely to be mistaken for the real thing than a
    clean "nothing downloaded."
    Click a player's name to
-   open their **Player Detail** page, which is grouped the same loose way: season **Overview**
+   open their **Player Detail** page, which is grouped the same loose way: **Past Seasons** and
+   **Flake %** (see Season Archiving and Who's Coming? above) at the top, season **Overview**
    (Two-Way Trend, Game Log), **Offense Detail** (Shot Chart, Shot Heatmap, Head-to-Head — As
    Scorer), **Defense Detail** (Defensive Heatmap, Head-to-Head — As Defender), **Team Context**
    (Teammate Synergy, Teammate Quality, Assisted By, Offensive Matchup Difficulty, Defensive
@@ -814,6 +830,9 @@ ranking tables (below) and the locally-stored video files are actually gone for 
   "currentSeasonStartedAt": null,
   "seasonHistory": [
     { "label": "Summer 2026", "startedAt": null, "endedAt": "2026-09-02" }
+  ],
+  "rsvps": [
+    { "id": "rsvp_abc", "date": "2026-08-24", "playerIds": ["player_abc", "player_xyz"] }
   ],
   "games": [
     {

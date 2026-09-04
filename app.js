@@ -171,6 +171,13 @@ function loadState() {
   // question of which fields came from the sheet vs. the UI. Lets Ben correct or extend a
   // read without editing app.js by hand.
   s.playerPhysicalOverrides = s.playerPhysicalOverrides || {};
+  // Who said they'd show up, per date — [{ id, date, playerIds }], at most one entry per date
+  // (saving again for a date already RSVP'd overwrites that entry rather than duplicating it).
+  // This is a plan, not a record of what happened — actual attendance is still derived from
+  // whoever ends up rostered on a real logged game for that date (computeFlakeStats() below
+  // compares the two). A date with an RSVP but no logged game yet is left unresolved rather than
+  // counted as a flake — the session may just not be entered yet, not actually a no-show.
+  s.rsvps = s.rsvps || [];
   return s;
 }
 
@@ -268,6 +275,8 @@ function showTab(tab) {
     renderBalanceAttendeePicker();
     renderGamesFilterPlayerPicker();
     renderGamesFilterStatPlayerSelect();
+    renderRsvpAttendeePicker();
+    renderRsvpRecentList();
   }
   // currentGameId/currentPlayerId are always set before showTab() is called for "stats"/"player"
   // (see openGame/openPlayerDetail), so this always captures the right context alongside the tab.
@@ -469,6 +478,97 @@ function renderPhysicalProfileEditor(p, phys) {
 }
 
 // ---------- Games ----------
+
+// "Who's Coming?" RSVP tracker — a plan for a date, separate from any game's actual roster (see
+// the s.rsvps comment in loadState()). rsvpSelectedIds mirrors whichever date is currently shown
+// in the date input; switching dates reloads it from any existing saved entry for that date.
+let rsvpSelectedIds = new Set();
+
+function renderRsvpAttendeePicker() {
+  const wrap = document.getElementById("rsvpAttendeePicker");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  [...state.players].sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "attendee-chip" + (rsvpSelectedIds.has(p.id) ? " selected" : "");
+    chip.textContent = p.name;
+    chip.addEventListener("click", () => {
+      if (rsvpSelectedIds.has(p.id)) rsvpSelectedIds.delete(p.id);
+      else rsvpSelectedIds.add(p.id);
+      renderRsvpAttendeePicker();
+    });
+    wrap.appendChild(chip);
+  });
+}
+
+function loadRsvpForDate(date) {
+  const existing = state.rsvps.find(r => r.date === date);
+  rsvpSelectedIds = new Set(existing ? existing.playerIds : []);
+  renderRsvpAttendeePicker();
+}
+
+document.getElementById("rsvpDateInput").addEventListener("change", e => {
+  loadRsvpForDate(e.target.value);
+});
+
+document.getElementById("saveRsvpBtn").addEventListener("click", () => {
+  const date = document.getElementById("rsvpDateInput").value;
+  if (!date) { alert("Pick a date first."); return; }
+  const playerIds = [...rsvpSelectedIds];
+  const existingIndex = state.rsvps.findIndex(r => r.date === date);
+  // Saving with nobody checked deletes any existing entry for that date rather than storing an
+  // empty one — "cleared then saved" reads as "no RSVP for this date" either way.
+  if (playerIds.length === 0) {
+    if (existingIndex !== -1) state.rsvps.splice(existingIndex, 1);
+  } else if (existingIndex !== -1) {
+    state.rsvps[existingIndex].playerIds = playerIds;
+  } else {
+    state.rsvps.push({ id: uid("rsvp"), date, playerIds });
+  }
+  saveState();
+  renderRsvpRecentList();
+});
+
+document.getElementById("clearRsvpBtn").addEventListener("click", () => {
+  rsvpSelectedIds = new Set();
+  renderRsvpAttendeePicker();
+});
+
+function renderRsvpRecentList() {
+  const wrap = document.getElementById("rsvpRecentList");
+  if (!wrap) return;
+  if (state.rsvps.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No RSVPs saved yet.</p>';
+    return;
+  }
+  const sorted = [...state.rsvps].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  wrap.innerHTML = sorted.map(r => {
+    const names = r.playerIds.map(id => state.players.find(p => p.id === id)?.name).filter(Boolean);
+    const hasGame = state.games.some(g => g.date === r.date);
+    let statusHtml;
+    if (!hasGame) {
+      statusHtml = ' <span class="badge">Pending — no game logged yet</span>';
+    } else {
+      const missed = r.playerIds.filter(id => !playerAttendedDate(id, r.date));
+      statusHtml = missed.length === 0
+        ? ' <span class="badge badge-highlight">Everyone showed</span>'
+        : ` <span class="badge badge-lowlight">${missed.length} missed: ${escapeHtml(missed.map(id => state.players.find(p => p.id === id)?.name || "?").join(", "))}</span>`;
+    }
+    return `<div class="roster-row">
+      <span>${escapeHtml(formatDateDisplay(r.date))} — ${escapeHtml(names.join(", ") || "nobody")}${statusHtml}</span>
+      <button type="button" class="icon-btn" data-delete-rsvp="${r.id}">Delete</button>
+    </div>`;
+  }).join("");
+  wrap.querySelectorAll("[data-delete-rsvp]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.rsvps = state.rsvps.filter(r => r.id !== btn.dataset.deleteRsvp);
+      saveState();
+      renderRsvpRecentList();
+    });
+  });
+}
+
 document.getElementById("addGameForm").addEventListener("submit", e => {
   e.preventDefault();
   const date = document.getElementById("gameDateInput").value;
@@ -637,6 +737,10 @@ document.getElementById("clearGamesFiltersBtn").addEventListener("click", () => 
 
 function renderGames() {
   renderNeedsReviewSummary();
+  // A game being created/deleted can resolve (or un-resolve) a pending RSVP entry for that same
+  // date, so the recent-RSVP list's Pending/Everyone showed/missed status needs to stay in sync
+  // with whatever renderGames() itself is reacting to.
+  renderRsvpRecentList();
   const list = document.getElementById("gamesList");
   list.innerHTML = "";
   if (state.games.length === 0) {
@@ -3638,6 +3742,52 @@ function computeLeaderboard() {
   });
 }
 
+// A dedicated "who's actually been the most valuable, showing-up included" ranking, separate
+// from the Leaderboard's own Two-Way/20 sort and from the frozen historical MVP award in
+// AWARD_RESULTS (that one's a real past vote and can't be recomputed). Quality still leads —
+// this is Two-Way/20 with a bonus added on top, not multiplied or replaced, so a player who
+// barely plays can't out-rank a clearly better one just by showing up a lot. The bonus scales
+// with games played *relative to whoever's played the most this season* (0 for the least-played
+// qualifying player up to the full MVP_ATTENDANCE_BONUS_MAX for the most-played one) rather than
+// an absolute games-played count, since "a lot" only means something relative to how many
+// sessions have actually happened.
+const MVP_ATTENDANCE_BONUS_MAX = 2;
+function computeMvpStandings() {
+  const board = computeLeaderboard().filter(r => r.gp > 0);
+  if (board.length === 0) return [];
+  const maxGp = Math.max(...board.map(r => r.gp));
+  return board.map(r => {
+    const attendanceBonus = maxGp > 0 ? (r.gp / maxGp) * MVP_ATTENDANCE_BONUS_MAX : 0;
+    return { player: r.player, gp: r.gp, twoWayPer20: r.twoWayPer20, attendanceBonus, mvpScore: r.twoWayPer20 + attendanceBonus };
+  }).sort((a, b) => b.mvpScore - a.mvpScore);
+}
+function renderMvpStandings() {
+  const wrap = document.getElementById("mvpStandings");
+  if (!wrap) return;
+  const rows = computeMvpStandings();
+  if (rows.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games with players yet.</p>';
+    return;
+  }
+  const rowsHtml = rows.map((r, i) => `<tr>
+    <td>${i + 1}</td>
+    <td><button type="button" class="icon-btn mvp-player-btn" style="color:var(--accent);font-weight:700" data-player-id="${r.player.id}">${escapeHtml(r.player.name)}</button></td>
+    <td>${r.mvpScore.toFixed(1)}</td>
+    <td>${r.twoWayPer20.toFixed(1)}</td>
+    <td>${r.gp}</td>
+    <td>+${r.attendanceBonus.toFixed(1)}</td>
+  </tr>`).join("");
+  wrap.innerHTML = `
+    <table class="matchup-table">
+      <thead><tr><th>#</th><th>Player</th><th>MVP Score</th><th>Two-Way/20</th><th>GP</th><th>Attendance Bonus</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `;
+  wrap.querySelectorAll(".mvp-player-btn").forEach(btn => {
+    btn.addEventListener("click", () => openPlayerDetail(btn.dataset.playerId));
+  });
+}
+
 // Every passer-to-scorer connection, directional — Alice assisting Bob is tracked separately
 // from Bob assisting Alice. A real chemistry signal straight from the Shot Log's assist tags,
 // unlike win/loss (which the real Poolean site already tracks per duo).
@@ -4881,6 +5031,44 @@ function renderSeasonHistoryPanel(playerId) {
   `;
 }
 
+// Whether this player ended up on either roster of any game actually logged for a given date —
+// deliberately not gated by isQualifyingGame() (real shots + balanced teams): attendance is
+// about whether they physically showed up, not whether that game happened to get scored or came
+// out even-sided. A game record existing with them rostered is attendance; nothing rostered for
+// that date at all just means unresolved (see computeFlakeStats() below), not absent.
+function playerAttendedDate(playerId, date) {
+  return state.games.some(g => g.date === date && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+}
+
+// Flake % = of the dates this player RSVP'd yes for AND that have since been resolved (at least
+// one game logged for that date, regardless of who's on it), what share they never actually
+// showed up for. An RSVP'd date with zero games logged yet is excluded from the denominator
+// entirely — the session may just not be entered in the tracker yet, which isn't the same as a
+// no-show, and counting it that way would punish players for Ben's own reviewing backlog. `pct`
+// is null (not 0) when nothing's resolved yet, same "no data" convention used everywhere else in
+// this tool, so the UI can say so plainly instead of showing a misleading 0%.
+function computeFlakeStats(playerId) {
+  const rsvpDates = state.rsvps.filter(r => r.playerIds.includes(playerId));
+  let resolved = 0, flaked = 0;
+  rsvpDates.forEach(r => {
+    if (!state.games.some(g => g.date === r.date)) return;
+    resolved++;
+    if (!playerAttendedDate(playerId, r.date)) flaked++;
+  });
+  return { resolved, flaked, pct: resolved > 0 ? pct(flaked, resolved) : null };
+}
+
+function renderFlakeStatsPanel(playerId) {
+  const wrap = document.getElementById("playerFlakeStats");
+  if (!wrap) return;
+  const stats = computeFlakeStats(playerId);
+  if (stats.pct === null) {
+    wrap.innerHTML = '<p class="empty-state">No resolved RSVPs for this player yet — flake % needs at least one RSVP\'d date with a logged game.</p>';
+    return;
+  }
+  wrap.innerHTML = `<p class="score-display">${stats.pct}% <span class="hint" style="margin:0">(${stats.flaked} of ${stats.resolved} RSVP'd sessions missed)</span></p>`;
+}
+
 // For each teammate this player has shared a team with (in a game with real shots logged),
 // split that player's own games into "with" (teammate on their side) and "without" (teammate
 // on the other team, or not playing) and compare per-20 output across the split.
@@ -5383,6 +5571,7 @@ function renderLeaderboard() {
   updateImbalancedGamesBtnLabel();
   updatePastSeasonsBtnLabel();
   renderLeaderboardHeader();
+  renderMvpStandings();
   renderAwardsVsStats();
   renderPowerRankingVsPerformance();
   renderQuadrantChart();
@@ -5540,6 +5729,7 @@ function renderPlayerDetail() {
   // context, then season overview, then offense detail (shots, then who defended them), then
   // defense detail (same shape, mirrored), then team context, then media. Keep the two in sync.
   renderSeasonHistoryPanel(player.id);
+  renderFlakeStatsPanel(player.id);
   renderTwoWayTrendChart(player.id);
   renderPlayerGameLog(player.id);
   renderPlayerShotChart(player.id);
@@ -6625,7 +6815,7 @@ document.getElementById("startNewSeasonBtn").addEventListener("click", async () 
 
 document.getElementById("resetDataBtn").addEventListener("click", () => {
   if (!confirm("This will permanently delete all players, games, and stats. Continue?")) return;
-  state = { players: [], games: [], masterVideos: [], seasonHistory: [], currentSeasonStartedAt: null, playerPhysicalOverrides: {} };
+  state = { players: [], games: [], masterVideos: [], seasonHistory: [], currentSeasonStartedAt: null, playerPhysicalOverrides: {}, rsvps: [] };
   saveState();
   renderPlayers();
   renderGames();
@@ -6639,6 +6829,8 @@ function escapeHtml(str) {
 
 // ---------- Init ----------
 renderPlayers();
+document.getElementById("rsvpDateInput").value = new Date().toISOString().slice(0, 10);
+loadRsvpForDate(document.getElementById("rsvpDateInput").value);
 renderGames();
 
 // Land back on whatever was in view last time, instead of always resetting to Games — a

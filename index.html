@@ -58,6 +58,18 @@
   <!-- GAMES -->
   <section id="tab-games" class="tab-panel active">
     <div class="panel">
+      <h2>Who's Coming?</h2>
+      <p class="hint">Pick a date and mark who said they're showing up — this doesn't create a game or affect stats by itself, it's just a plan to check actual attendance against later. Once at least one game is logged for that date, whoever RSVP'd but never ended up rostered on any game that day counts toward their <strong>Flake %</strong> on their own Player Detail page. Saving again for a date already RSVP'd overwrites that entry rather than adding a second one.</p>
+      <input type="date" id="rsvpDateInput" style="margin-bottom:10px">
+      <div id="rsvpAttendeePicker" class="attendee-picker"></div>
+      <div class="balance-controls">
+        <button type="button" class="secondary-btn" id="saveRsvpBtn">Save RSVPs</button>
+        <button type="button" class="icon-btn" id="clearRsvpBtn">Clear This Date</button>
+      </div>
+      <div id="rsvpRecentList" style="margin-top:14px"></div>
+    </div>
+
+    <div class="panel">
       <h2>Create Game</h2>
       <form id="addGameForm" class="inline-form">
         <input type="date" id="gameDateInput" required>
@@ -292,6 +304,14 @@
     </div>
 
     <div class="panel">
+      <h2>MVP Score</h2>
+      <p class="hint">A separate ranking from the table above that factors in attendance, not just Two-Way/20 — the season's frozen, real-voted <strong>MVP</strong> award further down (Awards vs. Stats) can't be recomputed, so this is a live, ongoing "who's actually been the most valuable, showing up included" number instead. Quality still leads: this is Two-Way/20 with an <strong>Attendance Bonus</strong> added on top (0 to +2.0), never a replacement — the bonus scales with games played relative to whoever's played the most this season, so a player who barely plays can't out-rank a clearly better one just by showing up a lot.</p>
+      <div class="table-scroll">
+        <div id="mvpStandings"></div>
+      </div>
+    </div>
+
+    <div class="panel">
       <h2>Player Comparison</h2>
       <p class="hint">Pick any two players to see their full stat lines side by side — every column from the table above, including the advanced % ones, whether or not they're currently shown there. Green marks whichever value is better for a given stat where "better" has a clear direction (lower for TOV/PF/Pts Allowed/Opp FG%/Beaten/TOV%, higher for everything else with a real quality read) — left uncolored for GP and the shot-share percentages (Shot%/AST%/OREB%/DREB%/TRB%), since a bigger share of the team's shots or assists reflects a role, not necessarily better play.</p>
       <div class="compare-controls">
@@ -498,6 +518,13 @@
       <p class="hint">This player's final numbers from every season closed out via Export → Data Management → Start New Season, one row per season — computed live off the actual archived games, not a frozen snapshot, so these stay correct even if a stat's formula changes later. The current season's own numbers are everywhere else on this page; toggle <strong>Include Past Seasons</strong> to blend these into the live totals instead of viewing them separately (same toggle as the Leaderboard's — flipping it here updates both).</p>
       <button type="button" class="secondary-btn" id="togglePastSeasonsBtnPlayer" style="margin-bottom:10px">Include Past Seasons</button>
       <div id="playerSeasonHistory"></div>
+    </div>
+
+    <!-- Flake % -->
+    <div class="panel">
+      <h2>Flake %</h2>
+      <p class="hint">Of the dates this player RSVP'd yes for on the Games tab's <strong>Who's Coming?</strong> panel and that have since had at least one game logged, how many they never actually showed up for. A date they RSVP'd for with no game logged yet isn't counted either way — it's not resolved, not a no-show.</p>
+      <div id="playerFlakeStats"></div>
     </div>
 
     <!-- Overview -->

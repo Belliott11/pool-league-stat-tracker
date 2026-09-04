@@ -270,8 +270,8 @@ that writes to these two fields: it `prompt()`s for a label, pushes `{label, sta
 state.currentSeasonStartedAt, endedAt: today}` onto `seasonHistory`, and sets
 `currentSeasonStartedAt = today` — that's the entire "close a season" operation as far as game/stat
 data goes. It does **not** touch `state.games`, `state.players`, `state.playerPhysicalOverrides`
-(a player's height/build/role edits from the Players tab), or any player's stats; it only
-also deletes every locally-stored video blob (`getAllStoredVideoIds()` → `deleteVideoFile()` for
+(a player's height/build/role edits from the Players tab), `state.rsvps`, or any player's stats;
+it only also deletes every locally-stored video blob (`getAllStoredVideoIds()` → `deleteVideoFile()` for
 each) and clears `state.masterVideos`, since those are large and re-watching last season's footage
 isn't the point of keeping the stats — a past game's `masterVideoId`/local video reference just
 goes dangling afterward, the same already-handled case **Export → Broken Session Video Links**
@@ -1238,13 +1238,59 @@ asked for "the ability to edit tags in app."** A plain object keyed by player id
 `state.playerPhysicalOverrides[id] || PLAYER_PHYSICAL_DATA[id]` — never straight at
 `PLAYER_PHYSICAL_DATA`, so a saved edit is picked up everywhere (Balance Teams' tiebreak, the
 Players tab tag list) with one change. An override is a **whole-object replacement**, not a
-partial merge: `renderPhysicalProfileEditor()`'s Save handler always writes all four fields
-(`heightIn`, `build`, `roles`, `note`) together, so there's never a question of which fields came
-from the sheet vs. the UI, and an edited role can never accidentally pair with a stale hardcoded
-height. Reset to Default just `delete`s the override key, falling back to whatever
-`PLAYER_PHYSICAL_DATA[id]` already had (or to no profile at all, for a player who was never in
-the original sheet) — Start New Season never touches this key either, so an edited profile
-survives a season close the same way the roster and games do.
+partial merge: `renderPhysicalProfileEditor()`'s Save handler always writes all five fields
+(`heightIn`, `build`, `effort`, `roles`, `note`) together, so there's never a question of which
+fields came from the sheet vs. the UI, and an edited role can never accidentally pair with a
+stale hardcoded height. Reset to Default just `delete`s the override key, falling back to
+whatever `PLAYER_PHYSICAL_DATA[id]` already had (or to no profile at all, for a player who was
+never in the original sheet) — Start New Season never touches this key either, so an edited
+profile survives a season close the same way the roster and games do.
+
+**`state.rsvps` (`loadState()`, `app.js`) — a "who said they'd show" plan, added for a genuinely
+new capability the app had no data for at all: no other structure here records anyone's *intent*
+to attend, only who actually ended up rostered on a real game.** `[{ id, date, playerIds }]`, at
+most one entry per date — `saveRsvpBtn`'s click handler (`app.js`, "Who's Coming?" section, right
+before `addGameForm`'s own handler) looks up any existing entry for the date in the picker
+(`state.rsvps.findIndex(r => r.date === date)`) and overwrites its `playerIds` in place rather
+than pushing a duplicate; saving with nobody checked deletes the entry outright instead of
+storing an empty array, so "cleared then saved" and "never RSVP'd" read identically. `rsvpSelectedIds`
+(a module-level `Set`) mirrors whichever date is currently in the date input — switching dates
+(`change` listener) calls `loadRsvpForDate()`, which reloads it from any saved entry for the new
+date, empty if there isn't one.
+
+`playerAttendedDate(playerId, date)` is the one place "did they actually show" gets answered —
+`state.games.some(g => g.date === date && (g.teamA.includes(playerId) || g.teamB.includes(playerId)))`.
+Deliberately **not** gated by `isQualifyingGame()` (real shots logged + balanced teams): showing
+up is a physical fact independent of whether that game ever got scored or came out even-sided,
+so a rostered-but-unreviewed game still counts as attendance. `computeFlakeStats(playerId)`
+(`app.js`, right after `renderSeasonHistoryPanel()`) walks every RSVP entry containing this
+player, skips any whose date has **no game logged at all** (`state.games.some(g => g.date ===
+r.date)`) — unresolved, not a no-show, since the session may simply not be entered in the
+tracker yet — and for the rest counts how many `!playerAttendedDate(...)`. Returns `{ resolved,
+flaked, pct }` with `pct: null` (not `0`) when `resolved === 0`, the same "no data" convention
+used everywhere else in this tool, so `renderFlakeStatsPanel()` (wired into `renderPlayerDetail()`
+right after `renderSeasonHistoryPanel()`, new `#playerFlakeStats` panel in `index.html`) can say
+so plainly instead of showing a misleading 0%. `renderRsvpRecentList()` (`#rsvpRecentList`, the
+Games tab) shows the same resolved/pending logic per RSVP entry — a `badge`/`badge-highlight`/
+`badge-lowlight` (reusing the existing badge classes) reading "Pending — no game logged yet",
+"Everyone showed", or "N missed: <names>" — and is re-rendered both from its own save/delete
+handlers and from `renderGames()` itself, since creating or deleting a game can resolve or
+un-resolve an RSVP entry for that same date.
+
+**`computeMvpStandings()`/`renderMvpStandings()` (`app.js`, right after `computeLeaderboard()`)
+build a new, separate "MVP Score" ranking — deliberately not the same thing as the frozen
+historical `AWARD_RESULTS` `mvp` entry (a real past vote that can't be recomputed), and not a
+replacement for the Leaderboard's own Two-Way/20 sort either.** `MVP_ATTENDANCE_BONUS_MAX = 2`;
+for each player with `gp > 0`, `attendanceBonus = (gp / maxGp) * MVP_ATTENDANCE_BONUS_MAX` where
+`maxGp` is the most games played by anyone currently on the board, and `mvpScore =
+twoWayPer20 + attendanceBonus` — additive, not a multiplier, so quality still leads and a
+low-quality player can gain at most 2.0 points of Two-Way/20-equivalent from attendance alone,
+never enough on its own to leapfrog someone genuinely better. Sorted descending by `mvpScore` and
+rendered as its own table (`#mvpStandings`, Leaderboard tab, right after the main table) with a
+clickable player name (`openPlayerDetail()`, same pattern as the main Leaderboard table's own
+name button) — wired into `renderLeaderboard()` alongside every other panel there, so it recomputes
+on the same toggles (Include Imbalanced Games, Include Past Seasons) that already feed `gp`
+and `twoWayPer20` through `computeLeaderboard()`.
 
 **The Players tab itself (`renderPlayers()`) now shows a color-coded tag row per player, driven
 by `physicalProfileTags(phys)`** — one `{label, kind}` entry per role. Height and build stay real
