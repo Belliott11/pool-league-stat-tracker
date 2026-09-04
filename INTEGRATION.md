@@ -1186,11 +1186,57 @@ before. Both the attendee picker and the results re-derive this map on every ren
 caching it, so it can never drift out of sync with `computeLeaderboard()`. The picker marks a
 reputation-estimated player with a **\*** and a tooltip naming the source and percentile — worth
 keeping if you port this, since silently blending a real stat with an estimate (even a
-well-reasoned one) without flagging which is which would be misleading. Deliberately does **not**
-pull in anything from the spreadsheet's "Player Profiles" sheet (attitude, effort, preferred
-role, shooting tendency, free-text notes) — that's Ben's own subjective scouting, and folding
-free-text judgment calls into a numeric fairness score wasn't something to do without him
-explicitly asking for it specifically.
+well-reasoned one) without flagging which is which would be misleading.
+
+**`PLAYER_PHYSICAL_DATA` (`app.js`, right after `PLAYER_REPUTATION_DATA`) pulls in the
+spreadsheet's "Player Profiles" sheet after all — at Ben's explicit request, reversing the
+original "deliberately does not" stance above; that stance was about not doing this
+*unprompted*, not a permanent rule.** Same hand-transcription pattern as
+`PLAYER_REPUTATION_DATA`: a plain object keyed by player id, `{ heightIn, role, note }` per
+entry. `heightIn` is parsed by hand from the sheet's "Height/Build" column's feet/inches (e.g.
+`6'0", 175 lbs` → `72`) — weight and build descriptors are dropped, since they're prose, not a
+clean number. `role` is Claude's own five-bucket read of the "Preferred Role" column's free text
+(`scorer` / `defender` / `rebounder` / `playmaker` / `role-player`) — an interpretation, not
+Ben's own explicit tag — with `note` keeping the original sentence specifically so a
+mismatched categorization is visible (surfaced as a tooltip in the UI) rather than hidden inside
+a score. A player missing from this table (no Player Profiles row) just doesn't contribute to
+either half of what it feeds.
+
+**Two mechanisms read `PLAYER_PHYSICAL_DATA`, both in `generateBalancedTeamSets()`, and both are
+explicitly scoped to never override quality — Ben was direct about this when it was built:
+Two-Way/20 (real or reputation-estimated) decides first, physical/role only breaks ties.**
+
+`scorePhysicalBalance(teams)` (called from `scoreTeamSet()`) sums two components into one
+`physicalScore` per candidate split: the spread between teams' *average* height (mirrors
+`scoreTeamSet()`'s own average-not-total reasoning for the same reason — uneven team sizes
+shouldn't read a bigger team as automatically "taller"), and — weighted 1.5× higher, since it's
+the more structurally significant of the two — the summed *variance* of each role tag's
+per-team count (so a split that puts every `defender`-tagged player on one team and none on the
+other scores worse than one where they're spread out). This score only ever gets consulted as a
+tiebreaker: `generateBalancedTeamSets()` computes `tieTolerance = 0.1 + reputationShare * 0.9`
+(`reputationShare` = the fraction of today's attendees who are reputation-estimated rather than
+`gp > 0`), then re-sorts only the best-spread candidates (`scored.slice(0, 30)`, not the full
+300+ pool, so the tolerance check can't produce a weird ordering between options that were never
+close to begin with) with a comparator that falls through to `physicalScore` only when
+`Math.abs(a.spread - b.spread) <= tieTolerance`. The tolerance scaling with `reputationShare` is
+deliberate: quality estimates built mostly from reputation percentiles are themselves mostly a
+guess, so two such options within a full point of each other are treated as practically
+indistinguishable on quality alone, handing real say to physical/role — whereas a group with real
+measured Two-Way/20 for everyone gets a near-zero tolerance (0.1), so physical/role essentially
+never overrides a real quality difference there.
+
+One height rule sits a level above that tiebreak, closer to a guideline than a nice-to-have, per
+Ben's own framing ("fundamental... although not completely strict"): `averageAttendeeHeight()`
+and `teamHasAboveAverageHeight()` check whether every team in a candidate has at least one player
+taller than *today's attendee group's own average* (not the whole roster's) — `null` (skipped
+entirely) if nobody in the group has height data at all. This is folded into the same
+tie-tolerance comparator, checked *before* `physicalScore` (so it's the stronger of the two
+tiebreak signals) but still only within the tolerance window — a candidate that's genuinely
+better-balanced on quality outside that window still wins even if it fails the height check. This
+was a deliberate design choice, not a hard filter: an earlier version excluded non-qualifying
+candidates outright before any spread sorting, and was explicitly walked back to this
+softer version — worth knowing if you're tempted to port the "obviously correct" strict version
+instead.
 
 **Matchup Preview, on any 2-team Balance Teams result, is not new data either — it's
 `computeMatchupGrid()`'s existing per-pair FG data, filtered down to one specific matchup.**

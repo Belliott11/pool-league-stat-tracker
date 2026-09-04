@@ -718,6 +718,13 @@ button:disabled {
   margin: 0;
   padding-left: 18px;
 }
+.balance-team-physical {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
 .balance-preview-wrap {
   margin-top: 10px;
 }

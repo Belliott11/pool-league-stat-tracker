@@ -628,6 +628,47 @@ const PLAYER_REPUTATION_DATA = [
 const PLAYER_REPUTATION_BY_ID = {};
 PLAYER_REPUTATION_DATA.forEach(r => { PLAYER_REPUTATION_BY_ID[r.slug] = r; });
 
+// Ben's own subjective scouting from poolean_player_profiles.xlsx's "Player Profiles" sheet —
+// same source PLAYER_REPUTATION_DATA draws from, hand-transcribed the same way, at his explicit
+// request (this was deliberately left out until asked for — see the comment above
+// PLAYER_REPUTATION_DATA). heightIn is parsed from the sheet's "Height/Build" column's
+// feet/inches (e.g. `6'0", 175 lbs` -> 72) — "build" itself is prose, not a clean number, so it
+// doesn't get its own field; role is Claude's own read of the "Preferred Role" column's free
+// text, bucketed into five rough categories (scorer / defender / rebounder / playmaker /
+// role-player) purely so there's something to spread evenly across teams below — not Ben's own
+// explicit tag. `note` keeps the original sentence specifically so a categorization that reads
+// wrong is obvious at a glance (hover a chip) rather than buried in a black-box score — relabel
+// any of these by hand if they don't match. Only ever a *tiebreaker* (see scorePhysicalBalance())
+// — real Two-Way spread always wins when the two disagree. A player missing here (no Player
+// Profiles row) just doesn't contribute to either half of the tiebreak.
+const PLAYER_PHYSICAL_DATA = {
+  ben: { heightIn: 72, role: "defender", note: "Lockdown defender on top opponent; facilitator/passer on offense" },
+  adam: { heightIn: 64, role: "scorer", note: "Catch-and-shoot threat" },
+  zach: { heightIn: 67, role: "scorer", note: "High-volume shooter" },
+  alex: { heightIn: 72, role: "scorer", note: "Ball-dominant scorer; doesn't pass frequently" },
+  evan: { heightIn: 69, role: "scorer", note: "Physical finisher around the rim; doesn't playmake much" },
+  "g-ian": { heightIn: 70, role: "rebounder", note: "Physical presence/rebounder; inconsistent on both ends otherwise" },
+  "g-michael-t": { heightIn: 70, role: "scorer", note: "Shoots everything; low shot discipline" },
+  "g-lukas": { heightIn: 67, role: "rebounder", note: "Comfortable in the post" },
+  reilly: { heightIn: 71, role: "scorer", note: "Midrange threat; plays fine defense" },
+  viraj: { heightIn: 69, role: "role-player", note: "Third option on almost every team he's on" },
+  sean: { heightIn: 72, role: "defender", note: "On-ball pest defensively; post scorer, doesn't shoot much" },
+  will: { heightIn: 68, role: "rebounder", note: "Physical, clears space; fouls a lot; not much skill either end" },
+  phillip: { heightIn: 73, role: "scorer", note: "Shoots from anywhere; can drive and dunk; blocks (sometimes goaltends)" },
+  jason: { heightIn: 70, role: "defender", note: "Defensive pest; can't shoot, occasional dunk as only real scoring source" },
+  "logan-hoskins": { heightIn: 72, role: "defender", note: "Great on-ball defender; midrange threat" },
+  "logan-watson": { heightIn: 69, role: "role-player", note: "Decently physical; modest midrange shooter" },
+  kayla: { heightIn: 67, role: "role-player", note: "Takes up space; no developed skill in any facet" },
+  ryder: { heightIn: 70, role: "playmaker", note: "Passes well, finds open space; not very talented on either end" },
+  "g-danny": { heightIn: 70, role: "rebounder", note: "Plays physical well; no real basketball talent" },
+  "g-michael-k": { heightIn: 70, role: "scorer", note: "Shoots a lot, not very accurately; not very physical" }
+};
+function formatHeightIn(totalInches) {
+  const rounded = Math.round(totalInches);
+  return `${Math.floor(rounded / 12)}'${rounded % 12}"`;
+}
+const PHYSICAL_ROLE_LABELS = { scorer: "Scorer", defender: "Defender", rebounder: "Rebounder", playmaker: "Playmaker", "role-player": "Role Player" };
+
 // Converts a season-average power-ranking percentile (0-100, 50 = exactly average that night)
 // into a Two-Way/20-equivalent estimate. Calibrated against the real spread of this roster's own
 // Two-Way/20 values (roughly -5 to +5.5): 10 percentile points above/below league-average maps
@@ -763,7 +804,33 @@ function teamSetSignature(teams) {
 // would then unfairly read a bigger team as "stronger" even at equal per-player quality.
 function scoreTeamSet(teams, qualityById) {
   const avgs = teams.map(team => team.reduce((sum, id) => sum + (qualityById[id] || 0), 0) / team.length);
-  return { avgs, spread: Math.max(...avgs) - Math.min(...avgs) };
+  return { avgs, spread: Math.max(...avgs) - Math.min(...avgs), physicalScore: scorePhysicalBalance(teams) };
+}
+
+// Tiebreaker only, by design (Two-Way spread is the real, measured/estimated signal and always
+// wins — see the sort in generateBalancedTeamSets()). Two components, summed: how far apart each
+// team's *average* height is in inches (mirrors scoreTeamSet()'s own average-not-total logic,
+// same reasoning), and how unevenly PLAYER_PHYSICAL_DATA's five role tags land across teams — for
+// each role, the variance of its per-team count, summed across all five roles. Role variance is
+// weighted higher than height: a couple of inches of average height difference matters less than
+// one team getting every defender-tagged player on the roster and the other getting none.
+function scorePhysicalBalance(teams) {
+  const heights = teams
+    .map(team => team.map(id => PLAYER_PHYSICAL_DATA[id]?.heightIn).filter(h => h !== undefined))
+    .filter(known => known.length > 0)
+    .map(known => known.reduce((a, b) => a + b, 0) / known.length);
+  const heightSpread = heights.length >= 2 ? Math.max(...heights) - Math.min(...heights) : 0;
+
+  let roleImbalance = 0;
+  Object.keys(PHYSICAL_ROLE_LABELS).forEach(role => {
+    const countsPerTeam = teams.map(team => team.filter(id => PLAYER_PHYSICAL_DATA[id]?.role === role).length);
+    const total = countsPerTeam.reduce((a, b) => a + b, 0);
+    if (total === 0) return;
+    const mean = total / teams.length;
+    roleImbalance += countsPerTeam.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) / teams.length;
+  });
+
+  return heightSpread + roleImbalance * 1.5;
 }
 
 // Season Two-Way/20 — or, for a player with no games logged yet, a reputation-based estimate
@@ -775,6 +842,19 @@ function scoreTeamSet(teams, qualityById) {
 // an odd number out in real pickup usually just makes one side's bench thicker instead of
 // spinning up a third team. Runs one seeded snake-draft candidate plus 300 randomized ones,
 // dedupes identical team compositions, and returns the 5 lowest-spread survivors.
+// Average height across whichever of today's attendees have a PLAYER_PHYSICAL_DATA entry — the
+// relevant baseline for "above average" is this specific group showing up today, not the whole
+// league roster. null when nobody in the group has height data at all (the height-floor
+// constraint below is a no-op in that case, same as it would be for any group with zero signal).
+function averageAttendeeHeight(attendeeIds) {
+  const heights = attendeeIds.map(id => PLAYER_PHYSICAL_DATA[id]?.heightIn).filter(h => h !== undefined);
+  return heights.length > 0 ? heights.reduce((a, b) => a + b, 0) / heights.length : null;
+}
+function teamHasAboveAverageHeight(team, avgHeight) {
+  if (avgHeight === null) return true;
+  return team.some(id => (PLAYER_PHYSICAL_DATA[id]?.heightIn ?? -Infinity) > avgHeight);
+}
+
 function generateBalancedTeamSets(attendeeIds, teamSize) {
   const qualityMap = computeBalanceQualityMap();
   const qualityById = {};
@@ -798,7 +878,39 @@ function generateBalancedTeamSets(attendeeIds, teamSize) {
     scored.push({ teams, ...scoreTeamSet(teams, qualityById) });
   });
   scored.sort((a, b) => a.spread - b.spread);
-  return scored.slice(0, 5);
+
+  // How much of this group is a reputation-based guess rather than a real measured Two-Way
+  // number decides how much slack the physical/role tiebreaker gets: a spread built entirely on
+  // real stats shouldn't get second-guessed over hundredths of a point, but a spread that's
+  // mostly reputation estimates is itself mostly a guess, so two options within a full point of
+  // each other are practically indistinguishable on quality alone — physical/role should get
+  // real say in picking between them. 0.1 (near-zero slack) at 0% reputation-estimated up to 1.0
+  // at 100%. Re-sorting only the best-spread slice (not the full 300+ pool) keeps this tolerance
+  // check from producing weird orderings between options that were never close to begin with.
+  const reputationShare = attendeeIds.length > 0
+    ? attendeeIds.filter(id => qualityMap[id]?.source !== "stats").length / attendeeIds.length
+    : 0;
+  const tieTolerance = 0.1 + reputationShare * 0.9;
+
+  // "Every team needs someone above today's average height" is a strong guideline, not a hard
+  // rule — it only gets to decide between options that are already practically tied on quality
+  // (the same tolerance window physical/role uses), and even there it's checked before
+  // physicalScore, not folded into it, since it's the more important of the two. A genuinely
+  // better-balanced split outside that tolerance window still wins even if it fails the height
+  // check — this never excludes a candidate outright, just ranks it behind an equally-fair one
+  // that also clears the bar.
+  const avgAttendeeHeight = averageAttendeeHeight(attendeeIds);
+  const pool = scored.slice(0, 30);
+  pool.sort((a, b) => {
+    if (Math.abs(a.spread - b.spread) <= tieTolerance) {
+      const aTall = a.teams.every(team => teamHasAboveAverageHeight(team, avgAttendeeHeight));
+      const bTall = b.teams.every(team => teamHasAboveAverageHeight(team, avgAttendeeHeight));
+      if (aTall !== bTall) return aTall ? -1 : 1;
+      return a.physicalScore - b.physicalScore;
+    }
+    return a.spread - b.spread;
+  });
+  return pool.slice(0, 5);
 }
 
 // Real head-to-head history between two specific rosters about to face each other — reuses
@@ -852,16 +964,36 @@ function renderBalanceResults() {
   const qualityMap = computeBalanceQualityMap();
   const anyEstimated = Object.values(qualityMap).some(v => v.source === "reputation");
   wrap.innerHTML = balanceResults.map((r, i) => {
-    const teamsHtml = r.teams.map((team, ti) => `
-      <div class="balance-team-card">
-        <h5><span>Team ${String.fromCharCode(65 + ti)}</span><span class="balance-team-avg">${r.avgs[ti].toFixed(1)} avg</span></h5>
-        <ul>${team.map(id => {
-          const name = state.players.find(p => p.id === id)?.name || "?";
-          const marker = qualityMap[id]?.source === "reputation" ? " *" : "";
-          return `<li>${escapeHtml(name)}${marker}</li>`;
-        }).join("")}</ul>
-      </div>
-    `).join("");
+    // Surfaces the height/role tiebreak's own reasoning per team, not just its effect on
+    // ranking — a player's name is titled with their height/role/original note straight from
+    // PLAYER_PHYSICAL_DATA (hover to see exactly what drove a categorization), and each team
+    // gets a one-line height/role summary underneath its roster.
+    const teamsHtml = r.teams.map((team, ti) => {
+      const heights = team.map(id => PLAYER_PHYSICAL_DATA[id]?.heightIn).filter(h => h !== undefined);
+      const avgHeightLabel = heights.length > 0 ? formatHeightIn(heights.reduce((a, b) => a + b, 0) / heights.length) : null;
+      const roleCounts = {};
+      team.forEach(id => {
+        const role = PLAYER_PHYSICAL_DATA[id]?.role;
+        if (role) roleCounts[role] = (roleCounts[role] || 0) + 1;
+      });
+      const roleSummary = Object.entries(roleCounts).map(([role, count]) => `${count} ${PHYSICAL_ROLE_LABELS[role]}${count > 1 ? "s" : ""}`).join(", ");
+      const physicalLine = (avgHeightLabel || roleSummary)
+        ? `<div class="balance-team-physical">${avgHeightLabel ? `Avg height: ${avgHeightLabel}` : ""}${avgHeightLabel && roleSummary ? " · " : ""}${roleSummary}</div>`
+        : "";
+      return `
+        <div class="balance-team-card">
+          <h5><span>Team ${String.fromCharCode(65 + ti)}</span><span class="balance-team-avg">${r.avgs[ti].toFixed(1)} avg</span></h5>
+          <ul>${team.map(id => {
+            const name = state.players.find(p => p.id === id)?.name || "?";
+            const marker = qualityMap[id]?.source === "reputation" ? " *" : "";
+            const phys = PLAYER_PHYSICAL_DATA[id];
+            const title = phys ? ` title="${escapeHtml(formatHeightIn(phys.heightIn))}, ${escapeHtml(PHYSICAL_ROLE_LABELS[phys.role])} — ${escapeHtml(phys.note)}"` : "";
+            return `<li${title}>${escapeHtml(name)}${marker}</li>`;
+          }).join("")}</ul>
+          ${physicalLine}
+        </div>
+      `;
+    }).join("");
     const buttonsHtml = r.teams.length === 2
       ? `<button type="button" class="secondary-btn balance-preview-btn" data-index="${i}">Preview Matchups</button>
          <button type="button" class="secondary-btn balance-use-btn" data-index="${i}">Use These Teams &rarr; Create Game</button>`

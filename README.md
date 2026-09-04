@@ -45,8 +45,9 @@ individual player, not a team.
    **Clear Filters** resets the whole panel (and the text box) in one click. Right above the list,
    **Balance Teams** turns picking fair sides into a click instead of
    eyeballing a roster: check off whoever's showing up, set a team size (defaults to 3), and
-   **Generate Balanced Teams** returns up to 5 different splits, ranked by how close each team's
-   *average* season Two-Way/20 is to the others. Team count is whichever integer is closest to
+   **Generate Balanced Teams** returns up to 5 different splits, ranked primarily by how close
+   each team's *average* season Two-Way/20 is to the others (more on the secondary factors below).
+   Team count is whichever integer is closest to
    attendees ÷ team size, at least 2 — 7 people at a team size of 3 rounds to 2 teams (4-and-3),
    not 3 teams with one running short. The search is randomized (one seeded "snake draft" split
    plus 300 randomized attempts, deduplicated and sorted by spread), so **Generate** again turns
@@ -60,9 +61,28 @@ individual player, not a team.
    hand-imported into `PLAYER_REPUTATION_DATA` in `app.js`), that's converted into a Two-Way/20-
    equivalent estimate instead, and the attendee picker marks them with a **\*** (hover a chip for
    the exact number and source). Truly no-data players (never logged a game *or* a real-life
-   party) still fall back to a neutral 0.0. Doesn't use anything from that spreadsheet's
-   subjective scouting notes (attitude, effort, shooting tendency) — that's Ben's own read on a
-   player, not something folded into a numeric fairness score. For any 2-team split, **Preview
+   party) still fall back to a neutral 0.0.
+
+   Height and role — from the same spreadsheet's "Player Profiles" sheet, hand-transcribed into
+   `PLAYER_PHYSICAL_DATA` at Ben's explicit request — factor in too, but strictly as a tiebreaker:
+   **quality (Two-Way/20, real or estimated) always decides first.** Physical/role only gets to
+   choose between options that are already close on quality, and "close" itself stretches with how
+   much of the group is a reputation-based guess rather than a real number — the less trustworthy
+   the quality spread is (an all-reputation-estimated group), the more say physical/role gets, on
+   the theory that hundredths-of-a-point differences between guesses aren't worth treating as
+   settled. Two things feed the tiebreak: how far apart each team's *average* height lands
+   (parsed from the sheet's "Height/Build" column), and how evenly Claude's own five-bucket read
+   of each player's "Preferred Role" note (scorer / defender / rebounder / playmaker / role
+   player — hover a name in the results for the original sentence it came from) spreads across
+   teams, so one side doesn't end up with every tagged defender and the other with none. One
+   exception sits a level above the rest of the tiebreak, closer to a real guideline than a
+   nice-to-have: every team should have someone taller than today's attendee-group's own average
+   height, since a team with nobody above that line is a real disadvantage in this league. It's
+   still not absolute — a split that's clearly better-balanced on quality can still win even if it
+   misses the height guideline — but among options that are already tied on quality, one that
+   clears the bar always beats one that doesn't. Each team card in the results shows its own
+   average height and role mix so this reasoning is visible, not a black box. For any 2-team
+   split, **Preview
    Matchups** expands real head-to-head history between the two rosters about to face each
    other — every scorer/defender pair from either side with real logged shots between them,
    sorted by attempts, both directions (each side's shooters against the other's defenders).
