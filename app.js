@@ -3773,67 +3773,48 @@ function computeLeaderboard() {
   });
 }
 
-function median(values) {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-}
-
-// A dedicated "who's actually been the most valuable, showing-up included" ranking, separate
-// from the Leaderboard's own Two-Way/20 sort and from the frozen historical MVP award in
-// AWARD_RESULTS (that one's a real past vote and can't be recomputed). Quality still leads —
-// this is Two-Way/20 with a bonus added on top, not multiplied or replaced, so a player who
-// barely plays can't out-rank a clearly better one just by showing up a lot. The bonus is
-// centered on the *median* games played this season (not the max) — median over mean since a
-// couple of every-single-session regulars shouldn't drag the center up and make everyone else
-// look like a flake by comparison. Below-median attendance genuinely subtracts, above-median
-// genuinely adds — this isn't "everyone gets a positive nudge scaled by how close to the top
-// they are," it's a real relative comparison in both directions. Scaled by how far a player's
-// own gp sits from that median relative to the single furthest player on either side (so the
-// most/least-attending player each hit the full bonus, everyone else falls proportionally
-// between), and the size of that full bonus is itself relative rather than a fixed number —
-// MVP_ATTENDANCE_RELATIVE_WEIGHT of however wide this season's own Two-Way/20 spread actually is
-// (best qualifying player minus worst), so a tight, closely-matched season hands out a small
-// nudge and a wide-open one a bigger one, instead of one arbitrary constant pretending every
-// season's spread is the same.
-const MVP_ATTENDANCE_RELATIVE_WEIGHT = 0.5;
-function computeMvpStandings() {
-  const board = computeLeaderboard().filter(r => r.gp > 0);
-  if (board.length === 0) return [];
-  const gpValues = board.map(r => r.gp);
-  const medianGp = median(gpValues);
-  const maxDeviation = Math.max(...gpValues.map(gp => Math.abs(gp - medianGp))) || 1;
-  const twoWayValues = board.map(r => r.twoWayPer20);
-  const qualitySpread = Math.max(...twoWayValues) - Math.min(...twoWayValues);
-  const fullBonus = qualitySpread * MVP_ATTENDANCE_RELATIVE_WEIGHT;
+// A standalone ranking for one of the real MVP ballot's own criteria — how much a player's
+// night-to-night performance actually varies, not just their average level of it. Season-long
+// Two-Way total (`twoWayTotal` in `computeLeaderboard()`, already the closest tracked comparison
+// to the real historical MVP award — see AWARD_RESULTS) already covers "impact, volume
+// included"; this is a different question — standard deviation of their own per-game
+// Two-Way/20 (same numbers computeTwoWayTrend()'s own chart plots) — lower means steadier output
+// game to game, not necessarily better output; a player who's reliably average every night reads
+// as more "consistent" here than a boom-or-bust one who's spectacular half the time and poor the
+// other half, even if their season averages land the same. Requires at least 2 qualifying games —
+// a single game has no variance to measure, and showing 0.0 for it would misleadingly read as
+// "perfectly consistent" rather than "not enough data yet."
+function computeConsistencyStandings() {
+  const board = computeLeaderboard().filter(r => r.gp >= 2);
   return board.map(r => {
-    const attendanceBonus = ((r.gp - medianGp) / maxDeviation) * fullBonus;
-    return { player: r.player, gp: r.gp, twoWayPer20: r.twoWayPer20, attendanceBonus, mvpScore: r.twoWayPer20 + attendanceBonus };
-  }).sort((a, b) => b.mvpScore - a.mvpScore);
+    const values = computeTwoWayTrend(r.player.id).points.map(p => p.twoWay);
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
+    return { player: r.player, gp: r.gp, twoWayPer20: r.twoWayPer20, stdDev: Math.sqrt(variance) };
+  }).sort((a, b) => a.stdDev - b.stdDev);
 }
-function renderMvpStandings() {
-  const wrap = document.getElementById("mvpStandings");
+function renderConsistencyStandings() {
+  const wrap = document.getElementById("consistencyStandings");
   if (!wrap) return;
-  const rows = computeMvpStandings();
+  const rows = computeConsistencyStandings();
   if (rows.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">No games with players yet.</p>';
+    wrap.innerHTML = '<p class="empty-state">Nobody has 2+ qualifying games yet.</p>';
     return;
   }
   const rowsHtml = rows.map((r, i) => `<tr>
     <td>${i + 1}</td>
-    <td><button type="button" class="icon-btn mvp-player-btn" style="color:var(--accent);font-weight:700" data-player-id="${r.player.id}">${escapeHtml(r.player.name)}</button></td>
-    <td>${r.mvpScore.toFixed(1)}</td>
+    <td><button type="button" class="icon-btn consistency-player-btn" style="color:var(--accent);font-weight:700" data-player-id="${r.player.id}">${escapeHtml(r.player.name)}</button></td>
+    <td>${r.stdDev.toFixed(1)}</td>
     <td>${r.twoWayPer20.toFixed(1)}</td>
     <td>${r.gp}</td>
-    <td>${r.attendanceBonus >= 0 ? "+" : ""}${r.attendanceBonus.toFixed(1)}</td>
   </tr>`).join("");
   wrap.innerHTML = `
     <table class="matchup-table">
-      <thead><tr><th>#</th><th>Player</th><th>MVP Score</th><th>Two-Way/20</th><th>GP</th><th>Attendance Bonus</th></tr></thead>
+      <thead><tr><th>#</th><th>Player</th><th>Two-Way Std Dev</th><th>Two-Way/20</th><th>GP</th></tr></thead>
       <tbody>${rowsHtml}</tbody>
     </table>
   `;
-  wrap.querySelectorAll(".mvp-player-btn").forEach(btn => {
+  wrap.querySelectorAll(".consistency-player-btn").forEach(btn => {
     btn.addEventListener("click", () => openPlayerDetail(btn.dataset.playerId));
   });
 }
@@ -5621,7 +5602,7 @@ function renderLeaderboard() {
   updateImbalancedGamesBtnLabel();
   updatePastSeasonsBtnLabel();
   renderLeaderboardHeader();
-  renderMvpStandings();
+  renderConsistencyStandings();
   renderAwardsVsStats();
   renderPowerRankingVsPerformance();
   renderQuadrantChart();

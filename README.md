@@ -355,23 +355,18 @@ individual player, not a team.
    whether that's above or below their season Off Rating/20 (within ±0.5 counts as flat, shown as ●
    rather than a dash, since a dash next to a number reads as a minus sign).
 
-   Right below the main table, **MVP Score** is a separate, live ranking (not the same thing as
-   the frozen, real-voted Summer 2026 **MVP** award further down, which can't be recomputed) —
-   Two-Way/20 plus an **Attendance Bonus** added on top, never multiplied or in place of it, so
-   quality still leads and a player who barely plays can't out-rank a clearly better one just by
-   showing up a lot. The bonus is centered on the *median* games played this season, not the
-   max — below-median attendance genuinely subtracts, above-median genuinely adds, not "everyone
-   gets a positive nudge scaled toward the top." Its full size is itself relative rather than a
-   fixed number — half the gap between this season's best and worst qualifying Two-Way/20, so a
-   tight season hands out a small nudge and a wide-open one a bigger one. Click a name to jump to
-   their Player Detail page. Worth being honest about: the real ballot's own MVP criteria is
-   broader than this score — impact on winning, consistency, attendance, leadership,
-   sportsmanship, and making teammates better — and this only covers two of those (impact via
-   Two-Way/20, and attendance). Consistency and making teammates better are both things this tool
-   could compute (game-to-game Two-Way variance; the existing Teammate Synergy/Chemistry lift)
-   but currently doesn't fold into this score; leadership and sportsmanship have no data source
-   at all. Treat MVP Score as one useful data point toward the fuller picture, not a stand-in
-   for it.
+   Right below the main table, **Consistency** ranks players by the standard deviation of their
+   own per-game Two-Way/20 (same numbers the Two-Way Trend chart on Player Detail plots) — lower
+   means steadier output night to night, not necessarily better output, so a reliably-average
+   player ranks as more consistent than a boom-or-bust one whose season average lands the same.
+   Needs at least 2 qualifying games (a single game has no variance to measure). This is one of
+   the real, real-voted Summer 2026 **MVP** award's own criteria (impact on winning, consistency,
+   attendance, leadership, sportsmanship, making teammates better — see Awards vs. Stats further
+   down, where season-long **Two-Way total** is already the closest tracked comparison to that
+   award, impact and attendance-via-volume both baked in) — kept as its own separate ranking
+   rather than folded into a made-up combined score, since "consistent" and "valuable overall"
+   are different questions worth answering separately. Click a name to jump to their Player
+   Detail page.
 
    Right below that, **Player Comparison** picks up where a 34-column table stops being
    readable for "just tell me how these two stack up": two dropdowns, and every column from the

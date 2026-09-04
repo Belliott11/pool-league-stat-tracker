@@ -1297,41 +1297,30 @@ Games tab) shows the same resolved/pending logic per RSVP entry — a `badge`/`b
 handlers and from `renderGames()` itself, since creating or deleting a game can resolve or
 un-resolve an RSVP entry for that same date.
 
-**`computeMvpStandings()`/`renderMvpStandings()` (`app.js`, right after `computeLeaderboard()`)
-build a new, separate "MVP Score" ranking — deliberately not the same thing as the frozen
-historical `AWARD_RESULTS` `mvp` entry (a real past vote that can't be recomputed), and not a
-replacement for the Leaderboard's own Two-Way/20 sort either.** For each player with `gp > 0`,
-`attendanceBonus = ((gp - medianGp) / maxDeviation) * fullBonus` — centered on the season's
-*median* `gp` (via a small new `median()` helper), not the max, per direct feedback that
-attendance shouldn't just be "everyone gets a positive nudge scaled toward whoever's played the
-most": below-median attendance genuinely subtracts from `mvpScore`, above-median genuinely adds,
-a real two-directional comparison rather than a one-sided bonus. `maxDeviation` is
-`max(|gp - medianGp|)` across the board (so whichever player sits furthest from the median, in
-either direction, hits the full ±bonus, everyone else falls proportionally between) and
-`fullBonus = qualitySpread * MVP_ATTENDANCE_RELATIVE_WEIGHT` (`MVP_ATTENDANCE_RELATIVE_WEIGHT =
-0.5`, `qualitySpread` = this season's own `max(twoWayPer20) - min(twoWayPer20)` across qualifying
-players) — deliberately **not** a fixed point value: the size of the full bonus scales with how
-spread out this season's own quality actually is, so a tight, closely-matched season hands out a
-small nudge and a wide-open one a bigger one, rather than one arbitrary constant pretending every
-season looks the same. `mvpScore = twoWayPer20 + attendanceBonus` — additive, not a multiplier,
-so quality still leads and a low-quality player can gain at most half this season's own quality
-spread from attendance alone, never enough on its own to leapfrog someone genuinely better.
-Sorted descending by `mvpScore` and
-rendered as its own table (`#mvpStandings`, Leaderboard tab, right after the main table) with a
-clickable player name (`openPlayerDetail()`, same pattern as the main Leaderboard table's own
-name button) — wired into `renderLeaderboard()` alongside every other panel there, so it recomputes
-on the same toggles (Include Imbalanced Games, Include Past Seasons) that already feed `gp`
-and `twoWayPer20` through `computeLeaderboard()`.
+**`computeConsistencyStandings()`/`renderConsistencyStandings()` (`app.js`, right after
+`computeLeaderboard()`) rank players by the standard deviation of their own per-game Two-Way/20.** `computeTwoWayTrend(playerId).points` (the same per-game series that
+player's own Two-Way Trend chart on Player Detail plots) supplies the raw values; population
+variance and its square root are computed inline (no shared `variance()`/`stdDev()` helper exists
+elsewhere in this file, so this is self-contained). Requires `gp >= 2` — a single game has no
+variance to measure, and a naive 0.0 for it would misleadingly read as "perfectly consistent"
+rather than "not enough data." Sorted ascending (lowest std dev = most consistent, shown first),
+rendered as its own table (`#consistencyStandings`, Leaderboard tab) with the same clickable
+player-name-opens-Player-Detail pattern used elsewhere on this page, wired into
+`renderLeaderboard()` so it stays in sync with the same toggles that feed `computeLeaderboard()`.
 
-**Deliberately partial against the real ballot's own MVP criteria — Ben supplied the actual
-wording: impact on winning, consistency, attendance, leadership, sportsmanship, and making
-teammates better.** `mvpScore` only covers two of those: impact (via `twoWayPer20`) and
-attendance. Asked directly whether to fold in the two more that this tool *could* compute —
-a consistency term from game-to-game Two-Way variance, and a "makes teammates better" term from
-the existing `computeTeammateSynergy()`/chemistry lift already used in Balance Teams — Ben chose
-to leave the formula as-is and just have the panel's own hint text (`index.html`) and this doc
-say plainly what it does and doesn't cover, rather than build either in speculatively. Leadership
-and sportsmanship have no data source in this tool at all, computable or not.
+**This replaced an earlier "MVP Score" panel (Two-Way/20 + a median-centered attendance bonus),
+removed outright rather than kept alongside Consistency.** Ben's own reasoning: `twoWayTotal`
+(season-long Two-Way sum, already in `computeLeaderboard()` and already the closest tracked
+comparison the real historical `AWARD_RESULTS` `mvp` entry uses) already serves as an
+"impact + volume" MVP-style metric on its own, so a second bespoke combined score was redundant
+rather than additive. The real ballot's own MVP criteria is broader still — impact on winning,
+consistency, attendance, leadership, sportsmanship, making teammates better — and Consistency is
+kept as its own separate ranking specifically *because* folding every one of those into one
+combined number would just recreate the same "made-up formula masquerading as the real thing"
+problem MVP Score had; "consistent" and "valuable overall" are different questions worth
+answering separately. Leadership and sportsmanship have no data source in this tool at all;
+"makes teammates better" could be built from the existing `computeTeammateSynergy()`/chemistry
+lift (already used in Balance Teams) but hasn't been, by the same reasoning.
 
 **The Players tab itself (`renderPlayers()`) now shows a color-coded tag row per player, driven
 by `physicalProfileTags(phys)`** — one `{label, kind}` entry per role. Height and build stay real
