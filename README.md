@@ -83,8 +83,8 @@ individual player, not a team.
    "close" itself stretches with how much of the group is a reputation-based guess rather than a
    real number — the less trustworthy the quality spread is (an all-reputation-estimated group),
    the more say physical/role gets, on the theory that hundredths-of-a-point differences between
-   guesses aren't worth treating as settled. Four things feed the tiebreak, weighted role (1.5x)
-   > height (0.75x) == build (0.75x) == effort (0.75x) — how evenly each player's role tag(s)
+   guesses aren't worth treating as settled. Four things feed the tiebreak, all weighted equally
+   (0.75x each) — role, height, build, and effort — how evenly each player's role tag(s)
    (Scorer / Defender / Physical / Playmaker / Role Player) spread across teams, so one side
    doesn't end up with every tagged Defender and the other with none; a small number of players
    carry two roles (e.g. a lockdown defender who also facilitates on offense), counting toward
@@ -93,9 +93,9 @@ individual player, not a team.
    team's *average* effort level lands (Low through Very High, from the sheet's own "Effort"
    column — the one factor that deliberately never shows as its own tag pill, so it balances a
    team's showing-up-and-trying-hard mix without turning into a public "this guy doesn't try"
-   label; still visible on hover and in the Edit Tags editor) — height, build, and effort all
-   carry the same, deliberately light weight, a small nudge each rather than a deciding factor,
-   well below role. One exception sits a level
+   label; still visible on hover and in the Edit Tags editor) — all four carry the same,
+   deliberately light weight, a small nudge each rather than a deciding factor. One exception
+   sits a level
    above the rest of the tiebreak, closer to a real
    guideline than a nice-to-have: every team should have someone taller than today's
    attendee-group's own average height, since a team with nobody above that line is a real

@@ -1292,11 +1292,12 @@ weakest of the three signals to lean on, then set equal to height's own weight p
 guess at vague prose like "decently sized"), and the spread between teams' *average* effort
 (also 0.75×, added later at Ben's request that it factor in "but doesn't appear in tag") — all
 three mirror `scoreTeamSet()`'s own average-not-total reasoning, uneven team sizes shouldn't read
-a bigger team as automatically "taller"/"stronger"/"more effort" — and, weighted 1.5× higher than
-any of them, the summed *variance* of each role tag's per-team count, tallied via
+a bigger team as automatically "taller"/"stronger"/"more effort" — and, at that same 0.75×
+weight (walked down from an original 1.5× per direct feedback that "role should be same weight
+as the others"), the summed *variance* of each role tag's per-team count, tallied via
 `(getPlayerPhysicalData(id)?.roles || []).includes(role)` so a player with two roles (see above)
-counts toward each one's own variance independently (role carries the most weight of the four;
-height, build, and effort are all tied for second, deliberately light). This score only ever
+counts toward each one's own variance independently. All four components are now tied at the
+same deliberately light weight — none of them a deciding factor on their own. This score only ever
 gets consulted as a tiebreaker: `generateBalancedTeamSets()`
 computes `tieTolerance = 0.1 + reputationShare * 0.9` (`reputationShare` = the fraction of
 today's attendees who are reputation-estimated rather than `gp > 0`), then re-sorts only the

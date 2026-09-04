@@ -1149,12 +1149,12 @@ function scorePhysicalBalance(teams) {
     roleImbalance += countsPerTeam.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) / teams.length;
   });
 
-  // Weighted role(1.5x) > height(0.75x) == build(0.75x) == effort(0.75x) — height/build/effort
-  // all carry the same, deliberately light weight (on top of the separate, still-real
-  // height-floor guideline below); per direct feedback each should nudge a tiebreak, not be a
-  // gigantic factor in it. Effort never surfaces as a .profile-tag pill anywhere (unlike the
-  // other three) — it factors into balancing without becoming a visible label on a player.
-  return heightSpread * 0.75 + buildSpread * 0.75 + effortSpread * 0.75 + roleImbalance * 1.5;
+  // role(0.75x) == height(0.75x) == build(0.75x) == effort(0.75x) — all four tied at the same,
+  // deliberately light weight (on top of the separate, still-real height-floor guideline below;
+  // role was originally weighted 1.5x, walked down to match the other three per direct
+  // feedback). Effort never surfaces as a .profile-tag pill anywhere (unlike the other three) —
+  // it factors into balancing without becoming a visible label on a player.
+  return heightSpread * 0.75 + buildSpread * 0.75 + effortSpread * 0.75 + roleImbalance * 0.75;
 }
 
 // Season Two-Way/20 — or, for a player with no games logged yet, a reputation-based estimate
