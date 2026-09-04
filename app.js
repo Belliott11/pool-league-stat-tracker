@@ -806,14 +806,17 @@ function teamSetSignature(teams) {
 // Balance is judged by each team's *average* quality, not its total — the two can differ by a
 // player when the attendee count doesn't divide evenly by the team size, and comparing totals
 // would then unfairly read a bigger team as "stronger" even at equal per-player quality. Each
-// team's average also gets nudged by teamChemistryAdjustment() — real past performance with
-// these specific teammates, not just theoretical individual quality — so this is where chemistry
-// actually feeds the *primary* ranking, unlike height/build/role below, which only ever
-// tiebreak.
-function scoreTeamSet(teams, qualityById, liftMap) {
+// team's average also gets nudged by two independent real-history signals — teamChemistryAdjustment()
+// (how these specific players have actually performed individually with each other) and
+// teamWinRateAdjustment() (whether teams built around these pairings have actually won) — so
+// this is where past games feed the *primary* ranking, unlike height/build/role below, which
+// only ever tiebreak. Summed rather than averaged together deliberately: a pairing that's both
+// shown a real individual lift *and* a real winning record is doubly-confirmed, not
+// double-counted, and each is independently dampened by its own sample size already.
+function scoreTeamSet(teams, qualityById, liftMap, winRateMap) {
   const avgs = teams.map(team => {
     const base = team.reduce((sum, id) => sum + (qualityById[id] || 0), 0) / team.length;
-    return base + teamChemistryAdjustment(team, liftMap);
+    return base + teamChemistryAdjustment(team, liftMap) + teamWinRateAdjustment(team, winRateMap);
   });
   return { avgs, spread: Math.max(...avgs) - Math.min(...avgs), physicalScore: scorePhysicalBalance(teams) };
 }
@@ -859,16 +862,67 @@ function teamChemistryAdjustment(team, liftMap) {
   return count > 0 ? sum / count : 0;
 }
 
+// Win/loss is a team fact, not an individual one — unlike Two-Way/20 lift, a pair's record while
+// playing together is the same number for both of them, so this map is symmetric (one entry per
+// unordered pair, "a|b" with a < b) instead of chemistry's directional one. Scans every
+// qualifying game once (not once per pair), bucketing by every attendee pair that shared a
+// side, and converts win% to a Two-Way/20-scale adjustment with the same (pct - 50) / 10 formula
+// estimatedQualityFromReputation() already uses (10 percentage points of win rate ≈ 1 point of
+// Two-Way/20) — reusing an established calibration rather than inventing a new one. A tie counts
+// as half a win, matching how win% is computed everywhere else in this tool. Dampened by
+// min(1, gp / 3), same confidence curve as chemistry, for the same reason: 1-2 shared games
+// isn't a settled record yet. A pair who's never shared a team contributes nothing.
+function computeTeamWinRateMap(attendeeIds) {
+  const map = {};
+  const qualifyingGames = state.games.filter(isQualifyingGame);
+  for (let i = 0; i < attendeeIds.length; i++) {
+    for (let j = i + 1; j < attendeeIds.length; j++) {
+      const [a, b] = [attendeeIds[i], attendeeIds[j]];
+      let wins = 0, losses = 0, ties = 0;
+      qualifyingGames.forEach(g => {
+        const together = (g.teamA.includes(a) && g.teamA.includes(b)) || (g.teamB.includes(a) && g.teamB.includes(b));
+        if (!together) return;
+        const result = playerGameResult(g, a); // same team, so same result for b
+        if (result === "W") wins++;
+        else if (result === "L") losses++;
+        else if (result === "T") ties++;
+      });
+      const gp = wins + losses + ties;
+      if (gp === 0) continue;
+      const winPct = ((wins + ties * 0.5) / gp) * 100;
+      const confidence = Math.min(1, gp / 3);
+      map[`${a}|${b}`] = ((winPct - 50) / 10) * confidence;
+    }
+  }
+  return map;
+}
+
+// Average of every known pairwise win-rate adjustment among this team's own players — symmetric
+// lookup, so unlike teamChemistryAdjustment() this only needs each unordered pair once.
+function teamWinRateAdjustment(team, winRateMap) {
+  if (team.length < 2) return 0;
+  let sum = 0, count = 0;
+  for (let i = 0; i < team.length; i++) {
+    for (let j = i + 1; j < team.length; j++) {
+      const key = team[i] < team[j] ? `${team[i]}|${team[j]}` : `${team[j]}|${team[i]}`;
+      const adj = winRateMap[key];
+      if (adj !== undefined) { sum += adj; count++; }
+    }
+  }
+  return count > 0 ? sum / count : 0;
+}
+
 // Tiebreaker only, by design (Two-Way spread is the real, measured/estimated signal and always
 // wins — see the sort in generateBalancedTeamSets()). Three components, summed: how far apart
 // each team's *average* height is in inches (mirrors scoreTeamSet()'s own average-not-total
 // logic, same reasoning), how far apart each team's *average* build is on PLAYER_PHYSICAL_DATA's
-// 1-5 scale (weighted 2x to land in roughly the same range as height spread — a full point of
-// average build is a bigger relative gap on a 1-5 scale than an inch is on human height), and how
-// unevenly the five role tags land across teams — for each role, the variance of its per-team
-// count, summed across all five roles, weighted 1.5x. Role variance carries the most weight of
-// the three: a couple of inches or half a build-point of average difference matters less than one
-// team getting every defender-tagged player on the roster and the other getting none.
+// 1-5 scale (weighted down to 0.75x, not up — build is the softest signal of the three, Claude's
+// own coarse read of vague prose like "decently sized", so it should carry less say than either
+// height, a real parsed number, or role), and how unevenly the five role tags land across teams —
+// for each role, the variance of its per-team count, summed across all five roles, weighted 1.5x.
+// Role variance carries the most weight of the three: a couple of inches or a build-point of
+// average difference matters less than one team getting every defender-tagged player on the
+// roster and the other getting none.
 function scorePhysicalBalance(teams) {
   const avgOf = field => {
     const vals = teams
@@ -889,7 +943,7 @@ function scorePhysicalBalance(teams) {
     roleImbalance += countsPerTeam.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) / teams.length;
   });
 
-  return heightSpread + buildSpread * 2 + roleImbalance * 1.5;
+  return heightSpread + buildSpread * 0.75 + roleImbalance * 1.5;
 }
 
 // Season Two-Way/20 — or, for a player with no games logged yet, a reputation-based estimate
@@ -919,6 +973,7 @@ function generateBalancedTeamSets(attendeeIds, teamSize) {
   const qualityById = {};
   Object.entries(qualityMap).forEach(([id, v]) => { qualityById[id] = v.quality; });
   const liftMap = computeChemistryLiftMap(attendeeIds);
+  const winRateMap = computeTeamWinRateMap(attendeeIds);
 
   const numTeams = Math.max(2, Math.round(attendeeIds.length / Math.max(1, teamSize)));
   const base = Math.floor(attendeeIds.length / numTeams);
@@ -935,7 +990,7 @@ function generateBalancedTeamSets(attendeeIds, teamSize) {
     const sig = teamSetSignature(teams);
     if (seen.has(sig)) return;
     seen.add(sig);
-    scored.push({ teams, ...scoreTeamSet(teams, qualityById, liftMap) });
+    scored.push({ teams, ...scoreTeamSet(teams, qualityById, liftMap, winRateMap) });
   });
   scored.sort((a, b) => a.spread - b.spread);
 
@@ -1024,6 +1079,7 @@ function renderBalanceResults() {
   const qualityMap = computeBalanceQualityMap();
   const anyEstimated = Object.values(qualityMap).some(v => v.source === "reputation");
   const liftMap = computeChemistryLiftMap([...balanceAttendeeIds]);
+  const winRateMap = computeTeamWinRateMap([...balanceAttendeeIds]);
   wrap.innerHTML = balanceResults.map((r, i) => {
     // Surfaces the height/build/role tiebreak's own reasoning per team, not just its effect on
     // ranking — a player's name is titled with their height/build/role/original note straight
@@ -1053,6 +1109,10 @@ function renderBalanceResults() {
       const chemLine = Math.abs(chem) >= 0.1
         ? `<div class="balance-team-physical" title="Average Two-Way/20 lift from real past games with these specific teammates, already included in the avg above.">Chemistry: ${chem >= 0 ? "+" : ""}${chem.toFixed(1)}</div>`
         : "";
+      const winAdj = teamWinRateAdjustment(team, winRateMap);
+      const winLine = Math.abs(winAdj) >= 0.1
+        ? `<div class="balance-team-physical" title="Two-Way/20-scale adjustment from this pairing's actual win rate in past games together, already included in the avg above.">Past record: ${winAdj >= 0 ? "+" : ""}${winAdj.toFixed(1)}</div>`
+        : "";
       return `
         <div class="balance-team-card">
           <h5><span>Team ${String.fromCharCode(65 + ti)}</span><span class="balance-team-avg">${r.avgs[ti].toFixed(1)} avg</span></h5>
@@ -1065,6 +1125,7 @@ function renderBalanceResults() {
           }).join("")}</ul>
           ${physicalLine}
           ${chemLine}
+          ${winLine}
         </div>
       `;
     }).join("");

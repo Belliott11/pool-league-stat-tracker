@@ -1206,19 +1206,21 @@ doesn't contribute to any part of what it feeds.
 
 **Two mechanisms read `PLAYER_PHYSICAL_DATA`, both in `generateBalancedTeamSets()`, and both are
 explicitly scoped to never override quality — Ben was direct about this when it was built:
-Two-Way/20 (real or reputation-estimated, itself now also chemistry-adjusted — see below) decides
-first, physical/role only breaks ties.**
+Two-Way/20 (real or reputation-estimated, itself now also chemistry- and win-rate-adjusted — see
+below) decides first, physical/role only breaks ties.**
 
 `scorePhysicalBalance(teams)` (called from `scoreTeamSet()`) sums three components into one
 `physicalScore` per candidate split, via a shared `avgOf(field)` helper: the spread between
-teams' *average* height, the spread between teams' *average* build (weighted 2× to land in
-roughly the same range as height spread — a full point of average build is a bigger relative gap
-on a 1-5 scale than an inch is on human height) — both mirror `scoreTeamSet()`'s own
-average-not-total reasoning, uneven team sizes shouldn't read a bigger team as automatically
-"taller" or "stronger" — and, weighted 1.5× higher again, the summed *variance* of each role
-tag's per-team count (so a split that puts every `defender`-tagged player on one team and none
-on the other scores worse than one where they're spread out; role carries the most weight of the
-three). This score only ever gets consulted as a tiebreaker: `generateBalancedTeamSets()`
+teams' *average* height, the spread between teams' *average* build (weighted **down** to 0.75×
+— originally shipped at 2× and explicitly walked back after Ben flagged build as the weakest of
+the three signals to lean on; it's Claude's own coarsest read of the three, a single-digit guess
+at vague prose like "decently sized", so it should carry the least say, not the most) — both
+mirror `scoreTeamSet()`'s own average-not-total reasoning, uneven team sizes shouldn't read a
+bigger team as automatically "taller" or "stronger" — and, weighted 1.5× higher, the summed
+*variance* of each role tag's per-team count (so a split that puts every `defender`-tagged player
+on one team and none on the other scores worse than one where they're spread out; role carries
+the most weight of the three, height sits at the implicit 1× baseline in between). This score
+only ever gets consulted as a tiebreaker: `generateBalancedTeamSets()`
 computes `tieTolerance = 0.1 + reputationShare * 0.9` (`reputationShare` = the fraction of
 today's attendees who are reputation-estimated rather than `gp > 0`), then re-sorts only the
 best-spread candidates (`scored.slice(0, 30)`, not the full 300+ pool, so the tolerance check
@@ -1270,6 +1272,30 @@ applies to every one of them) and passed through to `scoreTeamSet()` per candida
 `renderBalanceResults()` recomputes the same map once more for display (a `Chemistry: ±X.X` line
 on any team card where `Math.abs(adjustment) >= 0.1`) — cheap enough at this attendee-pool size
 that a second call isn't worth threading the first one through as extra render-function state.
+
+**`computeTeamWinRateMap(attendeeIds)`, right after the chemistry functions, is the second half
+of the same "past teams, not just past scores" request — whether teams built around a given pair
+have actually won, as a signal independent of either player's own individual performance.**
+Symmetric by construction (a pair's win/loss record while sharing a team is one fact, not two —
+`liftMap`'s `"a|b"`/`"b|a"` asymmetry doesn't apply here), so it's a single `O(n²)` nested loop
+over `attendeeIds`, storing one entry per unordered pair (`i < j`) rather than two. For each
+pair, it filters `state.games.filter(isQualifyingGame)` down to games where both were on the same
+side, tallies W/L/T via `playerGameResult(g, a)` (same result for `b`, since they shared a team
+that game), and converts the resulting win% to a Two-Way/20-scale adjustment with `((winPct - 50)
+/ 10) * confidence` — deliberately the exact same `(x - 50) / 10` shape
+`estimatedQualityFromReputation()` already uses elsewhere in this file, reusing an established
+calibration (10 percentage points ≈ 1 point of Two-Way/20) rather than inventing a new one. Ties
+count as half a win in `winPct`, matching how win% is computed everywhere else in this tool.
+`confidence` is the same `Math.min(1, gp / 3)` dampening curve as chemistry's, for the same
+reason — a 1-2 game record isn't settled yet — and a pair with zero shared games gets no entry at
+all. `teamWinRateAdjustment(team, winRateMap)` averages every known pairwise entry among a team's
+own players (looking up whichever of `"a|b"`/`"b|a"` the ids sort into) and `scoreTeamSet()`
+*sums* it with `teamChemistryAdjustment()`'s own result — not an average of the two — into the
+same primary-ranking nudge: a pairing that's both shown a real individual lift *and* a real
+winning record together is doubly-confirmed by two independent signals, not double-counted, since
+each is already dampened by its own sample size before the two are combined. Shown in the UI as
+its own `Past record: ±X.X` line, same `>= 0.1` display threshold as Chemistry, right underneath
+it on each team card.
 
 **Matchup Preview, on any 2-team Balance Teams result, is not new data either — it's
 `computeMatchupGrid()`'s existing per-pair FG data, filtered down to one specific matchup.**

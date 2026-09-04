@@ -73,11 +73,13 @@ individual player, not a team.
    guesses aren't worth treating as settled. Three things feed the tiebreak: how far apart each
    team's *average* height lands (parsed from the sheet's "Height/Build" column's feet/inches),
    how far apart each team's *average* build lands (Claude's own 1-5 read of that same column's
-   qualitative half — skinny through very muscular), and how evenly Claude's own five-bucket read
-   of each player's "Preferred Role" note (scorer / defender / rebounder / playmaker / role
-   player — hover a name in the results for the original sentence it came from) spreads across
-   teams, so one side doesn't end up with every tagged defender and the other with none — role
-   carries the most weight of the three. One exception sits a level above the rest of the
+   qualitative half — skinny through very muscular, weighted the lightest of the three, since it's
+   the softest signal — a coarse read of vague prose like "decently sized"), and how evenly
+   Claude's own five-bucket read of each player's "Preferred Role" note (scorer / defender /
+   rebounder / playmaker / role player — hover a name in the results for the original sentence it
+   came from) spreads across teams, so one side doesn't end up with every tagged defender and the
+   other with none — role carries the most weight of the three. One exception sits a level above
+   the rest of the
    tiebreak, closer to a real guideline than a nice-to-have: every team should have someone taller
    than today's attendee-group's own average height, since a team with nobody above that line is
    a real disadvantage in this league. It's still not absolute — a split that's clearly
@@ -97,7 +99,17 @@ individual player, not a team.
    playing with B is a different number from B's lift from playing with A, since those are
    different facts about different players' own games. A team card shows its own **Chemistry**
    line whenever the adjustment is large enough to matter, so it's visible on top of the blended
-   average, not hidden inside it. For any 2-team
+   average, not hidden inside it.
+
+   A pairing's actual **win rate** together factors in the same way — folded into the primary
+   average, not a tiebreaker. Unlike Chemistry, this one's about whether *teams* built around
+   these two have actually won, not how either player performed individually, so it's symmetric
+   (Ben and Zach's record together is one shared fact, not two) rather than directional. Converted
+   to a Two-Way/20-scale adjustment with the same formula the reputation-percentile estimate
+   already uses (10 percentage points of win rate ≈ 1 point of Two-Way/20), and dampened by games
+   played together the same way Chemistry is — a pair's record over just one or two shared games
+   isn't settled yet. Shown as its own **Past record** line, right under Chemistry, whenever it's
+   large enough to matter. For any 2-team
    split, **Preview
    Matchups** expands real head-to-head history between the two rosters about to face each
    other — every scorer/defender pair from either side with real logged shots between them,
