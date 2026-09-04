@@ -632,42 +632,46 @@ PLAYER_REPUTATION_DATA.forEach(r => { PLAYER_REPUTATION_BY_ID[r.slug] = r; });
 // same source PLAYER_REPUTATION_DATA draws from, hand-transcribed the same way, at his explicit
 // request (this was deliberately left out until asked for — see the comment above
 // PLAYER_REPUTATION_DATA). heightIn is parsed from the sheet's "Height/Build" column's
-// feet/inches (e.g. `6'0", 175 lbs` -> 72) — "build" itself is prose, not a clean number, so it
-// doesn't get its own field; role is Claude's own read of the "Preferred Role" column's free
-// text, bucketed into five rough categories (scorer / defender / rebounder / playmaker /
-// role-player) purely so there's something to spread evenly across teams below — not Ben's own
-// explicit tag. `note` keeps the original sentence specifically so a categorization that reads
-// wrong is obvious at a glance (hover a chip) rather than buried in a black-box score — relabel
-// any of these by hand if they don't match. Only ever a *tiebreaker* (see scorePhysicalBalance())
-// — real Two-Way spread always wins when the two disagree. A player missing here (no Player
-// Profiles row) just doesn't contribute to either half of the tiebreak.
+// feet/inches (e.g. `6'0", 175 lbs` -> 72). build is Claude's own 1-5 read of that same column's
+// qualitative half (1 skinny/very skinny, 2 skinny-leaning, 3 average/unstated, 4 strong/bigger,
+// 5 very muscular or bigger-and-physical) — the numeric weight when given (e.g. "175 lbs") isn't
+// itself used, just folded into the same 1-5 judgment call, since a bare pounds figure means
+// nothing without a frame to compare it against. role is Claude's own read of the "Preferred
+// Role" column's free text, bucketed into five rough categories (scorer / defender / rebounder /
+// playmaker / role-player) purely so there's something to spread evenly across teams below — not
+// Ben's own explicit tag. `note` keeps the original sentence specifically so a categorization
+// that reads wrong is obvious at a glance (hover a chip) rather than buried in a black-box score
+// — relabel any of these by hand if they don't match. All three are only ever a *tiebreaker* (see
+// scorePhysicalBalance()) — real Two-Way spread always wins when the two disagree. A player
+// missing here (no Player Profiles row) just doesn't contribute to any part of the tiebreak.
 const PLAYER_PHYSICAL_DATA = {
-  ben: { heightIn: 72, role: "defender", note: "Lockdown defender on top opponent; facilitator/passer on offense" },
-  adam: { heightIn: 64, role: "scorer", note: "Catch-and-shoot threat" },
-  zach: { heightIn: 67, role: "scorer", note: "High-volume shooter" },
-  alex: { heightIn: 72, role: "scorer", note: "Ball-dominant scorer; doesn't pass frequently" },
-  evan: { heightIn: 69, role: "scorer", note: "Physical finisher around the rim; doesn't playmake much" },
-  "g-ian": { heightIn: 70, role: "rebounder", note: "Physical presence/rebounder; inconsistent on both ends otherwise" },
-  "g-michael-t": { heightIn: 70, role: "scorer", note: "Shoots everything; low shot discipline" },
-  "g-lukas": { heightIn: 67, role: "rebounder", note: "Comfortable in the post" },
-  reilly: { heightIn: 71, role: "scorer", note: "Midrange threat; plays fine defense" },
-  viraj: { heightIn: 69, role: "role-player", note: "Third option on almost every team he's on" },
-  sean: { heightIn: 72, role: "defender", note: "On-ball pest defensively; post scorer, doesn't shoot much" },
-  will: { heightIn: 68, role: "rebounder", note: "Physical, clears space; fouls a lot; not much skill either end" },
-  phillip: { heightIn: 73, role: "scorer", note: "Shoots from anywhere; can drive and dunk; blocks (sometimes goaltends)" },
-  jason: { heightIn: 70, role: "defender", note: "Defensive pest; can't shoot, occasional dunk as only real scoring source" },
-  "logan-hoskins": { heightIn: 72, role: "defender", note: "Great on-ball defender; midrange threat" },
-  "logan-watson": { heightIn: 69, role: "role-player", note: "Decently physical; modest midrange shooter" },
-  kayla: { heightIn: 67, role: "role-player", note: "Takes up space; no developed skill in any facet" },
-  ryder: { heightIn: 70, role: "playmaker", note: "Passes well, finds open space; not very talented on either end" },
-  "g-danny": { heightIn: 70, role: "rebounder", note: "Plays physical well; no real basketball talent" },
-  "g-michael-k": { heightIn: 70, role: "scorer", note: "Shoots a lot, not very accurately; not very physical" }
+  ben: { heightIn: 72, build: 3, role: "defender", note: "Lockdown defender on top opponent; facilitator/passer on offense" },
+  adam: { heightIn: 64, build: 5, role: "scorer", note: "Catch-and-shoot threat" },
+  zach: { heightIn: 67, build: 1, role: "scorer", note: "High-volume shooter" },
+  alex: { heightIn: 72, build: 3, role: "scorer", note: "Ball-dominant scorer; doesn't pass frequently" },
+  evan: { heightIn: 69, build: 4, role: "scorer", note: "Physical finisher around the rim; doesn't playmake much" },
+  "g-ian": { heightIn: 70, build: 4, role: "rebounder", note: "Physical presence/rebounder; inconsistent on both ends otherwise" },
+  "g-michael-t": { heightIn: 70, build: 2, role: "scorer", note: "Shoots everything; low shot discipline" },
+  "g-lukas": { heightIn: 67, build: 3, role: "rebounder", note: "Comfortable in the post" },
+  reilly: { heightIn: 71, build: 3, role: "scorer", note: "Midrange threat; plays fine defense" },
+  viraj: { heightIn: 69, build: 2, role: "role-player", note: "Third option on almost every team he's on" },
+  sean: { heightIn: 72, build: 4, role: "defender", note: "On-ball pest defensively; post scorer, doesn't shoot much" },
+  will: { heightIn: 68, build: 4, role: "rebounder", note: "Physical, clears space; fouls a lot; not much skill either end" },
+  phillip: { heightIn: 73, build: 4, role: "scorer", note: "Shoots from anywhere; can drive and dunk; blocks (sometimes goaltends)" },
+  jason: { heightIn: 70, build: 2, role: "defender", note: "Defensive pest; can't shoot, occasional dunk as only real scoring source" },
+  "logan-hoskins": { heightIn: 72, build: 4, role: "defender", note: "Great on-ball defender; midrange threat" },
+  "logan-watson": { heightIn: 69, build: 3, role: "role-player", note: "Decently physical; modest midrange shooter" },
+  kayla: { heightIn: 67, build: 3, role: "role-player", note: "Takes up space; no developed skill in any facet" },
+  ryder: { heightIn: 70, build: 2, role: "playmaker", note: "Passes well, finds open space; not very talented on either end" },
+  "g-danny": { heightIn: 70, build: 5, role: "rebounder", note: "Plays physical well; no real basketball talent" },
+  "g-michael-k": { heightIn: 70, build: 2, role: "scorer", note: "Shoots a lot, not very accurately; not very physical" }
 };
 function formatHeightIn(totalInches) {
   const rounded = Math.round(totalInches);
   return `${Math.floor(rounded / 12)}'${rounded % 12}"`;
 }
 const PHYSICAL_ROLE_LABELS = { scorer: "Scorer", defender: "Defender", rebounder: "Rebounder", playmaker: "Playmaker", "role-player": "Role Player" };
+const BUILD_LABELS = { 1: "Very Skinny", 2: "Skinny", 3: "Average", 4: "Strong", 5: "Very Strong" };
 
 // Converts a season-average power-ranking percentile (0-100, 50 = exactly average that night)
 // into a Two-Way/20-equivalent estimate. Calibrated against the real spread of this roster's own
@@ -801,25 +805,80 @@ function teamSetSignature(teams) {
 
 // Balance is judged by each team's *average* quality, not its total — the two can differ by a
 // player when the attendee count doesn't divide evenly by the team size, and comparing totals
-// would then unfairly read a bigger team as "stronger" even at equal per-player quality.
-function scoreTeamSet(teams, qualityById) {
-  const avgs = teams.map(team => team.reduce((sum, id) => sum + (qualityById[id] || 0), 0) / team.length);
+// would then unfairly read a bigger team as "stronger" even at equal per-player quality. Each
+// team's average also gets nudged by teamChemistryAdjustment() — real past performance with
+// these specific teammates, not just theoretical individual quality — so this is where chemistry
+// actually feeds the *primary* ranking, unlike height/build/role below, which only ever
+// tiebreak.
+function scoreTeamSet(teams, qualityById, liftMap) {
+  const avgs = teams.map(team => {
+    const base = team.reduce((sum, id) => sum + (qualityById[id] || 0), 0) / team.length;
+    return base + teamChemistryAdjustment(team, liftMap);
+  });
   return { avgs, spread: Math.max(...avgs) - Math.min(...avgs), physicalScore: scorePhysicalBalance(teams) };
 }
 
+// Real chemistry, not just summed individual quality — for every attendee, how their own
+// Two-Way/20 actually changed with each other attendee on their team vs. not, straight from
+// computeTeammateSynergy() (the same "with vs. without" split Player Detail's own Teammate
+// Synergy panel shows). Precomputed once per generateBalancedTeamSets() call, not per candidate,
+// since it's the same lookup for every split tried — computeTeammateSynergy() itself re-scans
+// every game, so calling it once per attendee here (not once per pair per candidate) keeps this
+// affordable. Each pair's lift is dampened by how many games they've actually shared
+// (min(1, withGp / 3)), so a single shared game's swing isn't treated as a settled pattern the
+// way 3+ games together would be — and a pair with zero shared games contributes nothing at all
+// (unknown, never assumed neutral or negative). Asymmetric on purpose: A's lift from playing
+// with B is stored separately from B's lift from playing with A, since those are different
+// facts about different players' games, same reasoning the Teammate Lift Matrix already uses.
+function computeChemistryLiftMap(attendeeIds) {
+  const map = {};
+  attendeeIds.forEach(playerId => {
+    computeTeammateSynergy(playerId).forEach(r => {
+      if (!attendeeIds.includes(r.teammate.id)) return;
+      if (r.with.gp === 0 || r.without.gp === 0) return;
+      const lift = r.with.twoWayPer20 - r.without.twoWayPer20;
+      const confidence = Math.min(1, r.with.gp / 3);
+      map[`${playerId}|${r.teammate.id}`] = lift * confidence;
+    });
+  });
+  return map;
+}
+
+// Average of every known pairwise lift among this team's own players (both directions counted
+// separately — A-with-B and B-with-A are different lookups). A team with no known pairs (nobody
+// on it has ever shared a qualifying game with anybody else on it) gets 0, not a penalty for
+// being an untested combination.
+function teamChemistryAdjustment(team, liftMap) {
+  if (team.length < 2) return 0;
+  let sum = 0, count = 0;
+  team.forEach(a => team.forEach(b => {
+    if (a === b) return;
+    const lift = liftMap[`${a}|${b}`];
+    if (lift !== undefined) { sum += lift; count++; }
+  }));
+  return count > 0 ? sum / count : 0;
+}
+
 // Tiebreaker only, by design (Two-Way spread is the real, measured/estimated signal and always
-// wins — see the sort in generateBalancedTeamSets()). Two components, summed: how far apart each
-// team's *average* height is in inches (mirrors scoreTeamSet()'s own average-not-total logic,
-// same reasoning), and how unevenly PLAYER_PHYSICAL_DATA's five role tags land across teams — for
-// each role, the variance of its per-team count, summed across all five roles. Role variance is
-// weighted higher than height: a couple of inches of average height difference matters less than
-// one team getting every defender-tagged player on the roster and the other getting none.
+// wins — see the sort in generateBalancedTeamSets()). Three components, summed: how far apart
+// each team's *average* height is in inches (mirrors scoreTeamSet()'s own average-not-total
+// logic, same reasoning), how far apart each team's *average* build is on PLAYER_PHYSICAL_DATA's
+// 1-5 scale (weighted 2x to land in roughly the same range as height spread — a full point of
+// average build is a bigger relative gap on a 1-5 scale than an inch is on human height), and how
+// unevenly the five role tags land across teams — for each role, the variance of its per-team
+// count, summed across all five roles, weighted 1.5x. Role variance carries the most weight of
+// the three: a couple of inches or half a build-point of average difference matters less than one
+// team getting every defender-tagged player on the roster and the other getting none.
 function scorePhysicalBalance(teams) {
-  const heights = teams
-    .map(team => team.map(id => PLAYER_PHYSICAL_DATA[id]?.heightIn).filter(h => h !== undefined))
-    .filter(known => known.length > 0)
-    .map(known => known.reduce((a, b) => a + b, 0) / known.length);
-  const heightSpread = heights.length >= 2 ? Math.max(...heights) - Math.min(...heights) : 0;
+  const avgOf = field => {
+    const vals = teams
+      .map(team => team.map(id => PLAYER_PHYSICAL_DATA[id]?.[field]).filter(v => v !== undefined))
+      .filter(known => known.length > 0)
+      .map(known => known.reduce((a, b) => a + b, 0) / known.length);
+    return vals.length >= 2 ? Math.max(...vals) - Math.min(...vals) : 0;
+  };
+  const heightSpread = avgOf("heightIn");
+  const buildSpread = avgOf("build");
 
   let roleImbalance = 0;
   Object.keys(PHYSICAL_ROLE_LABELS).forEach(role => {
@@ -830,7 +889,7 @@ function scorePhysicalBalance(teams) {
     roleImbalance += countsPerTeam.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) / teams.length;
   });
 
-  return heightSpread + roleImbalance * 1.5;
+  return heightSpread + buildSpread * 2 + roleImbalance * 1.5;
 }
 
 // Season Two-Way/20 — or, for a player with no games logged yet, a reputation-based estimate
@@ -859,6 +918,7 @@ function generateBalancedTeamSets(attendeeIds, teamSize) {
   const qualityMap = computeBalanceQualityMap();
   const qualityById = {};
   Object.entries(qualityMap).forEach(([id, v]) => { qualityById[id] = v.quality; });
+  const liftMap = computeChemistryLiftMap(attendeeIds);
 
   const numTeams = Math.max(2, Math.round(attendeeIds.length / Math.max(1, teamSize)));
   const base = Math.floor(attendeeIds.length / numTeams);
@@ -875,7 +935,7 @@ function generateBalancedTeamSets(attendeeIds, teamSize) {
     const sig = teamSetSignature(teams);
     if (seen.has(sig)) return;
     seen.add(sig);
-    scored.push({ teams, ...scoreTeamSet(teams, qualityById) });
+    scored.push({ teams, ...scoreTeamSet(teams, qualityById, liftMap) });
   });
   scored.sort((a, b) => a.spread - b.spread);
 
@@ -963,22 +1023,35 @@ function renderBalanceResults() {
   }
   const qualityMap = computeBalanceQualityMap();
   const anyEstimated = Object.values(qualityMap).some(v => v.source === "reputation");
+  const liftMap = computeChemistryLiftMap([...balanceAttendeeIds]);
   wrap.innerHTML = balanceResults.map((r, i) => {
-    // Surfaces the height/role tiebreak's own reasoning per team, not just its effect on
-    // ranking — a player's name is titled with their height/role/original note straight from
-    // PLAYER_PHYSICAL_DATA (hover to see exactly what drove a categorization), and each team
-    // gets a one-line height/role summary underneath its roster.
+    // Surfaces the height/build/role tiebreak's own reasoning per team, not just its effect on
+    // ranking — a player's name is titled with their height/build/role/original note straight
+    // from PLAYER_PHYSICAL_DATA (hover to see exactly what drove a categorization), and each
+    // team gets a one-line summary underneath its roster. A team's chemistry adjustment (real
+    // "with this teammate vs. without" lift, already folded into its avg above) gets its own
+    // small callout when it's large enough to matter, so that part of the ranking isn't hidden
+    // inside one blended number either.
     const teamsHtml = r.teams.map((team, ti) => {
       const heights = team.map(id => PLAYER_PHYSICAL_DATA[id]?.heightIn).filter(h => h !== undefined);
       const avgHeightLabel = heights.length > 0 ? formatHeightIn(heights.reduce((a, b) => a + b, 0) / heights.length) : null;
+      const builds = team.map(id => PLAYER_PHYSICAL_DATA[id]?.build).filter(b => b !== undefined);
+      const avgBuildLabel = builds.length > 0 ? BUILD_LABELS[Math.round(builds.reduce((a, b) => a + b, 0) / builds.length)] : null;
       const roleCounts = {};
       team.forEach(id => {
         const role = PLAYER_PHYSICAL_DATA[id]?.role;
         if (role) roleCounts[role] = (roleCounts[role] || 0) + 1;
       });
       const roleSummary = Object.entries(roleCounts).map(([role, count]) => `${count} ${PHYSICAL_ROLE_LABELS[role]}${count > 1 ? "s" : ""}`).join(", ");
-      const physicalLine = (avgHeightLabel || roleSummary)
-        ? `<div class="balance-team-physical">${avgHeightLabel ? `Avg height: ${avgHeightLabel}` : ""}${avgHeightLabel && roleSummary ? " · " : ""}${roleSummary}</div>`
+      const parts = [
+        avgHeightLabel ? `Avg height: ${avgHeightLabel}` : "",
+        avgBuildLabel ? `Avg build: ${avgBuildLabel}` : "",
+        roleSummary
+      ].filter(Boolean);
+      const physicalLine = parts.length > 0 ? `<div class="balance-team-physical">${parts.join(" · ")}</div>` : "";
+      const chem = teamChemistryAdjustment(team, liftMap);
+      const chemLine = Math.abs(chem) >= 0.1
+        ? `<div class="balance-team-physical" title="Average Two-Way/20 lift from real past games with these specific teammates, already included in the avg above.">Chemistry: ${chem >= 0 ? "+" : ""}${chem.toFixed(1)}</div>`
         : "";
       return `
         <div class="balance-team-card">
@@ -987,10 +1060,11 @@ function renderBalanceResults() {
             const name = state.players.find(p => p.id === id)?.name || "?";
             const marker = qualityMap[id]?.source === "reputation" ? " *" : "";
             const phys = PLAYER_PHYSICAL_DATA[id];
-            const title = phys ? ` title="${escapeHtml(formatHeightIn(phys.heightIn))}, ${escapeHtml(PHYSICAL_ROLE_LABELS[phys.role])} — ${escapeHtml(phys.note)}"` : "";
+            const title = phys ? ` title="${escapeHtml(formatHeightIn(phys.heightIn))}, ${escapeHtml(BUILD_LABELS[phys.build])}, ${escapeHtml(PHYSICAL_ROLE_LABELS[phys.role])} — ${escapeHtml(phys.note)}"` : "";
             return `<li${title}>${escapeHtml(name)}${marker}</li>`;
           }).join("")}</ul>
           ${physicalLine}
+          ${chemLine}
         </div>
       `;
     }).join("");

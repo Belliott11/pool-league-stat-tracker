@@ -1192,38 +1192,44 @@ well-reasoned one) without flagging which is which would be misleading.
 spreadsheet's "Player Profiles" sheet after all — at Ben's explicit request, reversing the
 original "deliberately does not" stance above; that stance was about not doing this
 *unprompted*, not a permanent rule.** Same hand-transcription pattern as
-`PLAYER_REPUTATION_DATA`: a plain object keyed by player id, `{ heightIn, role, note }` per
-entry. `heightIn` is parsed by hand from the sheet's "Height/Build" column's feet/inches (e.g.
-`6'0", 175 lbs` → `72`) — weight and build descriptors are dropped, since they're prose, not a
-clean number. `role` is Claude's own five-bucket read of the "Preferred Role" column's free text
-(`scorer` / `defender` / `rebounder` / `playmaker` / `role-player`) — an interpretation, not
-Ben's own explicit tag — with `note` keeping the original sentence specifically so a
-mismatched categorization is visible (surfaced as a tooltip in the UI) rather than hidden inside
-a score. A player missing from this table (no Player Profiles row) just doesn't contribute to
-either half of what it feeds.
+`PLAYER_REPUTATION_DATA`: a plain object keyed by player id, `{ heightIn, build, role, note }`
+per entry. `heightIn` is parsed by hand from the sheet's "Height/Build" column's feet/inches
+(e.g. `6'0", 175 lbs` → `72`); `build` is Claude's own 1-5 read of that same column's
+qualitative half (skinny through very muscular — a bare pounds figure like "175 lbs" isn't used
+on its own, just folded into the same judgment call, since weight means nothing without a frame
+to compare it against). `role` is Claude's own five-bucket read of the "Preferred Role" column's
+free text (`scorer` / `defender` / `rebounder` / `playmaker` / `role-player`) — an
+interpretation, not Ben's own explicit tag — with `note` keeping the original sentence
+specifically so a mismatched categorization is visible (surfaced as a tooltip in the UI) rather
+than hidden inside a score. A player missing from this table (no Player Profiles row) just
+doesn't contribute to any part of what it feeds.
 
 **Two mechanisms read `PLAYER_PHYSICAL_DATA`, both in `generateBalancedTeamSets()`, and both are
 explicitly scoped to never override quality — Ben was direct about this when it was built:
-Two-Way/20 (real or reputation-estimated) decides first, physical/role only breaks ties.**
+Two-Way/20 (real or reputation-estimated, itself now also chemistry-adjusted — see below) decides
+first, physical/role only breaks ties.**
 
-`scorePhysicalBalance(teams)` (called from `scoreTeamSet()`) sums two components into one
-`physicalScore` per candidate split: the spread between teams' *average* height (mirrors
-`scoreTeamSet()`'s own average-not-total reasoning for the same reason — uneven team sizes
-shouldn't read a bigger team as automatically "taller"), and — weighted 1.5× higher, since it's
-the more structurally significant of the two — the summed *variance* of each role tag's
-per-team count (so a split that puts every `defender`-tagged player on one team and none on the
-other scores worse than one where they're spread out). This score only ever gets consulted as a
-tiebreaker: `generateBalancedTeamSets()` computes `tieTolerance = 0.1 + reputationShare * 0.9`
-(`reputationShare` = the fraction of today's attendees who are reputation-estimated rather than
-`gp > 0`), then re-sorts only the best-spread candidates (`scored.slice(0, 30)`, not the full
-300+ pool, so the tolerance check can't produce a weird ordering between options that were never
-close to begin with) with a comparator that falls through to `physicalScore` only when
-`Math.abs(a.spread - b.spread) <= tieTolerance`. The tolerance scaling with `reputationShare` is
-deliberate: quality estimates built mostly from reputation percentiles are themselves mostly a
-guess, so two such options within a full point of each other are treated as practically
-indistinguishable on quality alone, handing real say to physical/role — whereas a group with real
-measured Two-Way/20 for everyone gets a near-zero tolerance (0.1), so physical/role essentially
-never overrides a real quality difference there.
+`scorePhysicalBalance(teams)` (called from `scoreTeamSet()`) sums three components into one
+`physicalScore` per candidate split, via a shared `avgOf(field)` helper: the spread between
+teams' *average* height, the spread between teams' *average* build (weighted 2× to land in
+roughly the same range as height spread — a full point of average build is a bigger relative gap
+on a 1-5 scale than an inch is on human height) — both mirror `scoreTeamSet()`'s own
+average-not-total reasoning, uneven team sizes shouldn't read a bigger team as automatically
+"taller" or "stronger" — and, weighted 1.5× higher again, the summed *variance* of each role
+tag's per-team count (so a split that puts every `defender`-tagged player on one team and none
+on the other scores worse than one where they're spread out; role carries the most weight of the
+three). This score only ever gets consulted as a tiebreaker: `generateBalancedTeamSets()`
+computes `tieTolerance = 0.1 + reputationShare * 0.9` (`reputationShare` = the fraction of
+today's attendees who are reputation-estimated rather than `gp > 0`), then re-sorts only the
+best-spread candidates (`scored.slice(0, 30)`, not the full 300+ pool, so the tolerance check
+can't produce a weird ordering between options that were never close to begin with) with a
+comparator that falls through to `physicalScore` only when `Math.abs(a.spread - b.spread) <=
+tieTolerance`. The tolerance scaling with `reputationShare` is deliberate: quality estimates
+built mostly from reputation percentiles are themselves mostly a guess, so two such options
+within a full point of each other are treated as practically indistinguishable on quality alone,
+handing real say to physical/role — whereas a group with real measured Two-Way/20 for everyone
+gets a near-zero tolerance (0.1), so physical/role essentially never overrides a real quality
+difference there.
 
 One height rule sits a level above that tiebreak, closer to a guideline than a nice-to-have, per
 Ben's own framing ("fundamental... although not completely strict"): `averageAttendeeHeight()`
@@ -1237,6 +1243,33 @@ was a deliberate design choice, not a hard filter: an earlier version excluded n
 candidates outright before any spread sorting, and was explicitly walked back to this
 softer version — worth knowing if you're tempted to port the "obviously correct" strict version
 instead.
+
+**Chemistry is the one place past games actually move the *primary* ranking, not just settle
+close calls — this was the second half of the same request that added `PLAYER_PHYSICAL_DATA`.**
+`computeChemistryLiftMap(attendeeIds)` (`app.js`, right before `generateBalancedTeamSets()`)
+calls `computeTeammateSynergy(playerId)` once per attendee (not once per pair per candidate —
+that function already re-scans every game per call, so this keeps the cost affordable) and
+builds a flat `"playerId|teammateId" -> dampened lift` map from every pair where both players are
+in `attendeeIds` and both `with.gp` and `without.gp` are nonzero. The lift itself is
+`with.twoWayPer20 - without.twoWayPer20` (identical to what Player Detail's own Teammate Synergy
+panel shows), dampened by `Math.min(1, with.gp / 3)` — a pair who's shared only one game gets a
+third of their raw lift's weight, three or more games gets the full lift, since a single shared
+game's swing shouldn't be treated as a settled pattern. A pair with zero shared games gets no
+entry at all (not a zero — unknown, not assumed neutral). The map is intentionally asymmetric:
+`liftMap["a|b"]` and `liftMap["b|a"]` are separate lookups with generally different values, same
+as the Teammate Lift Matrix's own row/column asymmetry, since "how did A do with B" and "how did
+B do with A" are different facts about different players' games.
+
+`teamChemistryAdjustment(team, liftMap)` averages every known pairwise lift among a team's own
+players (both directions counted separately) and `scoreTeamSet()` adds that adjustment directly
+to each team's base quality average *before* computing `spread` — meaning a strong observed
+chemistry effect between two attendees can change which split ranks best, not just which one wins
+a tiebreak among near-equal options. `computeChemistryLiftMap()` is computed once per
+`generateBalancedTeamSets()` call (all candidates share the same attendee pool, so the same map
+applies to every one of them) and passed through to `scoreTeamSet()` per candidate.
+`renderBalanceResults()` recomputes the same map once more for display (a `Chemistry: ±X.X` line
+on any team card where `Math.abs(adjustment) >= 0.1`) — cheap enough at this attendee-pool size
+that a second call isn't worth threading the first one through as extra render-function state.
 
 **Matchup Preview, on any 2-team Balance Teams result, is not new data either — it's
 `computeMatchupGrid()`'s existing per-pair FG data, filtered down to one specific matchup.**

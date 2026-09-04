@@ -63,25 +63,41 @@ individual player, not a team.
    the exact number and source). Truly no-data players (never logged a game *or* a real-life
    party) still fall back to a neutral 0.0.
 
-   Height and role — from the same spreadsheet's "Player Profiles" sheet, hand-transcribed into
-   `PLAYER_PHYSICAL_DATA` at Ben's explicit request — factor in too, but strictly as a tiebreaker:
-   **quality (Two-Way/20, real or estimated) always decides first.** Physical/role only gets to
-   choose between options that are already close on quality, and "close" itself stretches with how
-   much of the group is a reputation-based guess rather than a real number — the less trustworthy
-   the quality spread is (an all-reputation-estimated group), the more say physical/role gets, on
-   the theory that hundredths-of-a-point differences between guesses aren't worth treating as
-   settled. Two things feed the tiebreak: how far apart each team's *average* height lands
-   (parsed from the sheet's "Height/Build" column), and how evenly Claude's own five-bucket read
+   Height, build, and role — from the same spreadsheet's "Player Profiles" sheet, hand-
+   transcribed into `PLAYER_PHYSICAL_DATA` at Ben's explicit request — factor in too, but
+   strictly as a tiebreaker: **quality (Two-Way/20, real or estimated) always decides first.**
+   Physical/role only gets to choose between options that are already close on quality, and
+   "close" itself stretches with how much of the group is a reputation-based guess rather than a
+   real number — the less trustworthy the quality spread is (an all-reputation-estimated group),
+   the more say physical/role gets, on the theory that hundredths-of-a-point differences between
+   guesses aren't worth treating as settled. Three things feed the tiebreak: how far apart each
+   team's *average* height lands (parsed from the sheet's "Height/Build" column's feet/inches),
+   how far apart each team's *average* build lands (Claude's own 1-5 read of that same column's
+   qualitative half — skinny through very muscular), and how evenly Claude's own five-bucket read
    of each player's "Preferred Role" note (scorer / defender / rebounder / playmaker / role
    player — hover a name in the results for the original sentence it came from) spreads across
-   teams, so one side doesn't end up with every tagged defender and the other with none. One
-   exception sits a level above the rest of the tiebreak, closer to a real guideline than a
-   nice-to-have: every team should have someone taller than today's attendee-group's own average
-   height, since a team with nobody above that line is a real disadvantage in this league. It's
-   still not absolute — a split that's clearly better-balanced on quality can still win even if it
-   misses the height guideline — but among options that are already tied on quality, one that
-   clears the bar always beats one that doesn't. Each team card in the results shows its own
-   average height and role mix so this reasoning is visible, not a black box. For any 2-team
+   teams, so one side doesn't end up with every tagged defender and the other with none — role
+   carries the most weight of the three. One exception sits a level above the rest of the
+   tiebreak, closer to a real guideline than a nice-to-have: every team should have someone taller
+   than today's attendee-group's own average height, since a team with nobody above that line is
+   a real disadvantage in this league. It's still not absolute — a split that's clearly
+   better-balanced on quality can still win even if it misses the height guideline — but among
+   options that are already tied on quality, one that clears the bar always beats one that
+   doesn't. Each team card in the results shows its own average height, average build, and role
+   mix so this reasoning is visible, not a black box.
+
+   Real chemistry factors in too, but unlike height/build/role, it's folded directly into each
+   team's quality average rather than sitting outside it as a tiebreaker — this is the one place
+   past games actually move the primary ranking, not just settle close calls. For every pair of
+   attendees who've actually shared a team before, their real "with this teammate vs. without"
+   Two-Way/20 lift (the same number Player Detail's own Teammate Synergy panel shows) nudges that
+   team's average up or down, dampened by how many games they've actually shared (a single shared
+   game counts for less than three or more) — a pair who's never played together contributes
+   nothing, not a penalty for being untested. It's asymmetric on purpose: player A's lift from
+   playing with B is a different number from B's lift from playing with A, since those are
+   different facts about different players' own games. A team card shows its own **Chemistry**
+   line whenever the adjustment is large enough to matter, so it's visible on top of the blended
+   average, not hidden inside it. For any 2-team
    split, **Preview
    Matchups** expands real head-to-head history between the two rosters about to face each
    other — every scorer/defender pair from either side with real logged shots between them,
