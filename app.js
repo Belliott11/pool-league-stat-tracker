@@ -5062,6 +5062,94 @@ function renderSeasonHistoryPanel(playerId) {
   `;
 }
 
+// The league-wide equivalent of computeSeasonHistoryForPlayer() above — same per-season game
+// filter (real shots logged, balanced unless includeImbalancedGames is on, within that season's
+// own [startedAt, endedAt] date range), just pooled across every player instead of scoped to
+// one, for full standings of one specific closed season rather than one player's row in it.
+function computeLeagueSeasonStandings(season) {
+  return state.players.map(p => {
+    const seasonGames = state.games.filter(g =>
+      g.scoringEvents.length > 0
+      && (g.teamA.includes(p.id) || g.teamB.includes(p.id))
+      && (includeImbalancedGames || isBalancedGame(g))
+      && (season.startedAt ? (g.date || "") >= season.startedAt : true)
+      && (g.date || "") <= season.endedAt
+    );
+    if (seasonGames.length === 0) return null;
+    let wins = 0, losses = 0, ties = 0;
+    seasonGames.forEach(g => {
+      const result = playerGameResult(g, p.id);
+      if (result === "W") wins++;
+      else if (result === "L") losses++;
+      else if (result === "T") ties++;
+    });
+    const summary = computeRateSummaryForGames(p.id, seasonGames);
+    return {
+      player: p, gp: seasonGames.length, wins, losses, ties,
+      offRatingPer20: summary.offRatingPer20,
+      defRatingPer20: summary.twoWayPer20 - summary.offRatingPer20,
+      twoWayPer20: summary.twoWayPer20
+    };
+  }).filter(Boolean).sort((a, b) => b.twoWayPer20 - a.twoWayPer20);
+}
+
+// Rebuilds the season <select>'s options from state.seasonHistory (most recently ended first),
+// trying to keep whatever was already selected in place across a re-render (e.g. from an
+// unrelated toggle click triggering renderLeaderboard()) by matching on label rather than index,
+// since seasons have no id field of their own.
+function renderLeagueSeasonSelect() {
+  const sel = document.getElementById("leagueSeasonSelect");
+  if (!sel) return;
+  const sorted = [...state.seasonHistory].sort((a, b) => (b.endedAt || "").localeCompare(a.endedAt || ""));
+  if (sorted.length === 0) {
+    sel.innerHTML = '<option value="">No seasons closed yet</option>';
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  const prevLabel = sel.selectedOptions[0]?.textContent;
+  sel.innerHTML = sorted.map((s, i) => `<option value="${i}">${escapeHtml(s.label)}</option>`).join("");
+  const matchIndex = sorted.findIndex(s => s.label === prevLabel);
+  if (matchIndex !== -1) sel.value = String(matchIndex);
+}
+document.getElementById("leagueSeasonSelect").addEventListener("change", renderLeagueSeasonStandings);
+
+function renderLeagueSeasonStandings() {
+  renderLeagueSeasonSelect();
+  const sel = document.getElementById("leagueSeasonSelect");
+  const wrap = document.getElementById("leagueSeasonStandings");
+  if (!sel || !wrap) return;
+  if (state.seasonHistory.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No seasons closed yet (Export → Data Management → Start New Season) — nothing archived to show.</p>';
+    return;
+  }
+  const sorted = [...state.seasonHistory].sort((a, b) => (b.endedAt || "").localeCompare(a.endedAt || ""));
+  const season = sorted[Number(sel.value)] || sorted[0];
+  const rows = computeLeagueSeasonStandings(season);
+  if (rows.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games with real shots logged in this season.</p>';
+    return;
+  }
+  const rowsHtml = rows.map((r, i) => `<tr>
+    <td>${i + 1}</td>
+    <td><button type="button" class="icon-btn league-season-player-btn" style="color:var(--accent);font-weight:700" data-player-id="${r.player.id}">${escapeHtml(r.player.name)}</button></td>
+    <td>${r.gp}</td>
+    <td>${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}</td>
+    <td>${r.offRatingPer20.toFixed(1)}</td>
+    <td>${r.defRatingPer20.toFixed(1)}</td>
+    <td>${r.twoWayPer20.toFixed(1)}</td>
+  </tr>`).join("");
+  wrap.innerHTML = `
+    <table class="matchup-table">
+      <thead><tr><th>#</th><th>Player</th><th>GP</th><th>Record</th><th>Off Rating/20</th><th>Def Rating/20</th><th>Two-Way/20</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `;
+  wrap.querySelectorAll(".league-season-player-btn").forEach(btn => {
+    btn.addEventListener("click", () => openPlayerDetail(btn.dataset.playerId));
+  });
+}
+
 // Whether this player ended up on either roster of any game actually logged for a given date —
 // deliberately not gated by isQualifyingGame() (real shots + balanced teams): attendance is
 // about whether they physically showed up, not whether that game happened to get scored or came
@@ -5602,6 +5690,7 @@ function renderLeaderboard() {
   updateImbalancedGamesBtnLabel();
   updatePastSeasonsBtnLabel();
   renderLeaderboardHeader();
+  renderLeagueSeasonStandings();
   renderConsistencyStandings();
   renderAwardsVsStats();
   renderPowerRankingVsPerformance();

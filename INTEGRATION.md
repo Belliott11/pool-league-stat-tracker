@@ -292,6 +292,29 @@ records on every render, so if a stat's formula changes later (as several alread
 season), a past season's own numbers update right along with the current one's, exactly the same
 "recompute, don't trust a stored copy" rule this entire tool already runs on everywhere else.
 
+**`computeLeagueSeasonStandings(season)` (`app.js`, right after `renderSeasonHistoryPanel()`) is
+the league-wide sibling of `computeSeasonHistoryForPlayer()` above — same per-season game filter,
+copy-pasted rather than shared because the player version filters to games *that player* was in
+before running the date-range check, while this one runs the date-range check once and produces
+a full-roster row set, different enough shapes that factoring out a shared helper would've added
+an abstraction for a two-call-site savings.** Maps every player through the identical
+`scoringEvents.length > 0 && (teamA/teamB includes) && (includeImbalancedGames ||
+isBalancedGame) && within [startedAt, endedAt]` filter, runs `computeRateSummaryForGames()` per
+player same as the player version, and sorts descending by `twoWayPer20` (the player panel has no
+sort since it's one row per season, not competing rows). `renderLeagueSeasonSelect()` populates
+`#leagueSeasonSelect` from `state.seasonHistory` (no `id` field on season entries, so the option
+`value` is just its index into the freshly re-sorted-by-`endedAt` array each render — stable
+within one render since the sort is deterministic) and tries to preserve whatever was selected
+across a re-render by matching on `label` text rather than trusting the index to stay put.
+`renderLeagueSeasonStandings()` (`#leagueSeasonStandings`, Leaderboard tab, right after the main
+table) calls the select-renderer itself first, reads its current `value`, and renders that one
+season's table — wired into `renderLeaderboard()` so a toggle click (Include Imbalanced Games)
+refreshes it same as everything else, and it has its own `change` listener on the select for
+picking a different season without touching any other panel. Deliberately **not** gated by
+`includePastSeasons` at all, same reasoning as the player-level panel: this shows one past season
+completely on its own, not blended into anything, so the toggle that controls blending doesn't
+apply to it.
+
 The Leaderboard CSV export is a separate code path (calls `computeLeaderboard()` directly rather
 than iterating `scoring_events` itself, unlike the other CSVs) and still exports raw season totals
 plus `games_played` rather than per-20 rates for every column — it only computes PTS/20, Off

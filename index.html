@@ -310,6 +310,15 @@
     </div>
 
     <div class="panel">
+      <h2>Past Seasons (League)</h2>
+      <p class="hint">The league-wide equivalent of each player's own <strong>Past Seasons</strong> panel on Player Detail — full standings for one closed season at a time, computed live off that season's own archived games (not a frozen snapshot, so these stay correct even if a stat's formula changes later), shown regardless of the <strong>Include Past Seasons</strong> toggle above. That toggle blends past seasons into the live current-season totals; this instead shows one past season completely on its own, the way it actually played out. Pick a season, click a name to jump to their Player Detail page.</p>
+      <select id="leagueSeasonSelect" style="margin-bottom:10px"></select>
+      <div class="table-scroll">
+        <div id="leagueSeasonStandings"></div>
+      </div>
+    </div>
+
+    <div class="panel">
       <h2>Consistency</h2>
       <p class="hint">Standard deviation of each player's own per-game Two-Way/20 (the same numbers their Two-Way Trend chart on Player Detail plots) — lower means steadier output night to night, not necessarily better output. A player who's reliably average every game reads as more consistent here than a boom-or-bust one who's spectacular half the time and poor the other half, even if their season average lands the same as someone steadier. Needs at least 2 qualifying games — a single game has no variance to measure. One of the real voted <strong>MVP</strong> award's own criteria (see Awards vs. Stats below, where <strong>twoWayTotal</strong> — season-long Two-Way, volume included — is already the closest tracked comparison to that award) — kept as its own ranking rather than folded into a made-up combined score, since "consistent" and "valuable overall" are different questions worth answering separately.</p>
       <div class="table-scroll">

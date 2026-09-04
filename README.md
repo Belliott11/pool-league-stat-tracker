@@ -355,7 +355,16 @@ individual player, not a team.
    whether that's above or below their season Off Rating/20 (within ±0.5 counts as flat, shown as ●
    rather than a dash, since a dash next to a number reads as a minus sign).
 
-   Right below the main table, **Consistency** ranks players by the standard deviation of their
+   Right below the main table, **Past Seasons (League)** is the league-wide counterpart to each
+   player's own Past Seasons panel on Player Detail — pick a closed season from the dropdown and
+   see full standings (GP, record, Off/Def/Two-Way Rating) for that season alone, computed live
+   off its own archived games. This is a different thing from the **Include Past Seasons** toggle
+   above: that toggle blends past seasons *into* the live current-season totals; this instead
+   shows one past season completely on its own, exactly as it played out, regardless of the
+   toggle's state. Click a name to jump to their Player Detail page. Empty and disabled until at
+   least one season's been closed (Export → Data Management → Start New Season).
+
+   Right below that, **Consistency** ranks players by the standard deviation of their
    own per-game Two-Way/20 (same numbers the Two-Way Trend chart on Player Detail plots) — lower
    means steadier output night to night, not necessarily better output, so a reliably-average
    player ranks as more consistent than a boom-or-bust one whose season average lands the same.
@@ -803,7 +812,9 @@ ranking tables (below) and the locally-stored video files are actually gone for 
      closed season regardless of the toggle — GP, record, Off/Def/Two-Way Rating, computed live
      off the archived games (not a frozen snapshot, so these stay correct if a stat's formula
      ever changes later) — so a season's final numbers are always visible on a profile even with
-     the toggle off.
+     the toggle off. **Past Seasons (League)**, on the Leaderboard, is the same idea pooled across
+     the whole roster instead of one player — full standings for whichever closed season you pick
+     from its dropdown.
    - The Games list marks every archived game with a **📅 Past Season** badge, same idea as the
      ⚖️ imbalanced-game one, so which games are currently excluded from computed stats is visible
      without cross-referencing dates by hand.
