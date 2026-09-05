@@ -204,10 +204,67 @@ main {
 .leaderboard-toolbar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 16px;
   margin: 10px 0;
 }
+
+/* iOS-style toggle switch — a settings-row label paired with a track/knob, replacing a button
+   whose own text used to flip between "Include X"/"Exclude X" to show state. The label now names
+   the setting once; the switch position (and green fill when on) shows whether it's active,
+   the same split every iOS Settings row uses. Built on a real (visually hidden) checkbox input
+   so it's keyboard-operable and gets a native :checked state for free — the visible track/knob
+   are sibling spans styled off that input's state via `:checked +`/`:disabled +`. */
+.ios-switch-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+.ios-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 26px;
+  flex-shrink: 0;
+}
+.ios-switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.ios-switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--disabled-bg);
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+.ios-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+.ios-switch input:checked + .ios-switch-track { background: var(--success); }
+.ios-switch input:checked + .ios-switch-track .ios-switch-knob { transform: translateX(18px); }
+.ios-switch input:focus-visible + .ios-switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ios-switch input:disabled { cursor: not-allowed; }
+.ios-switch input:disabled + .ios-switch-track { opacity: 0.5; }
+.ios-switch-row:has(input:disabled) { opacity: 0.6; cursor: not-allowed; }
 
 /* Small live preview during the league-wide combine-video export — visible so there's some
    confirmation something's actually happening during what can be a long real-time recording,
@@ -999,6 +1056,22 @@ button:disabled {
 .table-scroll {
   overflow-x: auto;
 }
+
+/* Thin overlay scrollbar, iOS-style — a slim translucent thumb that doesn't compete visually
+   with the content, rather than the OS's default chunky bar. Firefox gets the closest built-in
+   equivalent (scrollbar-width/-color); WebKit/Blink get the full treatment below. */
+.table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) transparent;
+}
+.table-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+.table-scroll::-webkit-scrollbar-track { background: transparent; }
+.table-scroll::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 999px;
+  opacity: 0.5;
+}
+.table-scroll::-webkit-scrollbar-thumb:hover { background: var(--text); }
 
 /* Scoring log defender picker */
 .stat-cell.expanded {

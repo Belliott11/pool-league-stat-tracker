@@ -5627,12 +5627,17 @@ document.getElementById("toggleAdvancedColsBtn").addEventListener("click", () =>
   renderLeaderboard();
 });
 
+// All three of these toggles are now real checkbox inputs styled as iOS switches
+// (.ios-switch-row in style.css) rather than buttons whose own text used to flip between
+// "Include X"/"Exclude X" — the label next to each switch names the setting once, and the
+// switch's checked state (fed from `.checked`, not textContent) shows whether it's on. Every
+// updater below sets `.checked` to match the underlying flag instead of rewriting a label.
 function updateImbalancedGamesBtnLabel() {
-  const btn = document.getElementById("toggleImbalancedGamesBtn");
-  if (btn) btn.textContent = includeImbalancedGames ? "Exclude Imbalanced Games" : "Include Imbalanced Games";
+  const input = document.getElementById("toggleImbalancedGamesBtn");
+  if (input) input.checked = includeImbalancedGames;
 }
-document.getElementById("toggleImbalancedGamesBtn").addEventListener("click", () => {
-  includeImbalancedGames = !includeImbalancedGames;
+document.getElementById("toggleImbalancedGamesBtn").addEventListener("change", e => {
+  includeImbalancedGames = e.target.checked;
   localStorage.setItem(INCLUDE_IMBALANCED_KEY, String(includeImbalancedGames));
   updateImbalancedGamesBtnLabel();
   // isQualifyingGame() feeds Leaderboard rates, awards, every Player Detail trend/panel, and
@@ -5642,11 +5647,11 @@ document.getElementById("toggleImbalancedGamesBtn").addEventListener("click", ()
 });
 
 function updateOutlierGamesBtnLabel() {
-  const btn = document.getElementById("toggleOutlierGamesBtn");
-  if (btn) btn.textContent = excludeOutlierGames ? "Include Outlier Games" : "Exclude Outlier Games";
+  const input = document.getElementById("toggleOutlierGamesBtn");
+  if (input) input.checked = excludeOutlierGames;
 }
-document.getElementById("toggleOutlierGamesBtn").addEventListener("click", () => {
-  excludeOutlierGames = !excludeOutlierGames;
+document.getElementById("toggleOutlierGamesBtn").addEventListener("change", e => {
+  excludeOutlierGames = e.target.checked;
   localStorage.setItem(EXCLUDE_OUTLIER_GAMES_KEY, String(excludeOutlierGames));
   updateOutlierGamesBtnLabel();
   // qualifyingGamesForPlayer() feeds Leaderboard rates and every per-player Player Detail
@@ -5654,28 +5659,28 @@ document.getElementById("toggleOutlierGamesBtn").addEventListener("click", () =>
   renderLeaderboard();
 });
 
-// Two buttons drive the same one global includePastSeasons flag — the original on the
+// Two switches drive the same one global includePastSeasons flag — the original on the
 // Leaderboard, and a second on Player Detail's own Past Seasons panel (added so combining a
 // player's history doesn't require hopping back to the Leaderboard first just to flip it). Both
 // stay in sync automatically since they share this one updater and one flag.
 const PAST_SEASONS_TOGGLE_BTN_IDS = ["togglePastSeasonsBtn", "togglePastSeasonsBtnPlayer"];
 function updatePastSeasonsBtnLabel() {
   PAST_SEASONS_TOGGLE_BTN_IDS.forEach(id => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
+    const input = document.getElementById(id);
+    if (!input) return;
     if (!state.currentSeasonStartedAt) {
-      btn.textContent = "Include Past Seasons";
-      btn.disabled = true;
-      btn.title = "No season has been closed yet (Export → Data Management → Start New Season) — nothing archived to include.";
+      input.checked = false;
+      input.disabled = true;
+      input.title = "No season has been closed yet (Export → Data Management → Start New Season) — nothing archived to include.";
       return;
     }
-    btn.disabled = false;
-    btn.title = "";
-    btn.textContent = includePastSeasons ? "Exclude Past Seasons" : "Include Past Seasons";
+    input.disabled = false;
+    input.title = "";
+    input.checked = includePastSeasons;
   });
 }
-function togglePastSeasonsInclusion() {
-  includePastSeasons = !includePastSeasons;
+function togglePastSeasonsInclusion(e) {
+  includePastSeasons = e.target.checked;
   localStorage.setItem(INCLUDE_PAST_SEASONS_KEY, String(includePastSeasons));
   updatePastSeasonsBtnLabel();
   // isQualifyingGame() feeds both views off the same flag, so both need a fresh render — cheap
@@ -5684,8 +5689,8 @@ function togglePastSeasonsInclusion() {
   renderLeaderboard();
   if (currentPlayerId) renderPlayerDetail();
 }
-document.getElementById("togglePastSeasonsBtn").addEventListener("click", togglePastSeasonsInclusion);
-document.getElementById("togglePastSeasonsBtnPlayer").addEventListener("click", togglePastSeasonsInclusion);
+document.getElementById("togglePastSeasonsBtn").addEventListener("change", togglePastSeasonsInclusion);
+document.getElementById("togglePastSeasonsBtnPlayer").addEventListener("change", togglePastSeasonsInclusion);
 
 // Nulls (no attempts yet, etc.) always sort last regardless of direction.
 function compareForSort(a, b, dir) {

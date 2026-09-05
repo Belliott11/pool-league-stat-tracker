@@ -814,7 +814,7 @@ ranking tables (below) and the locally-stored video files are actually gone for 
    empty tracker.
    - The **Include Past Seasons** toggle blends every archived season back into the live
      Leaderboard/awards/Player Detail/Balance Teams numbers when it's on — off by default, so a
-     new season starts clean. It's a single shared setting with two buttons that stay in sync:
+     new season starts clean. It's a single shared setting with two switches that stay in sync:
      one on the Leaderboard, one on each player's own Past Seasons panel (Player Detail), so
      combining a specific player's history doesn't require hopping back to the Leaderboard first.
      Disabled with an explanatory tooltip until a season's actually been closed at least once.

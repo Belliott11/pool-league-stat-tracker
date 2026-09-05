@@ -253,17 +253,31 @@ Because `isQualifyingGame()` already threads through every season/league-aggrega
 the imbalanced-games work above, extending it here was the entire change needed to make every one
 of those panels respect the season boundary and its own toggle — no new call sites to touch.
 `includePastSeasons` (`localStorage["poolLeagueIncludePastSeasons"]`) is the toggle itself, same
-default-off/persisted/button-relabels-itself pattern as `includeImbalancedGames`, with one
-addition: disabled with an explanatory `title` whenever `state.currentSeasonStartedAt` is `null`,
-since the toggle is a genuine no-op until a season's been closed at least once. **Two buttons
-drive this one flag** — `togglePastSeasonsBtn` (Leaderboard) and `togglePastSeasonsBtnPlayer`
-(Player Detail's own Past Seasons panel, added so combining a specific player's history doesn't
-require switching to the Leaderboard first) — both listed in `PAST_SEASONS_TOGGLE_BTN_IDS` and
-kept in sync by one shared `togglePastSeasonsInclusion()` handler: it flips `includePastSeasons`,
-persists it, calls `updatePastSeasonsBtnLabel()` (which now loops both ids, relabeling/disabling
-whichever exist), then re-renders `renderLeaderboard()` unconditionally and `renderPlayerDetail()`
-only if `currentPlayerId` is set — so the view not currently on screen still ends up correct
-without an extra render call showing up as a visible cost.
+default-off/persisted pattern as `includeImbalancedGames`, with one addition: disabled with an
+explanatory `title` whenever `state.currentSeasonStartedAt` is `null`, since the toggle is a
+genuine no-op until a season's been closed at least once. **Two switches drive this one flag** —
+`togglePastSeasonsBtn` (Leaderboard) and `togglePastSeasonsBtnPlayer` (Player Detail's own Past
+Seasons panel, added so combining a specific player's history doesn't require switching to the
+Leaderboard first) — both listed in `PAST_SEASONS_TOGGLE_BTN_IDS` and kept in sync by one shared
+`togglePastSeasonsInclusion()` handler: it reads `includePastSeasons` off `e.target.checked`
+(the checkbox that actually fired the `change` event), persists it, calls
+`updatePastSeasonsBtnLabel()` (which now loops both ids, setting `.checked`/`.disabled` on each
+rather than rewriting a label — see the iOS-switch note below), then re-renders
+`renderLeaderboard()` unconditionally and `renderPlayerDetail()` only if `currentPlayerId` is set
+— so the view not currently on screen still ends up correct without an extra render call showing
+up as a visible cost.
+
+**All three Leaderboard toggles (`toggleImbalancedGamesBtn`, `togglePastSeasonsBtn`,
+`toggleOutlierGamesBtn`) plus the Player Detail one changed from `<button>` elements whose own
+text flipped between "Include X"/"Exclude X" to real `<input type="checkbox">`s styled as iOS
+switches (`.ios-switch-row`/`.ios-switch` in `style.css`).** A static `<span>` label now names
+the setting once, and the switch's own `.checked` state (green fill, knob slid right) shows
+whether it's on — no more relabeling text on every update. Every `updateXBtnLabel()` function
+sets `.checked`/`.disabled` on the input instead of `.textContent`, and every click listener
+became a `change` listener reading the new value straight off `e.target.checked` (already
+reflecting the just-toggled state by the time `change` fires) instead of manually inverting a
+boolean. `:disabled` on the underlying checkbox drives `.ios-switch-row:has(input:disabled)`'s
+dimmed appearance via `:has()` — a JS-free way to gray out the whole label+switch row together.
 
 **`excludeOutlierGames` (`localStorage["poolLeagueExcludeOutlierGames"]`) is a third toggle, same
 default-off/persisted/button-relabels-itself pattern as the two above (`toggleOutlierGamesBtn`,
