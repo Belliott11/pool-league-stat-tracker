@@ -3242,8 +3242,10 @@ function defenderNames(defenderIds) {
   }).join(" + ");
 }
 
-function formatShootingSplit(m, a) {
-  return a > 0 ? `${m}/${a} (${pct(m, a)}%)` : "—";
+// `asRate` formats m/a to one decimal (per-20 rate values, e.g. "12.3/20.0 (61%)") instead of
+// plain integers (raw counts, e.g. "8/13 (61%)") — same "m/a (pct%)" shape either way.
+function formatShootingSplit(m, a, asRate = false) {
+  return a > 0 ? `${asRate ? m.toFixed(1) : m}/${asRate ? a.toFixed(1) : a} (${pct(m, a)}%)` : "—";
 }
 
 function formatAstTov(ast, tov) {
@@ -4807,9 +4809,20 @@ function renderWideOpenShootingPanel() {
     : rows.map(r => `<tr><td>${escapeHtml(r.player.name)}</td><td>${r.wideOpenFga}</td><td>${formatPct(r.share)}</td><td>${formatPct(r.ts)}</td></tr>`).join("");
 }
 
+// League-wide Assist Connections is trimmed to "top by count," not the full O(players^2) list —
+// the full list grows long fast, when "who's the top connection or two" is the actual thing worth
+// seeing at a glance here. Trimmed to the same row count as Teammate Context, its .panel-row
+// partner (one row per player with gp > 0 — computeTeammateContext()'s own row basis), purely so
+// the two panels land at roughly the same height side by side instead of one trailing off with a
+// lot of empty space below it — not because there's any real relationship between "how many
+// players have played" and "how many assist pairings are worth showing." The per-player
+// equivalent on Player Detail ("Assisted By") stays the full, untrimmed list, since that one's
+// already naturally scoped to a single player's own connections rather than every pairing in the
+// league.
 function renderAssistSynergy() {
   const body = document.getElementById("assistSynergyBody");
-  const rows = computeAssistConnections();
+  const rowLimit = Math.max(1, computeLeaderboard().filter(r => r.gp > 0).length);
+  const rows = computeAssistConnections().slice(0, rowLimit);
   body.innerHTML = rows.length === 0
     ? '<tr><td colspan="3" class="empty-state">No assists logged yet.</td></tr>'
     : rows.map(r => `<tr><td>${escapeHtml(r.passer.name)}</td><td>${escapeHtml(r.scorer.name)}</td><td>${r.count}</td></tr>`).join("");
@@ -5729,10 +5742,6 @@ function renderAssistedByPanel(playerId) {
   `;
 }
 
-function formatShootingSplitRate(m, a) {
-  return a > 0 ? `${m.toFixed(1)}/${a.toFixed(1)} (${pct(m, a)}%)` : "—";
-}
-
 // Single source of truth for the Leaderboard's columns: label, how to sort it (accessor
 // returning a number/string/null), and how to display it (defaults to the accessor's value).
 // Keeping header + row generation driven by one list avoids them drifting out of sync.
@@ -5749,9 +5758,9 @@ const LEADERBOARD_COLUMNS = [
   { key: "drebpct", label: "DREB%", advanced: true, accessor: r => r.drebPct, display: r => formatPct(r.drebPct), tooltip: "Same idea as OREB% for the other side of the ball: this player's DREB divided by every defensive rebound available on the opponent's misses that game (their team's DREB plus the opponent's OREB on those same misses). A season-long share, not a per-20 rate." },
   { key: "trebpct", label: "TRB%", advanced: true, accessor: r => r.trebPct, display: r => formatPct(r.trebPct), tooltip: "OREB and DREB combined: this player's total rebounds divided by every rebound actually available across the games they played (OREB% and DREB%'s two pools added together). Same no-substitutions reasoning as OREB%/DREB% above — a season-long share, not a per-20 rate." },
   { key: "tovpct", label: "TOV%", advanced: true, accessor: r => r.tovPct, display: r => formatPct(r.tovPct), tooltip: "How often this player turned it over relative to their own scoring opportunities — TOV ÷ (FGA + 0.44×FTA + TOV), the same FTA-equivalent scaling True Shooting % uses. Not a share of the team's turnovers like Shot%/AST% above — a turnover isn't a shared resource the way a shot or an assist is, so this measures usage instead: of the times this player had the ball in a position to score or give it away, how often it was the latter." },
-  { key: "fg", label: "FG", accessor: r => pct(r.shooting.fgm, r.shooting.fga), display: r => formatShootingSplitRate(r.rateShooting.fgm, r.rateShooting.fga), tooltip: "Field goals made/attempted (2s and 3s combined), per 20 combined points, with FG%." },
-  { key: "tpt", label: "3PT", accessor: r => pct(r.shooting.tpm, r.shooting.tpa), display: r => formatShootingSplitRate(r.rateShooting.tpm, r.rateShooting.tpa), tooltip: "3-pointers made/attempted, per 20 combined points, with 3PT%. See the 3PT Shot Distance panel below for the Arc/Deep breakdown." },
-  { key: "ft", label: "FT", accessor: r => pct(r.shooting.ftm, r.shooting.fta), display: r => formatShootingSplitRate(r.rateShooting.ftm, r.rateShooting.fta), tooltip: "Free throws made/attempted, per 20 combined points, with FT%." },
+  { key: "fg", label: "FG", accessor: r => pct(r.shooting.fgm, r.shooting.fga), display: r => formatShootingSplit(r.rateShooting.fgm, r.rateShooting.fga, true), tooltip: "Field goals made/attempted (2s and 3s combined), per 20 combined points, with FG%." },
+  { key: "tpt", label: "3PT", accessor: r => pct(r.shooting.tpm, r.shooting.tpa), display: r => formatShootingSplit(r.rateShooting.tpm, r.rateShooting.tpa, true), tooltip: "3-pointers made/attempted, per 20 combined points, with 3PT%. See the 3PT Shot Distance panel below for the Arc/Deep breakdown." },
+  { key: "ft", label: "FT", accessor: r => pct(r.shooting.ftm, r.shooting.fta), display: r => formatShootingSplit(r.rateShooting.ftm, r.rateShooting.fta, true), tooltip: "Free throws made/attempted, per 20 combined points, with FT%." },
   { key: "efg", label: "eFG%", accessor: r => effectiveFgPct(r.shooting.fgm, r.shooting.tpm, r.shooting.fga), display: r => formatPct(effectiveFgPct(r.shooting.fgm, r.shooting.tpm, r.shooting.fga)), tooltip: "Effective FG% — field goal percentage weighted so a made 3 counts as 1.5 made 2s." },
   { key: "ts", label: "TS%", accessor: r => trueShootingPct(r.totals.pts, r.shooting.fga, r.shooting.fta), display: r => formatPct(trueShootingPct(r.totals.pts, r.shooting.fga, r.shooting.fta)), tooltip: "True Shooting % — overall scoring efficiency across field goals and free throws combined." },
   { key: "oreb", label: "OREB/20", accessor: r => r.rate.oreb, display: r => r.rate.oreb.toFixed(1), tooltip: "Offensive rebounds (grabbed by a teammate of the shooter), per 20 combined points." },
@@ -6515,20 +6524,30 @@ function renderPlayerGameLog(playerId) {
   });
 }
 
-// Every shot this player took, grouped by who (if anyone) was tagged defending it. A
-// double-teamed shot counts fully against each tagged defender's bucket, same as gameDefenseStats.
-function headToHeadAsScorer(playerId) {
-  const totals = {}; // defenderId | "none" -> { fgm, fga }
+// Shared by headToHeadAsScorer/headToHeadAsDefender below — walks every qualifying game's
+// scoring events matching `matchEvent`, bucketing fgm/fga by whatever key(s) `keysFor` returns
+// for that event (an array, since a double-teamed shot counts fully against each tagged
+// defender's own bucket, same as gameDefenseStats()).
+function accumulateHeadToHeadFg(matchEvent, keysFor) {
+  const totals = {}; // key -> { fgm, fga }
   state.games.filter(isQualifyingGame).forEach(g => {
-    g.scoringEvents.filter(ev => ev.scorerId === playerId).forEach(ev => {
-      const keys = (ev.defenderIds && ev.defenderIds.length > 0) ? ev.defenderIds : ["none"];
-      keys.forEach(key => {
+    g.scoringEvents.filter(matchEvent).forEach(ev => {
+      keysFor(ev).forEach(key => {
         totals[key] = totals[key] || { fgm: 0, fga: 0 };
         totals[key].fga++;
         if (ev.made !== false) totals[key].fgm++;
       });
     });
   });
+  return totals;
+}
+
+// Every shot this player took, grouped by who (if anyone) was tagged defending it.
+function headToHeadAsScorer(playerId) {
+  const totals = accumulateHeadToHeadFg(
+    ev => ev.scorerId === playerId,
+    ev => (ev.defenderIds && ev.defenderIds.length > 0) ? ev.defenderIds : ["none"]
+  );
   return Object.entries(totals)
     .map(([key, v]) => ({ defenderId: key === "none" ? null : key, ...v }))
     .sort((a, b) => b.fga - a.fga);
@@ -6536,14 +6555,10 @@ function headToHeadAsScorer(playerId) {
 
 // Every shot this player was tagged defending, grouped by who took it.
 function headToHeadAsDefender(playerId) {
-  const totals = {}; // scorerId -> { fgm, fga }
-  state.games.filter(isQualifyingGame).forEach(g => {
-    g.scoringEvents.filter(ev => (ev.defenderIds || []).includes(playerId)).forEach(ev => {
-      totals[ev.scorerId] = totals[ev.scorerId] || { fgm: 0, fga: 0 };
-      totals[ev.scorerId].fga++;
-      if (ev.made !== false) totals[ev.scorerId].fgm++;
-    });
-  });
+  const totals = accumulateHeadToHeadFg(
+    ev => (ev.defenderIds || []).includes(playerId),
+    ev => [ev.scorerId]
+  );
   return Object.entries(totals)
     .map(([scorerId, v]) => ({ scorerId, ...v }))
     .sort((a, b) => b.fga - a.fga);

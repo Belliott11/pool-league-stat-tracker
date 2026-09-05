@@ -534,9 +534,12 @@ individual player, not a team.
    never a real read on defensive pressure. Share of FGA (how much of a player's own shot diet
    was untagged) sits next to TS%, since a high TS% off 2 wide-open looks means something very
    different than the same number off 20. Click any column header to sort. Below that, **Assist
-   Connections** lists every passer-to-scorer pairing, league-wide, with how many times each has
-   happened — directional (Alice assisting Bob is a separate row from Bob assisting Alice) — a
-   straight readout of the Shot Log's assist tags, sorted by count. Right below that, a
+   Connections** shows the top passer-to-scorer pairings league-wide, by how many times each has
+   happened — directional (Alice assisting Bob is a separate row from Bob assisting Alice), trimmed
+   to line up with the number of rows in **Teammate Context** next to it rather than a fixed count.
+   Want the full list? A player's own **Assisted By** panel on their Player Detail page still shows
+   every connection involving them, and Export → Download Assist Connections CSV has every pairing
+   league-wide. Right below that, a
    **Teammate Lift Matrix** does for Average Teammate Lift (the Best Teammate award's stat, see
    above) what the Matchup Grid does for Head-to-Head: turns one aggregated number per player into
    a full grid of every specific pairing. Row player on the team, column player's own Two-Way/20

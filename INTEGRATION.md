@@ -923,7 +923,55 @@ if you're porting this and your panel order differs, `.panel-row` only works on 
 already next to each other in the DOM, so reorder first. Hint text that referenced a panel by
 relative position ("the chart above," "unlike the over-time chart above") was also reworded to name
 the panel directly (`<strong>Panel Name</strong>`) wherever panel-row reordering could make the old
-spatial wording wrong.
+spatial wording wrong. **Five more pairs were added in a later pass** once the Leaderboard tab
+itself got long enough to be worth shrinking: Past Seasons (League) + Consistency; Awards vs. Stats
++ Power Ranking vs. Performance; League Shot Heatmap + Two-Way/20 Rank Over the Season;
+Out-of-Bounds Misses + Second-Chance Conversion; and Teammate Context + Assist Connections. Four of
+the five were already adjacent in the DOM; the Two-Way/20 Rank Over the Season pairing needed one
+small reorder — it originally sat standalone, full-width, right before League Shot Heatmap, and
+Shot Distance sat paired with League Shot Heatmap instead. That got flipped once actually tested:
+**Shot Distance turned out to want the full width** (a 4-zone table with a Mix column reads badly
+squeezed to half), while the Rank-Over-Season line chart (fixed ~380px SVG, same footprint as the
+Two-Way Quadrant/Volume-vs-Efficiency charts already paired above) didn't need it — so
+Two-Way/20 Rank Over the Season moved into the row with League Shot Heatmap, and Shot Distance
+became its own full-width panel where the row used to be. Worth remembering if you're deciding
+whether to pair a panel: a fixed-size SVG chart is a safe pairing candidate almost by definition,
+but a data table's "wants full width or not" isn't always obvious from column count alone — worth
+actually looking at it squeezed before committing. Season Rates (Individual, the giant leaderboard
+table), Head-to-Head Matchup Grid, and Teammate Lift Matrix (both NxN grids that grow with roster
+size) were the other full-width holdouts — a `.panel-row` pairing only helps when both panels are
+already narrow enough that halving their width doesn't hurt them.
+
+**Assist Connections on the Leaderboard is trimmed, not the full list — but to a row count that
+tracks its `.panel-row` partner, Teammate Context, rather than a fixed number.**
+`renderAssistSynergy()` (`app.js`) computes `rowLimit = computeLeaderboard().filter(r => r.gp >
+0).length` — the exact same row basis `computeTeammateContext()` uses — and `.slice(0, rowLimit)`s
+`computeAssistConnections()`'s results down to that count before rendering. Purely a visual-balance
+choice (so the two side-by-side panels land at roughly the same height instead of one trailing off
+with empty space below it), not a meaningful stat cutoff — an earlier version of this used a fixed
+top-5 limit, until it was pointed out the row count should actually track whatever's next to it in
+the row instead of a made-up constant. `computeAssistConnections()` itself is untouched and still
+returns every pairing, since two other call sites need the full list: the Awards vs. Stats "Best
+Teammate" duo calculation, and the `exportAssistSynergyCsvBtn` CSV export
+(`assist-connections.csv`) under Export → Export All Data. Player Detail's own **Assisted By**
+panel is a completely separate function (`computeAssistedByBreakdown()`) scoped to one player's own
+connections and was never affected — don't confuse the two if you're tracing this. If you're
+porting this and reorder which panel sits next to Assist Connections, update `rowLimit`'s row-count
+source to match whatever the new neighbor actually is.
+
+**Two more small redundancies were merged in the same pass, both found by a fresh sweep for
+duplicate logic across the whole app.** `formatShootingSplit(m, a)` and `formatShootingSplitRate(m,
+a)` (`app.js`) both rendered the identical `"m/a (pct%)"` shape and differed only in whether `m`/`a`
+needed `.toFixed(1)` first (raw integer counts vs. already-decimal per-20 rates) — now one
+`formatShootingSplit(m, a, asRate = false)`, with the three per-20 rate callers (the Leaderboard's
+FG/3PT/FT columns) passing `true` as a third argument. And `headToHeadAsScorer(playerId)` /
+`headToHeadAsDefender(playerId)` both built an `fgm`/`fga` totals map by walking the same
+`state.games.filter(isQualifyingGame)` → `scoringEvents` loop, differing only in which side
+(`scorerId` vs. `defenderIds`) is the match condition and which is the group key — now both call a
+shared `accumulateHeadToHeadFg(matchEvent, keysFor)`, passing their own predicate/key-selector
+callbacks. `keysFor` always returns an array even for the defender case's single `scorerId` key,
+since the scorer case needs one event to be able to credit multiple keys at once (a double-teamed
+shot counts fully against every tagged defender).
 
 **Shot Distance is now a single merged panel, not two.** It used to be split into "Shot Distance"
 (FG% per zone) and "Shot Selection" (share of attempts per zone) — both per-player, both the exact

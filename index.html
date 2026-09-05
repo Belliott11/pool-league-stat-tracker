@@ -335,20 +335,22 @@
       </div>
     </div>
 
-    <div class="panel">
-      <h2>Past Seasons (League)</h2>
-      <p class="hint">The league-wide equivalent of each player's own <strong>Past Seasons</strong> panel on Player Detail — full standings for one closed season at a time, computed live off that season's own archived games (not a frozen snapshot, so these stay correct even if a stat's formula changes later), shown regardless of the <strong>Include Past Seasons</strong> toggle above. That toggle blends past seasons into the live current-season totals; this instead shows one past season completely on its own, the way it actually played out. Pick a season, click a name to jump to their Player Detail page.</p>
-      <select id="leagueSeasonSelect" style="margin-bottom:10px"></select>
-      <div class="table-scroll">
-        <div id="leagueSeasonStandings"></div>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>Past Seasons (League)</h2>
+        <p class="hint">The league-wide equivalent of each player's own <strong>Past Seasons</strong> panel on Player Detail — full standings for one closed season at a time, computed live off that season's own archived games (not a frozen snapshot, so these stay correct even if a stat's formula changes later), shown regardless of the <strong>Include Past Seasons</strong> toggle above. That toggle blends past seasons into the live current-season totals; this instead shows one past season completely on its own, the way it actually played out. Pick a season, click a name to jump to their Player Detail page.</p>
+        <select id="leagueSeasonSelect" style="margin-bottom:10px"></select>
+        <div class="table-scroll">
+          <div id="leagueSeasonStandings"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="panel">
-      <h2>Consistency</h2>
-      <p class="hint">Standard deviation of each player's own per-game Two-Way/20 (the same numbers their Two-Way Trend chart on Player Detail plots) — lower means steadier output night to night, not necessarily better output. A player who's reliably average every game reads as more consistent here than a boom-or-bust one who's spectacular half the time and poor the other half, even if their season average lands the same as someone steadier. Needs at least 2 qualifying games — a single game has no variance to measure. Worth knowing: with <strong>Include Outlier Games</strong> turned off above, this measures the spread of a player's typical games with their own most extreme night(s) already set aside — not their true overall variance including the outlier. One of the real voted <strong>MVP</strong> award's own criteria (see Awards vs. Stats below, where <strong>twoWayTotal</strong> — season-long Two-Way, volume included — is already the closest tracked comparison to that award) — kept as its own ranking rather than folded into a made-up combined score, since "consistent" and "valuable overall" are different questions worth answering separately.</p>
-      <div class="table-scroll">
-        <div id="consistencyStandings"></div>
+      <div class="panel">
+        <h2>Consistency</h2>
+        <p class="hint">Standard deviation of each player's own per-game Two-Way/20 (the same numbers their Two-Way Trend chart on Player Detail plots) — lower means steadier output night to night, not necessarily better output. A player who's reliably average every game reads as more consistent here than a boom-or-bust one who's spectacular half the time and poor the other half, even if their season average lands the same as someone steadier. Needs at least 2 qualifying games — a single game has no variance to measure. Worth knowing: with <strong>Include Outlier Games</strong> turned off above, this measures the spread of a player's typical games with their own most extreme night(s) already set aside — not their true overall variance including the outlier. One of the real voted <strong>MVP</strong> award's own criteria (see <strong>Awards vs. Stats</strong> below, where <strong>twoWayTotal</strong> — season-long Two-Way, volume included — is already the closest tracked comparison to that award) — kept as its own ranking rather than folded into a made-up combined score, since "consistent" and "valuable overall" are different questions worth answering separately.</p>
+        <div class="table-scroll">
+          <div id="consistencyStandings"></div>
+        </div>
       </div>
     </div>
 
@@ -363,16 +365,18 @@
       <div id="playerComparisonResult" class="table-scroll"></div>
     </div>
 
-    <div class="panel">
-      <h2>Awards vs. Stats</h2>
-      <p class="hint">Summer 2026's voted awards, from that season's closed ballot, checked against the closest tracked stat — computed live from whatever games are actually logged in this browser, so it's only as complete as your Shot Log is. A stat winner sitting outside the top of its column isn't a bug — the vote and the numbers are allowed to disagree, that's the point of comparing them.</p>
-      <div id="awardsVsStats" class="awards-grid"></div>
-    </div>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>Awards vs. Stats</h2>
+        <p class="hint">Summer 2026's voted awards, from that season's closed ballot, checked against the closest tracked stat — computed live from whatever games are actually logged in this browser, so it's only as complete as your Shot Log is. A stat winner sitting outside the top of its column isn't a bug — the vote and the numbers are allowed to disagree, that's the point of comparing them.</p>
+        <div id="awardsVsStats" class="awards-grid"></div>
+      </div>
 
-    <div class="panel">
-      <h2>Power Ranking vs. Performance</h2>
-      <p class="hint">A "power ranking" isn't voted or tracked by this tool — it's the real site's own per-night rank/percentile for each party (rank 1 = best that night, percentile field-size-normalized: 100 = first, 0 = last), pulled from the season spreadsheet as a frozen historical record. Paired here with that same player's actual Two-Way/20 in just the games logged for that date, computed live. Only nights with at least one reviewed game show up here at all — the other 10 real parties predate any footage existing, and a night with footage nobody's gotten to reviewing yet is left out too, rather than showing a table of nothing but dashes. A player with no games logged for that specific night still shows "—", not a zero.</p>
-      <div id="powerRankingVsPerformance"></div>
+      <div class="panel">
+        <h2>Power Ranking vs. Performance</h2>
+        <p class="hint">A "power ranking" isn't voted or tracked by this tool — it's the real site's own per-night rank/percentile for each party (rank 1 = best that night, percentile field-size-normalized: 100 = first, 0 = last), pulled from the season spreadsheet as a frozen historical record. Paired here with that same player's actual Two-Way/20 in just the games logged for that date, computed live. Only nights with at least one reviewed game show up here at all — the other 10 real parties predate any footage existing, and a night with footage nobody's gotten to reviewing yet is left out too, rather than showing a table of nothing but dashes. A player with no games logged for that specific night still shows "—", not a zero.</p>
+        <div id="powerRankingVsPerformance"></div>
+      </div>
     </div>
 
     <!-- Comparison Scatters (not to be confused with the Player Comparison panel above, a
@@ -394,17 +398,19 @@
       </div>
     </div>
 
-    <div class="panel">
-      <h2>Two-Way/20 Rank Over the Season</h2>
-      <p class="hint">One line per player, tracking where they'd rank if the season had ended at each date shown — a checkpoint exists for every date with at least one qualifying game, and a player's rank there comes from their <em>cumulative</em> Two-Way/20 across every qualifying game up through that date (not just that date's own games), ranked against everyone else's own cumulative number at that same moment. Rank 1 is at the top, so a climbing line means genuinely improving standing, not just a good single night. Each point is the same colored avatar used everywhere else in the app, with that checkpoint's rank number inside it instead of an initial. Built on the same games <strong>Include Imbalanced Games</strong>/<strong>Include Past Seasons</strong> already gate — deliberately not on <strong>Include Outlier Games</strong>, since a per-player outlier exclusion would mean two players could disagree about which dates even count as checkpoints.</p>
-      <div id="twoWayRankChart"></div>
-    </div>
-
     <!-- Shot Location & Efficiency -->
-    <div class="panel">
-      <h2>League Shot Heatmap</h2>
-      <p class="hint">Every marked field goal, league-wide, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. A zone stays blank until at least one shot lands in it. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
-      <div id="leagueHeatmap"></div>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>League Shot Heatmap</h2>
+        <p class="hint">Every marked field goal, league-wide, bucketed by court zone — color is FG% in that zone (red low, green high), the number is attempts. A zone stays blank until at least one shot lands in it. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
+        <div id="leagueHeatmap"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Two-Way/20 Rank Over the Season</h2>
+        <p class="hint">One line per player, tracking where they'd rank if the season had ended at each date shown — a checkpoint exists for every date with at least one qualifying game, and a player's rank there comes from their <em>cumulative</em> Two-Way/20 across every qualifying game up through that date (not just that date's own games), ranked against everyone else's own cumulative number at that same moment. Rank 1 is at the top, so a climbing line means genuinely improving standing, not just a good single night. Each point is the same colored avatar used everywhere else in the app, with that checkpoint's rank number inside it instead of an initial. Built on the same games <strong>Include Imbalanced Games</strong>/<strong>Include Past Seasons</strong> already gate — deliberately not on <strong>Include Outlier Games</strong>, since a per-player outlier exclusion would mean two players could disagree about which dates even count as checkpoints.</p>
+        <div id="twoWayRankChart"></div>
+      </div>
     </div>
 
     <div class="panel">
@@ -462,50 +468,54 @@
       <div id="teammateLiftMatrix"></div>
     </div>
 
-    <div class="panel">
-      <h2>Teammate Context</h2>
-      <p class="hint">The season-average headline numbers from Player Detail's Teammate Quality, Offensive/Defensive Matchup Difficulty, and Assisted By panels, side by side for every player at once — built to catch a specific pattern without clicking into each player one at a time: someone whose own Off Rating/20 leans heavily on strong teammates (high Teammate Quality), easy defenders to shoot over (low Off Matchup Difficulty), and light defensive assignments (low Def Matchup Difficulty) is a different case from someone producing the same number on their own. Teammate Quality is teammates' season Off Rating/20; Off Matchup Difficulty is the season Def Rating/20 of whoever defended this player's shots (how good those defenders have been defensively); Def Matchup Difficulty is the season Off Rating/20 of whoever this player defended (how good those scorers have been offensively) — see the Player Detail panels for the full explanation and the game-by-game trend charts. Click a column header to sort by it.</p>
-      <div class="table-scroll">
-        <table class="matchup-table" id="teammateContextTable">
-          <thead><tr id="teammateContextHeaderRow"></tr></thead>
-          <tbody id="teammateContextBody"></tbody>
-        </table>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>Teammate Context</h2>
+        <p class="hint">The season-average headline numbers from Player Detail's Teammate Quality, Offensive/Defensive Matchup Difficulty, and Assisted By panels, side by side for every player at once — built to catch a specific pattern without clicking into each player one at a time: someone whose own Off Rating/20 leans heavily on strong teammates (high Teammate Quality), easy defenders to shoot over (low Off Matchup Difficulty), and light defensive assignments (low Def Matchup Difficulty) is a different case from someone producing the same number on their own. Teammate Quality is teammates' season Off Rating/20; Off Matchup Difficulty is the season Def Rating/20 of whoever defended this player's shots (how good those defenders have been defensively); Def Matchup Difficulty is the season Off Rating/20 of whoever this player defended (how good those scorers have been offensively) — see the Player Detail panels for the full explanation and the game-by-game trend charts. Click a column header to sort by it.</p>
+        <div class="table-scroll">
+          <table class="matchup-table" id="teammateContextTable">
+            <thead><tr id="teammateContextHeaderRow"></tr></thead>
+            <tbody id="teammateContextBody"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <div class="panel">
-      <h2>Assist Connections</h2>
-      <p class="hint">Every passer-to-scorer connection, league-wide — who set up whom, and how often. Directional: Alice assisting Bob is a separate row from Bob assisting Alice, since those are different facts. Sorted by assist count. Only connections with at least one assist are listed.</p>
-      <div class="table-scroll">
-        <table class="matchup-table" id="assistSynergyTable">
-          <thead><tr><th>Passer</th><th>Scorer</th><th>Assists</th></tr></thead>
-          <tbody id="assistSynergyBody"></tbody>
-        </table>
+      <div class="panel">
+        <h2>Assist Connections</h2>
+        <p class="hint">The top passer-to-scorer connections, league-wide, by assist count — who's set up whom the most. Directional: Alice assisting Bob is a separate row from Bob assisting Alice, since those are different facts. Trimmed to the same number of rows as <strong>Teammate Context</strong> next to it, just so the two panels line up at roughly the same height — not a meaningful cutoff on its own. See a player's own <strong>Assisted By</strong> panel on Player Detail for their full, untrimmed list of connections, or <strong>Export → Download Assist Connections CSV</strong> for every connection league-wide.</p>
+        <div class="table-scroll">
+          <table class="matchup-table" id="assistSynergyTable">
+            <thead><tr><th>Passer</th><th>Scorer</th><th>Assists</th></tr></thead>
+            <tbody id="assistSynergyBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <!-- Situational & Moments -->
-    <div class="panel">
-      <h2>Out-of-Bounds Misses</h2>
-      <p class="hint">How often a player's own missed shot ends up out of bounds — per Poolean's rule, whoever last touched the ball loses possession, so this is really a "how often does the ball leave their hands for good on a miss" read, not a shooting-accuracy stat. Only misses count as the denominator (a make can't go out of bounds). Sorted by number of misses.</p>
-      <p id="outOfBoundsSummary" class="hint" style="margin:0 0 10px"></p>
-      <div class="table-scroll">
-        <table class="matchup-table" id="outOfBoundsTable">
-          <thead><tr id="outOfBoundsHeaderRow"></tr></thead>
-          <tbody id="outOfBoundsBody"></tbody>
-        </table>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>Out-of-Bounds Misses</h2>
+        <p class="hint">How often a player's own missed shot ends up out of bounds — per Poolean's rule, whoever last touched the ball loses possession, so this is really a "how often does the ball leave their hands for good on a miss" read, not a shooting-accuracy stat. Only misses count as the denominator (a make can't go out of bounds). Sorted by number of misses.</p>
+        <p id="outOfBoundsSummary" class="hint" style="margin:0 0 10px"></p>
+        <div class="table-scroll">
+          <table class="matchup-table" id="outOfBoundsTable">
+            <thead><tr id="outOfBoundsHeaderRow"></tr></thead>
+            <tbody id="outOfBoundsBody"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <div class="panel">
-      <h2>Second-Chance Conversion</h2>
-      <p class="hint">"True" second-chance conversion, not just who grabs offensive rebounds — an OREB counts as converted when, within 20 seconds of the missed shot's own video timestamp, either that rebounder scored themselves or someone else scored with them credited as the assist (either path counts, a kick-out is worth the same as a putback). Both the miss and the scoring follow-up need a real video timestamp to be checked; an OREB logged without one still counts toward the total but can't be evaluated for conversion. The 20-second window is a single adjustable constant (`SECOND_CHANCE_WINDOW_SECONDS` in <code>app.js</code>), same pattern as the shot-distance thresholds. This panel runs the same algorithm as <code>scripts/second-chance-analysis.js</code>, just against whatever's loaded in this browser instead of an exported file.</p>
-      <p id="secondChanceSummary" class="hint" style="margin:0 0 10px"></p>
-      <div class="table-scroll">
-        <table class="matchup-table" id="secondChanceTable">
-          <thead><tr id="secondChanceHeaderRow"></tr></thead>
-          <tbody id="secondChanceBody"></tbody>
-        </table>
+      <div class="panel">
+        <h2>Second-Chance Conversion</h2>
+        <p class="hint">"True" second-chance conversion, not just who grabs offensive rebounds — an OREB counts as converted when, within 20 seconds of the missed shot's own video timestamp, either that rebounder scored themselves or someone else scored with them credited as the assist (either path counts, a kick-out is worth the same as a putback). Both the miss and the scoring follow-up need a real video timestamp to be checked; an OREB logged without one still counts toward the total but can't be evaluated for conversion. The 20-second window is a single adjustable constant (`SECOND_CHANCE_WINDOW_SECONDS` in <code>app.js</code>), same pattern as the shot-distance thresholds. This panel runs the same algorithm as <code>scripts/second-chance-analysis.js</code>, just against whatever's loaded in this browser instead of an exported file.</p>
+        <p id="secondChanceSummary" class="hint" style="margin:0 0 10px"></p>
+        <div class="table-scroll">
+          <table class="matchup-table" id="secondChanceTable">
+            <thead><tr id="secondChanceHeaderRow"></tr></thead>
+            <tbody id="secondChanceBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
