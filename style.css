@@ -362,43 +362,13 @@ button:disabled {
   font-size: 0.9rem;
 }
 
-.teams-list, .games-list {
+.games-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.team-card {
-  background: var(--panel-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  box-shadow: var(--shadow-sm);
-}
-
-.team-card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: space-between;
-}
-
-.team-name-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 1.05rem;
-}
-
-.color-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.roster-row, .player-row {
+.roster-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -407,13 +377,7 @@ button:disabled {
   font-weight: 500;
 }
 
-.roster-row:first-child, .player-row:first-of-type { border-top: none; }
-
-.add-player-form {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
+.roster-row:first-child { border-top: none; }
 
 .icon-btn {
   background: none;
@@ -680,11 +644,6 @@ button:disabled {
 }
 
 /* Players roster */
-.roster-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 .roster-row-name {
   display: flex;
   align-items: center;
@@ -1498,23 +1457,6 @@ button:disabled {
   height: 10px;
   border-radius: 3px;
   display: inline-block;
-}
-.shot-selection-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.shot-selection-row:last-child {
-  margin-bottom: 0;
-}
-.shot-selection-name {
-  width: 110px;
-  flex-shrink: 0;
-  font-size: 0.86rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .shot-selection-bar {
   flex: 1;
