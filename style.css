@@ -14,15 +14,20 @@ body {
   color: var(--text);
   min-height: 100vh;
   transition: background-color 0.15s ease, color 0.15s ease;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+/* Frosted-glass sticky nav bar, iOS-style: translucent + blurred rather than a flat opaque
+   panel, so page content is still faintly readable sliding underneath it on scroll. */
 .app-header {
-  background: var(--panel-bg);
+  background: var(--header-bg-translucent);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: var(--shadow-sm);
 }
 
 .header-inner {
@@ -70,33 +75,38 @@ body {
 }
 .theme-toggle-btn:hover { background: var(--surface-muted-hover); }
 
+/* iOS segmented control: a rounded pill-shaped track holding the tab buttons, with the active
+   one reading as a distinct floating segment (its own background + soft shadow) rather than an
+   underline — the same pattern iOS uses for Photos' Library/For You/Albums switcher, etc. */
 .tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   overflow-x: auto;
+  background: var(--surface-muted);
+  padding: 3px;
+  border-radius: 12px;
 }
 
 .tab-btn {
   background: none;
   border: none;
-  padding: 10px 16px;
+  padding: 8px 16px;
   font-family: var(--font-body);
   font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
   color: var(--muted);
-  border-radius: 8px 8px 0 0;
+  border-radius: 9px;
   white-space: nowrap;
-  border-bottom: 3px solid transparent;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.tab-btn:hover { color: var(--text); background: var(--primary-light); }
+.tab-btn:hover { color: var(--text); }
 
 .tab-btn.active {
   color: var(--primary-dark);
-  border-bottom-color: var(--primary);
-  background: var(--primary-light);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-sm);
 }
 
 main {
@@ -117,8 +127,8 @@ main {
   background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 18px 22px;
-  margin-bottom: 18px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -221,6 +231,18 @@ input, select, button {
   color: var(--text);
 }
 
+/* Filled fields, not outlined boxes — the iOS text-field convention (Settings, Mail search:
+   a soft gray capsule with no visible border until it's actually focused). */
+input, select {
+  background: var(--surface-muted);
+  border-color: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+input:focus, select:focus {
+  background: var(--panel-bg);
+  border-color: var(--accent);
+}
+
 input:focus, select:focus, button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
@@ -232,11 +254,12 @@ button {
   border: none;
   cursor: pointer;
   font-weight: 600;
-  transition: background 0.15s ease, transform 0.05s ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 button:hover { background: var(--primary-dark); }
-button:active { transform: translateY(1px); }
+button:active { transform: scale(0.96); }
 
 .secondary-btn {
   background: var(--surface-muted);

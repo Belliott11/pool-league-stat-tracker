@@ -1150,11 +1150,12 @@ oversight, since which panels someone wants expanded is a very session-specific 
 All colors, fonts, radii, and shadows are CSS custom properties defined in one place,
 **`theme.css`** (loaded before `style.css`) — nothing else in the codebase hardcodes a color or
 font. `style.css` is layout/structure only, built entirely on `var(--...)` references, and
-`app.js` never touches styling at all. The current palette (navy + a single teal accent, small
-radius, Archivo + IBM Plex Mono) is just Ben's own working look for this tool day-to-day — not a
-Poolean brand direction to preserve. Treat it the same as any other placeholder: swap it freely
-to match the live site. To make this look like it belongs on poolean.adammirmina.com, you have
-two options and don't need to touch `style.css` for either:
+`app.js` never touches styling at all. The current palette (navy + a single teal accent, large
+radius and soft shadows in an iOS-leaning card language, Archivo + IBM Plex Mono) is just Ben's
+own working look for this tool day-to-day — not a Poolean brand direction to preserve. Treat it
+the same as any other placeholder: swap it freely to match the live site. To make this look like
+it belongs on poolean.adammirmina.com, you have two options and don't need to touch `style.css`
+for either:
 
 1. **Edit `theme.css` directly** — swap the hex values for your site's palette, change
    `--font-body` / `--font-display` to your site's fonts (and swap or drop the Google Fonts
@@ -1172,6 +1173,22 @@ site already defines CSS variables with any of these same names, so the two don'
 The full token list, with what each one controls, is commented inline in `theme.css` under four
 groups: Surfaces, Text, Brand + semantic colors, and Typography — read that file top to bottom
 before touching anything, it's short.
+
+**The visual language leans iOS on purpose (Ben's own request), entirely through tokens plus a
+handful of structural rules in `style.css` — no new colors, the same navy/teal palette
+throughout.** `--radius`/`--radius-sm` went from 8px/6px to 18px/12px, and `--shadow-sm`/
+`--shadow-md` went from flat (`none`) to soft, low-opacity, large-blur shadows — since every
+`.panel`, button, and input already referenced these tokens rather than hardcoding their own
+radius/shadow, bumping the two token sets was enough to restyle every card/control in the app at
+once. Three structural additions layer on top: **`--header-bg-translucent`** (a semi-transparent
+copy of `--panel-bg`, one value per theme) backs the sticky `.app-header`, paired with
+`backdrop-filter: blur(...)` for the frosted-glass nav-bar look; **`.tabs`/`.tab-btn`** changed
+from an underlined-tab pattern to an iOS segmented control (a rounded `--surface-muted` track,
+the active tab a floating `--panel-bg` segment with its own `--shadow-sm`); and plain `input`/
+`select` elements (not `button`) now default to a filled `--surface-muted` background with no
+visible border until focused, the iOS text-field convention, rather than an outlined box.
+`button:active` also switched from a `translateY` nudge to `transform: scale(0.96)` for a more
+native-feeling tap response.
 
 ## What would change in the code
 
