@@ -18,7 +18,10 @@ individual player, not a team.
 
 ## Workflow
 
-1. **Players** — add everyone in the league once. Anyone with a hand-transcribed scouting profile
+1. **Players** — add everyone in the league once. Every player gets a small colored avatar (their
+   first initial on a color derived from their own id, so it's always the same color everywhere
+   their name shows up — roster, Leaderboard, Player Detail header, the scatter charts' dots) next
+   to their name. Anyone with a hand-transcribed scouting profile
    (see Balance Teams below) shows color-coded role tags next to their name (Scorer, Defender,
    Physical, Playmaker, Role Player) — height, build, and effort still feed the Balance Teams
    tiebreak but aren't surfaced as their own tag here (hover the tags for effort, height, build,
@@ -326,7 +329,11 @@ individual player, not a team.
    Grid, Head-to-Head, Balance Teams' chemistry/win-rate) — a game that's an outlier for one
    player isn't necessarily one for everyone else who happened to share it. With fewer than 4
    qualifying games nothing gets excluded either way — not enough data to call anything an
-   outlier yet. Right after PTS/20 sits **Shot%** — not a per-20 rate
+   outlier yet. Whoever's leading a column this season gets a green highlight in that cell — same
+   "which direction is better" logic Player Comparison already uses (lower is better for TOV/PF/
+   Pts Allowed/Opp FG%/Beaten/TOV%, higher for everything else with a real quality read; GP and
+   the shot-share columns stay uncolored, same reasoning as there), so a column reads as its own
+   mini-leaderboard at a glance, ties included. Right after PTS/20 sits **Shot%** — not a per-20 rate
    like its neighbors, but a season-long share: what percentage of their own *team's* total field
    goal attempts were theirs, across the games they played (their FGA ÷ their team's FGA in those
    same games — teammates included in the denominator, opponents' shots never counted). Free
@@ -452,10 +459,10 @@ individual player, not a team.
    instead of pre-summed, so "who's good" splits into "good at what." The quadrant lines cross at
    zero on each axis rather than at this roster's own median, since zero is already the meaningful
    boundary each stat uses on its own — a median split would just be an arbitrary line drawn
-   through wherever this particular group happens to cluster. Each player gets their own distinct
-   dot color (an 8-color colorblind-safe palette, cycling if there are more players than colors)
-   instead of one uniform accent color — with a real roster this matters, since a wall of
-   identically-colored dots is only distinguishable by tiny, easily-overlapping text labels.
+   through wherever this particular group happens to cluster. Each dot is the same colored
+   initial avatar used everywhere else in the app (roster, Leaderboard, Player Detail header) —
+   a player is always the same color on every chart and every other view, not a color that
+   depends on who else happens to be plotted alongside them.
    Right below that, **Volume vs. Efficiency** is a separate scatter, offense only — pure shot
    volume (FGA/20) on the x-axis against season TS% on the y-axis, so a high-volume/low-efficiency
    player and a low-volume/high-efficiency player show up as mirror opposites directly instead of
@@ -633,6 +640,10 @@ individual player, not a team.
      eFG%/TS%, defensive numbers, Off Rating, Two-Way) as the Game Stats table, plus that game's
      W/L/T result. Unlike the Leaderboard, this is per-game actuals, not averaged — one row per
      game, exactly what happened in it. The literal data behind the Two-Way Trend chart above it.
+     Their own single best and worst game this season (by Two-Way score, among games with real
+     shots logged, needs at least 2 such games) gets a 🔥/👎 badge next to its Two-Way value —
+     same language as the best/worst-this-game badges on the Games list, just scoped to this one
+     player's own season instead of one specific game.
    - **Shot Heatmap** — the same court grid as the Shot Chart, scoped to just this player's
      marked field goals across every game.
    - **Head-to-Head — As Scorer** — their shooting *against* each defender who's guarded them,

@@ -383,6 +383,25 @@ function renderPlayersRoleFilter() {
   });
 }
 
+// A small colored circle with a player's first initial, wherever their name shows up as a list
+// item (roster, Leaderboard, Player Detail header) — purely decorative, no new data. Color is
+// deterministic from the player's id (a simple string hash into a hue), not tied to role/build/
+// effort tag colors elsewhere, so it never implies a second meaning on top of an actual stat —
+// same player always gets the same color, different players usually land on visibly different
+// ones, that's the whole job. `size` lets the Player Detail header use a bigger version of the
+// same thing instead of a separate component.
+function avatarHueForPlayer(id) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return hash % 360;
+}
+function renderPlayerAvatar(player, size = "normal") {
+  if (!player) return "";
+  const initial = (player.name.trim().charAt(0) || "?").toUpperCase();
+  const hue = avatarHueForPlayer(player.id);
+  return `<span class="player-avatar player-avatar-${size}" style="background:hsl(${hue}, 55%, 42%)">${escapeHtml(initial)}</span>`;
+}
+
 function renderPlayers() {
   renderPlayersRoleFilter();
   const list = document.getElementById("playersList");
@@ -418,7 +437,7 @@ function renderPlayers() {
     const tagsHtml = tags.length > 0
       ? `<span class="profile-tags"${tagsTitle}>${tags.map(t => `<span class="profile-tag profile-tag-${t.kind}">${escapeHtml(t.label)}</span>`).join("")}</span>`
       : "";
-    row.innerHTML = `<span class="roster-row-name">${escapeHtml(p.name)}${tagsHtml}</span>`;
+    row.innerHTML = `<span class="roster-row-name">${renderPlayerAvatar(p)}${escapeHtml(p.name)}${tagsHtml}</span>`;
 
     const editBtn = document.createElement("button");
     editBtn.className = "icon-btn";
@@ -4356,16 +4375,20 @@ function renderPowerRankingVsPerformance() {
   });
 }
 
-// Categorical colors for telling individual players apart on a scatter chart — distinct from the
-// app's semantic red/amber/teal/green tokens, which encode good/bad rather than identity, so
-// reusing them here would mean two unrelated players landing on the same "warning amber" dot for
-// no reason. Okabe-Ito, the standard colorblind-safe qualitative palette, with pure black swapped
-// for a violet so every color stays visible against both the light and dark theme backgrounds.
-// Cycles if there are more players than colors — an eventual repeat is far less confusing than
-// every single dot being identical, which was the actual problem this replaces.
-const PLAYER_CHART_COLORS = ["#e69f00", "#56b4e9", "#009e73", "#c9a227", "#0072b2", "#d55e00", "#cc79a7", "#7b52ab"];
-function playerChartColor(index) {
-  return PLAYER_CHART_COLORS[index % PLAYER_CHART_COLORS.length];
+// One SVG "dot" per player on a scatter chart — the same colored-initial identity as
+// renderPlayerAvatar() elsewhere (roster, Leaderboard, Player Detail header), just drawn as
+// SVG circle+text instead of an HTML span, and hash-based on the player's own id rather than
+// their position in this render's data array — so a player is always the same color on every
+// chart and every other view in the app, not a color that happens to depend on sort order or
+// who else is in the room. Replaced an earlier index-cycling categorical palette (Okabe-Ito)
+// that gave the same player a different color on every render depending on array order.
+function svgAvatarDot(player, cx, cy, r = 9) {
+  const initial = (player.name.trim().charAt(0) || "?").toUpperCase();
+  const hue = avatarHueForPlayer(player.id);
+  return `
+    <circle cx="${cx}" cy="${cy}" r="${r}" style="fill:hsl(${hue}, 55%, 42%)" class="quadrant-dot" />
+    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" class="quadrant-dot-initial">${escapeHtml(initial)}</text>
+  `;
 }
 
 // One dot per player: Off Rating/20 on the x-axis, Def Rating/20 on the y-axis — the two
@@ -4397,13 +4420,14 @@ function renderQuadrantChart() {
   const yScale = v => PAD + plotH - ((v + maxAbsY) / (2 * maxAbsY)) * plotH;
   const zeroX = xScale(0), zeroY = yScale(0);
 
-  const dotsSvg = data.map((d, i) => {
+  const dotsSvg = data.map(d => {
     const cx = xScale(d.offRtg), cy = yScale(d.defRtg);
     return `
-      <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot" style="fill:${playerChartColor(i)}">
+      <g>
         <title>${escapeHtml(d.player.name)}: ${d.offRtg.toFixed(1)} Off Rating/20, ${d.defRtg.toFixed(1)} Def Rating/20</title>
-      </circle>
-      <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
+        ${svgAvatarDot(d.player, cx, cy)}
+      </g>
+      <text x="${cx}" y="${cy - 12}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
     `;
   }).join("");
 
@@ -4452,13 +4476,14 @@ function renderVolumeEfficiencyChart() {
   const xScale = v => PAD_L + (v / maxVolume) * plotW;
   const yScale = v => PAD_T + plotH - (v / maxTs) * plotH;
 
-  const dotsSvg = data.map((d, i) => {
+  const dotsSvg = data.map(d => {
     const cx = xScale(d.volume), cy = yScale(d.ts);
     return `
-      <circle cx="${cx}" cy="${cy}" r="5" class="quadrant-dot" style="fill:${playerChartColor(i)}">
+      <g>
         <title>${escapeHtml(d.player.name)}: ${d.volume.toFixed(1)} FGA/20, ${d.ts}% TS</title>
-      </circle>
-      <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
+        ${svgAvatarDot(d.player, cx, cy)}
+      </g>
+      <text x="${cx}" y="${cy - 12}" text-anchor="middle" class="quadrant-label">${escapeHtml(d.player.name)}</text>
     `;
   }).join("");
 
@@ -5754,6 +5779,20 @@ function renderLeaderboard() {
   const sortCol = LEADERBOARD_COLUMNS.find(c => c.key === leaderboardSort.key);
   rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), leaderboardSort.dir));
 
+  // Highlights whoever's leading each column this season — reuses the same "which direction is
+  // better" data Player Comparison already established (COMPARISON_NEUTRAL_KEYS/
+  // COMPARISON_LOWER_IS_BETTER_KEYS below), so a column reads as a leaderboard the same way in
+  // both places rather than inventing a second opinion on which stats even have a "better."
+  // "last5" is excluded too — its own display is a trend arrow, not a plain number, same
+  // reasoning Player Comparison uses to skip it.
+  const columnBest = {};
+  cols.forEach(col => {
+    if (col.key === "player" || col.key === "last5" || COMPARISON_NEUTRAL_KEYS.has(col.key)) return;
+    const values = rows.map(r => col.accessor(r)).filter(v => typeof v === "number" && !Number.isNaN(v));
+    if (values.length === 0) return;
+    columnBest[col.key] = COMPARISON_LOWER_IS_BETTER_KEYS.has(col.key) ? Math.min(...values) : Math.max(...values);
+  });
+
   rows.forEach(r => {
     const tr = document.createElement("tr");
     cols.forEach(col => {
@@ -5761,15 +5800,20 @@ function renderLeaderboard() {
       if (col.key === "player") {
         td.className = "sticky-col";
         const nameBtn = document.createElement("button");
-        nameBtn.className = "icon-btn";
+        nameBtn.className = "icon-btn player-name-btn";
         nameBtn.style.color = "var(--accent)";
         nameBtn.style.fontWeight = "700";
-        nameBtn.textContent = r.player.name;
+        nameBtn.innerHTML = `${renderPlayerAvatar(r.player)}${escapeHtml(r.player.name)}`;
         nameBtn.addEventListener("click", () => openPlayerDetail(r.player.id));
         td.appendChild(nameBtn);
       } else {
         td.className = "num-cell";
         td.textContent = col.display ? col.display(r) : col.accessor(r);
+        const value = col.accessor(r);
+        if (columnBest[col.key] !== undefined && value === columnBest[col.key]) {
+          td.classList.add("leaderboard-leader-cell");
+          td.title = "Season leader in this column";
+        }
       }
       tr.appendChild(td);
     });
@@ -5869,7 +5913,7 @@ function renderPlayerDetail() {
   if (!player) return;
 
   const row = computeLeaderboard().find(r => r.player.id === currentPlayerId);
-  document.getElementById("playerDetailTitle").textContent = player.name;
+  document.getElementById("playerDetailTitle").innerHTML = `${renderPlayerAvatar(player, "large")}<span>${escapeHtml(player.name)}</span>`;
   document.getElementById("playerDetailSummary").textContent = row
     ? `${row.wins}-${row.losses}${row.ties ? `-${row.ties}` : ""} · ${row.rate.pts.toFixed(1)} PTS/20 · ${row.offRatingPer20.toFixed(1)} Off Rating/20 · ${row.twoWayPer20.toFixed(1)} Two-Way/20`
     : "No games yet";
@@ -6222,10 +6266,26 @@ function renderPlayerGameLog(playerId) {
     const def = gameDefenseStats(game, playerId);
     return { game, s, sh, def, result: playerGameResult(game, playerId), offRtg: offensiveRating(s, sh), twoWay: twoWayScore(s, sh, def) };
   });
+  // Best/worst individual game by Two-Way score, same 🔥/👎 language as the Games list's own
+  // best/worst-this-game badges — only among games with real shots logged, so an unreviewed
+  // 0-everything game can never wrongly "win" either title, and only when there are at least 2
+  // reviewed games (with just 1, best and worst would trivially be the same game).
+  const reviewed = rows.filter(r => r.game.scoringEvents.length > 0);
+  let bestGameId = null, worstGameId = null;
+  if (reviewed.length >= 2) {
+    bestGameId = reviewed.reduce((a, b) => b.twoWay > a.twoWay ? b : a).game.id;
+    worstGameId = reviewed.reduce((a, b) => b.twoWay < a.twoWay ? b : a).game.id;
+    if (worstGameId === bestGameId) worstGameId = null;
+  }
   const sortCol = PLAYER_GAME_LOG_COLUMNS.find(c => c.key === playerGameLogSort.key);
   rows.sort((a, b) => compareForSort(sortCol.accessor(a), sortCol.accessor(b), playerGameLogSort.dir));
   rows.forEach(r => {
     const tr = document.createElement("tr");
+    const twoWayBadge = r.game.id === bestGameId
+      ? ' <span class="badge badge-highlight" title="Best individual game this season by Two-Way score.">🔥</span>'
+      : r.game.id === worstGameId
+        ? ' <span class="badge badge-lowlight" title="Worst individual game this season by Two-Way score.">👎</span>'
+        : "";
     tr.innerHTML = `
       <td>${formatDateDisplay(r.game.date)}</td>
       <td>${r.result || "—"}</td>
@@ -6248,7 +6308,7 @@ function renderPlayerGameLog(playerId) {
       <td>${r.def.timesBeaten}</td>
       <td>${r.def.stops}</td>
       <td>${r.offRtg.toFixed(1)}</td>
-      <td>${r.twoWay.toFixed(1)}</td>
+      <td>${r.twoWay.toFixed(1)}${twoWayBadge}</td>
     `;
     body.appendChild(tr);
   });

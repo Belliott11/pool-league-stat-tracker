@@ -650,6 +650,49 @@ button:disabled {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* Colored initial avatar (renderPlayerAvatar() in app.js) — background color is set inline
+   per-player (hue derived from their id), only the shape/size/text styling lives here. */
+.player-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: white;
+  font-weight: 700;
+  line-height: 1;
+}
+.player-avatar-normal {
+  width: 24px;
+  height: 24px;
+  font-size: 0.75rem;
+}
+.player-avatar-large {
+  width: 52px;
+  height: 52px;
+  font-size: 1.5rem;
+}
+.player-name-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+#playerDetailTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Season-leader cell in the main Leaderboard table (renderLeaderboard() in app.js) — same
+   green-for-better language as Player Comparison's .compare-better, just as a background tint
+   since a whole table column is a busier context than two side-by-side numbers. */
+.leaderboard-leader-cell {
+  background: var(--success-light);
+  color: var(--success);
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+}
 .profile-tags {
   display: inline-flex;
   flex-wrap: wrap;
@@ -1420,6 +1463,13 @@ button:disabled {
   fill: var(--accent);
   stroke: var(--panel-bg);
   stroke-width: 1.5;
+}
+.quadrant-dot-initial {
+  fill: white;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  pointer-events: none;
 }
 .quadrant-label {
   font-size: 10px;

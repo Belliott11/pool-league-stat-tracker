@@ -834,11 +834,18 @@ new computation; it's the existing Two-Way Score inputs plotted separately inste
 direction) rather than to the data's actual min/max, so the zero-crossing quadrant lines always
 land at the plot's visual center — worth keeping if you reimplement this, since scaling to min/max
 instead would put the crossing point wherever this particular roster's data happens to center,
-not at the meaningful zero boundary both stats already use on their own. Each dot's `fill` is set
-inline via `playerChartColor(index)` (`app.js`), an 8-color Okabe-Ito colorblind-safe palette
-cycling by array index — replacing an earlier version where every dot shared the single
-`var(--accent)` teal, which on a real roster was indistinguishable dot-to-dot beyond the small
-text labels. The same helper drives Volume vs. Efficiency's dots below. Legibility note that
+not at the meaningful zero boundary both stats already use on their own. Each dot is drawn by
+`svgAvatarDot(player, cx, cy, r)` (`app.js`, right above `computeQuadrantData()`) — an SVG
+circle+text rendering of the same colored-initial identity `renderPlayerAvatar()` draws as an
+HTML span everywhere else (roster, Leaderboard, Player Detail header): `hue =
+avatarHueForPlayer(player.id)` (a simple string hash into 0-360, not tied to role/build/effort
+tag colors) sets the circle's `fill`, the player's own first initial goes in a centered `<text>`
+inside it. This replaced an earlier `playerChartColor(index)` — an 8-color Okabe-Ito palette
+cycling by the player's position in that render's own data array — specifically because
+index-based color meant the *same player* could get a different dot color from one render to the
+next depending on array order, whereas hash-based-on-id means a player is always the same color
+on this chart, the other scatter chart, and every other view in the app. The same helper drives
+Volume vs. Efficiency's dots below. Legibility note that
 applies to every SVG chart on this page, not just this one: axis lines were originally styled with
 `var(--border)` (a deliberately low-contrast token meant for subtle dividers) and axis/label text
 at 6.5-8px — both read as "barely there" once actually tested. Every `*-axis` class now uses
@@ -1419,6 +1426,17 @@ answering separately. Leadership and sportsmanship have no data source in this t
 "makes teammates better" could be built from the existing `computeTeammateSynergy()`/chemistry
 lift (already used in Balance Teams) but hasn't been, by the same reasoning.
 
+**`renderPlayerAvatar(player, size)` (`app.js`, right above `renderPlayers()`) is a small colored
+circle with the player's first initial — purely decorative, no new data — rendered wherever a
+name appears as a list item: the Players tab roster, the Leaderboard table's player-name cell,
+and (at `size = "large"`) the Player Detail page header.** `avatarHueForPlayer(id)` hashes the
+player's own id into a 0-360 hue (a simple `hash = hash * 31 + charCode` loop, same shape as any
+string hash) — deliberately independent of the role/build/effort tag colors elsewhere, so it
+never implies a second meaning layered on top of an actual stat; the point is purely "same player,
+same color, everywhere," never "this color means something." `size` is `"normal"` (24px, inline
+with text) or `"large"` (52px, Player Detail header) — both share the same `.player-avatar` base
+class in `style.css`, only width/height/font-size differ per `.player-avatar-<size>`.
+
 **The Players tab itself (`renderPlayers()`) now shows a color-coded tag row per player, driven
 by `physicalProfileTags(phys)`** — one `{label, kind}` entry per role. Height and build stay real
 fields (still feed the Balance Teams tiebreak, still editable in the form below) but deliberately
@@ -1600,6 +1618,25 @@ inherently better play) and `COMPARISON_LOWER_IS_BETTER_KEYS` (L, TOV, PF, Pts A
 Beaten, TOV%) — everything else defaults to higher-is-better. If you add a new Leaderboard column
 later, decide which of these three buckets it belongs in the same way; nothing auto-detects
 direction from the stat's own shape.
+
+**The main Leaderboard table itself reuses those same two sets to highlight each column's season
+leader** — `renderLeaderboard()` builds a `columnBest` map once per render (before the per-row
+loop, over the *unsorted* `rows` — column leadership doesn't depend on which column the table
+happens to be sorted by), skipping `"player"`, `"last5"`, and everything in
+`COMPARISON_NEUTRAL_KEYS` the same way Player Comparison does, and taking `Math.min`/`Math.max`
+per column depending on `COMPARISON_LOWER_IS_BETTER_KEYS`. Any cell whose own value strictly
+equals its column's best gets `.leaderboard-leader-cell` (a green background tint, same
+better-means-green language as `.compare-better`, just as a tint since a whole table column is a
+busier context than two side-by-side numbers) — ties all get highlighted, not just whichever row
+happens to sort first.
+
+**Player Detail's Game Log (`renderPlayerGameLog()`) highlights that one player's own best and
+worst game this season, same 🔥/👎 badge language as the Games list's per-game best/worst.**
+Scoped to `game.scoringEvents.length > 0` (real shots logged) before picking best/worst by
+`twoWay`, so an unreviewed 0-everything game can never win either title — and only computed at
+all when there are `>= 2` such reviewed games (with just one, best and worst would trivially be
+the same game, which would misleadingly badge it both 🔥 and 👎). Badge sits next to that row's
+own Two-Way value in the last column, not as a separate column of its own.
 
 **Games tab Advanced Filters is client-side only, no schema implications, purely additive to the
 existing free-text filter (both apply together, AND'd).** Collapsed behind its own toggle
