@@ -18,10 +18,11 @@ individual player, not a team.
 
 ## Workflow
 
-1. **Players** — add everyone in the league once. Every player gets a small colored avatar (their
-   first initial on a color derived from their own id, so it's always the same color everywhere
-   their name shows up — roster, Leaderboard, Player Detail header, the scatter charts' dots) next
-   to their name. Anyone with a hand-transcribed scouting profile
+1. **Players** — add everyone in the league once. Every player gets a small circular avatar next
+   to their name, wherever it shows up (roster, Leaderboard, Player Detail header, the identity
+   dots on the scatter charts) — a real photo (`photos/<id>.jpg` or `.png`) when one exists, else
+   their first initial on a color derived from their own id, so even the fallback is always the
+   same color everywhere. Anyone with a hand-transcribed scouting profile
    (see Balance Teams below) shows color-coded role tags next to their name (Scorer, Defender,
    Physical, Playmaker, Role Player) — height, build, and effort still feed the Balance Teams
    tiebreak but aren't surfaced as their own tag here (hover the tags for effort, height, build,
@@ -34,6 +35,13 @@ individual player, not a team.
    **Reset to Default** clears a saved edit and falls back to the original hand-transcribed
    profile. Edits are saved per-player in `localStorage` and feed the same Balance Teams
    tiebreak everything else in this section describes.
+
+   Both the **Games** and **Leaderboard** tabs have grown into a long single column of panels, so
+   each keeps a **Standings** sidebar alongside the main content — rank, avatar, W-L, and
+   Two-Way/20 for everyone, sorted the same way the Leaderboard's own default sort does, always
+   visible without scrolling back up to the main table. Click a name to jump straight to their
+   Player Detail page. Collapsible via the ☰ button at its top (remembers your choice per sidebar
+   on reload) — the toggle stays visible either way, so collapsing it is never a dead end.
 2. **Games** — **Who's Coming?**, at the top, is a separate "who said they're showing up" plan
    for a date, not a game roster — pick a date, check off names, **Save RSVPs**. It doesn't
    create anything or touch stats by itself; once at least one game is logged for that date,
@@ -329,11 +337,14 @@ individual player, not a team.
    Grid, Head-to-Head, Balance Teams' chemistry/win-rate) — a game that's an outlier for one
    player isn't necessarily one for everyone else who happened to share it. With fewer than 4
    qualifying games nothing gets excluded either way — not enough data to call anything an
-   outlier yet. Whoever's leading a column this season gets a green highlight in that cell — same
-   "which direction is better" logic Player Comparison already uses (lower is better for TOV/PF/
-   Pts Allowed/Opp FG%/Beaten/TOV%, higher for everything else with a real quality read; GP and
-   the shot-share columns stay uncolored, same reasoning as there), so a column reads as its own
-   mini-leaderboard at a glance, ties included. Right after PTS/20 sits **Shot%** — not a per-20 rate
+   outlier yet. Whoever's leading a column this season gets a green highlight in that cell, and
+   whoever's last gets a red one — same "which direction is better" logic Player Comparison
+   already uses (lower is better for TOV/PF/Pts Allowed/Opp FG%/Beaten/TOV%, higher for everything
+   else with a real quality read; GP and the shot-share columns stay uncolored, same reasoning as
+   there), so a column reads as its own mini-leaderboard at a glance, ties included on both ends
+   — though a column where every value is identical only gets the green, not both, since the same
+   cell being simultaneously "best" and "worst" wouldn't tell you anything. Right after PTS/20
+   sits **Shot%** — not a per-20 rate
    like its neighbors, but a season-long share: what percentage of their own *team's* total field
    goal attempts were theirs, across the games they played (their FGA ÷ their team's FGA in those
    same games — teammates included in the denominator, opponents' shots never counted). Free
@@ -459,14 +470,24 @@ individual player, not a team.
    instead of pre-summed, so "who's good" splits into "good at what." The quadrant lines cross at
    zero on each axis rather than at this roster's own median, since zero is already the meaningful
    boundary each stat uses on its own — a median split would just be an arbitrary line drawn
-   through wherever this particular group happens to cluster. Each dot is the same colored
-   initial avatar used everywhere else in the app (roster, Leaderboard, Player Detail header) —
-   a player is always the same color on every chart and every other view, not a color that
-   depends on who else happens to be plotted alongside them.
-   Right below that, **Volume vs. Efficiency** is a separate scatter, offense only — pure shot
+   through wherever this particular group happens to cluster. Each dot is the same avatar (photo
+   or colored initial) used everywhere else in the app — a player is always the same identity on
+   every chart and every other view, not a color that depends on who else happens to be plotted
+   alongside them.
+   Next to that (the two charts sit side by side), **Volume vs. Efficiency** is a separate scatter, offense only — pure shot
    volume (FGA/20) on the x-axis against season TS% on the y-axis, so a high-volume/low-efficiency
    player and a low-volume/high-efficiency player show up as mirror opposites directly instead of
    requiring someone to cross-reference the FGA and TS% columns on the main table by hand.
+   Right after that, **Two-Way/20 Rank Over the Season** plots one line per player tracking where
+   they'd rank if the season had ended at each checkpoint (every date with at least one qualifying
+   game), using their *cumulative* Two-Way/20 through that date — a real "season so far" snapshot
+   repeated at every checkpoint, not a per-night score. Rank 1 sits at the top, so a climbing line
+   means genuinely improving standing. Each point is the same avatar as everywhere else, but with
+   that checkpoint's rank number inside it instead of a photo or initial — the number is the
+   actual information this specific chart needs at a glance. Built on the same games Include
+   Imbalanced Games/Include Past Seasons already gate, deliberately not Include Outlier Games,
+   since a per-player outlier exclusion would mean two players could disagree about which dates
+   even count as checkpoints — this chart depends on everyone being ranked at the same moments.
    Below that, **Game-Winning Buckets** counts, per player, how many times their shot actually
    closed out a game their team won — the real game-ending basket in Poolean's race-to-a-target
    format. Credited only when *every* made shot in that game has a real video timestamp — a
@@ -475,7 +496,7 @@ individual player, not a team.
    preference: a game logged without timestamps (or with just a few) will never contribute here,
    even if you're certain from memory which shot actually won it. A season count, not a rate,
    since a rate would round a rare, memorable thing down to an unreadable decimal.
-   Right below that, **Close-Game Shooting** is the tracked stat behind the Clutch comparison
+   Next to that (the two panels sit side by side), **Close-Game Shooting** is the tracked stat behind the Clutch comparison
    above, not Game-Winning Buckets — GWB is explicitly non-scarce by construction (the last
    basket of every decided game belongs to the winning team, full stop), so it measures "who
    tends to close games out," not performance under real pressure. This one is
@@ -557,19 +578,19 @@ individual player, not a team.
    visual instead of text — one stacked bar per player, colors tracking typical shot quality
    (green close, amber midrange, teal line, red deep, same association as the heatmaps' FG%
    coloring) — not itself sortable, since a bar has no single number to sort by.
-   Below that, **League TS% Over Time** pools True Shooting % across every player, one point per
-   date with at least one reviewed game — a single league-wide efficiency line rather than a
-   per-player stat, meant for watching the whole league drift over a season or for checking whether
-   some future rule change actually moved the needle.
-   Right below that, **TS% by Shot Distance** is a plain 4-bar chart of the same Close/Midrange/
+   Below that, **TS% by Shot Distance** is a plain 4-bar chart of the same Close/Midrange/
    Line/Deep split as the Shot Distance table above, meant to make a "shooting gets worse with
    distance" story (or wherever it actually breaks down) land in one glance instead of requiring
    someone to read that table and compare percentages in their head. Free throws have no shot
-   location, so unlike the line chart just above it, this one excludes them entirely — each bar is
-   just that zone's own points scored per attempt in that zone. Worth knowing: TS% for a single
-   zone isn't capped at 100% the way whole-game TS% effectively is in practice — a small,
+   location, so unlike **League TS% Over Time** next to it, this one excludes them entirely — each
+   bar is just that zone's own points scored per attempt in that zone. Worth knowing: TS% for a
+   single zone isn't capped at 100% the way whole-game TS% effectively is in practice — a small,
    hot-from-three sample can clear it (one make on one three-point attempt is 3 points on 1 FGA,
    which is 150% by the formula), so don't read a bar taller than the others as a data error.
+   Next to that (the two charts sit side by side), **League TS% Over Time** pools True Shooting %
+   across every player, one point per date with at least one reviewed game — a single league-wide
+   efficiency line rather than a per-player stat, meant for watching the whole league drift over a
+   season or for checking whether some future rule change actually moved the needle.
    Below that, **Out-of-Bounds Misses**
    shows how often a player's own missed shot ends up out of bounds — per Poolean's actual rule,
    whoever last touched the ball loses possession, so this is really "how often does the ball

@@ -6,3 +6,8 @@ Thumbs.db
 # Still referenced/used from README's "Starting from your existing Poolean data" section;
 # it just isn't tracked in git anymore.
 poolean-seed.json
+
+# Real players' photos — same reasoning as poolean-seed.json above. Referenced by
+# PLAYER_PHOTO_FILES in app.js and used from the local dashboard/dashboard-mail zips;
+# just never pushed to this public repo's history.
+photos/

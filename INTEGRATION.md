@@ -835,17 +835,26 @@ direction) rather than to the data's actual min/max, so the zero-crossing quadra
 land at the plot's visual center — worth keeping if you reimplement this, since scaling to min/max
 instead would put the crossing point wherever this particular roster's data happens to center,
 not at the meaningful zero boundary both stats already use on their own. Each dot is drawn by
-`svgAvatarDot(player, cx, cy, r)` (`app.js`, right above `computeQuadrantData()`) — an SVG
-circle+text rendering of the same colored-initial identity `renderPlayerAvatar()` draws as an
-HTML span everywhere else (roster, Leaderboard, Player Detail header): `hue =
-avatarHueForPlayer(player.id)` (a simple string hash into 0-360, not tied to role/build/effort
-tag colors) sets the circle's `fill`, the player's own first initial goes in a centered `<text>`
-inside it. This replaced an earlier `playerChartColor(index)` — an 8-color Okabe-Ito palette
-cycling by the player's position in that render's own data array — specifically because
-index-based color meant the *same player* could get a different dot color from one render to the
-next depending on array order, whereas hash-based-on-id means a player is always the same color
-on this chart, the other scatter chart, and every other view in the app. The same helper drives
-Volume vs. Efficiency's dots below. Legibility note that
+`svgAvatarDot(player, cx, cy, r, label)` (`app.js`, right above `computeQuadrantData()`) — the SVG
+equivalent of `renderPlayerAvatar()`'s HTML version, same `PLAYER_PHOTO_FILES` map: with no
+`label` override (the case here and in Volume vs. Efficiency below), a real photo draws as a
+circle-clipped `<image>` (`<clipPath>` with a randomized id per call, since multiple `<svg>`s on
+the same page share one DOM id namespace — reusing a fixed id would let one chart's clip
+accidentally resolve to another's), falling back to a `hue = avatarHueForPlayer(player.id)`-colored
+circle with the player's first initial in a centered `<text>` when no photo exists. **A real bug
+worth knowing if you touch this: the border ring drawn over a photo uses its own
+`.quadrant-dot-ring` class (`fill: none`), not `.quadrant-dot` (`fill: var(--accent)`) — a CSS
+class's `fill` overrides an SVG presentation attribute, so a `fill="none"` circle still classed
+`.quadrant-dot` painted solid teal over the whole photo, which from a glance looked exactly like
+the photo integration silently not working at all** (it was working — the photo was just
+completely hidden behind an opaque circle on top of it). `label`, when given (the Two-Way/20 Rank
+Over the Season chart below passes a rank number), always wins over a photo — the number is the
+information that chart actually needs visible, not a face. This whole
+approach replaced an earlier `playerChartColor(index)` — an 8-color Okabe-Ito palette cycling by
+the player's position in that render's own data array — specifically because index-based color
+meant the *same player* could get a different dot color from one render to the next depending on
+array order, whereas hash-based-on-id means a player is always the same identity on this chart,
+every other scatter chart, and every other view in the app. Legibility note that
 applies to every SVG chart on this page, not just this one: axis lines were originally styled with
 `var(--border)` (a deliberately low-contrast token meant for subtle dividers) and axis/label text
 at 6.5-8px — both read as "barely there" once actually tested. Every `*-axis` class now uses
@@ -853,7 +862,15 @@ at 6.5-8px — both read as "barely there" once actually tested. Every `*-axis` 
 label font-sizes were bumped to 9-11px; the red-to-green hue scales used elsewhere (heatmaps,
 Matchup Grid, Teammate Lift Matrix, TS% by Shot Distance) had their saturation raised from 70% to
 85% for the same reason — a continuous hue sweep's yellow/olive midpoint is where the eye is worst
-at telling two values apart, and the extra saturation genuinely helps.
+at telling two values apart, and the extra saturation genuinely helps. **Another axis-label bug
+worth knowing about**: the Def Rating/20 y-axis label was originally `text-anchor="end"` positioned
+at `x = PAD - 10`, which right-aligns the text so it grows *leftward* from that point — fine for a
+short label, but "↑ Def Rating/20" at ~110px wide starting from x≈36 ran well past the SVG's left
+edge (x=0) and got silently clipped by the viewBox, with nothing in the console to flag it. Fixed by
+switching to `text-anchor="start"` at a fixed `x="4"` so the text grows rightward from just inside
+the left edge instead — verify any new axis label this way (compare its rendered
+`getBoundingClientRect()` against the `<svg>` element's own) rather than assuming a short label is
+automatically safe.
 
 **Volume vs. Efficiency on the Leaderboard is also purely computed, nothing stored.** A second
 scatter, deliberately separate from the Two-Way Quadrant above rather than a third axis bolted
@@ -865,6 +882,48 @@ Same overflow risk as TS% by Shot Distance above and the same fix: TS% isn't cap
 small enough sample, so `renderVolumeEfficiencyChart()` scales its y-axis to `Math.max(100,
 ...values) * 1.08` rather than a fixed range — carry that forward if you port this chart, for the
 same reason.
+
+**Two-Way/20 Rank Over the Season is a genuine time series, not a snapshot — one line per player,
+tracking their rank at every date a qualifying game happened, using their *cumulative* Two-Way/20
+through that date rather than that date's own games alone.** `computeTwoWayRankOverSeason()`
+(`app.js`, right after `renderVolumeEfficiencyChart()`) collects every distinct date across
+`state.games.filter(isQualifyingGame)` as a "checkpoint," and at each one re-derives a full
+snapshot leaderboard: every player's `computeRateSummaryForGames(playerId, gamesSoFar)` where
+`gamesSoFar` is every qualifying game with `date <= checkpoint`, sorted descending by
+`twoWayPer20`, each player's array index + 1 becomes their `rank` at that checkpoint. Returns
+`{dates, series}` where `series[playerId]` is a chronological array of `{date, rank, twoWay}` —
+a player simply has no entry before their first qualifying game, so their line starts wherever
+they actually enter the picture, not at a fabricated rank. **Deliberately built on the plain
+`isQualifyingGame()` gate, not each player's own `qualifyingGamesForPlayer()`** (which factors in
+Exclude — now Include — Outlier Games): this chart's whole premise is "everyone ranked at the same
+moments in time," and a per-player outlier exclusion could make two players disagree about which
+dates even exist as checkpoints, breaking that premise. `renderTwoWayRankChart()` scales x
+categorically by checkpoint index (same pattern as the Two-Way Trend chart's per-game points) and
+y by `rank` with `1` pinned to the top (`yScale(rank) = PAD_T + ((rank-1)/(maxRank-1)) * plotH`) —
+a climbing line reads as improving because rank 1 is already "top of the table" everywhere else in
+this tool, not an arbitrary axis-direction choice. Each point calls `svgAvatarDot(player, cx, cy,
+8, rank)` — the `rank` argument is the `label` override, so these dots always show the checkpoint
+number rather than a photo, unlike the two scatter charts above. Each line gets a text label at
+its own last point (`.rank-line-label`, colored the same `avatarHueForPlayer()` hue as its dots)
+rather than a shared legend, since a legend far from a long, possibly-crossing set of lines is
+harder to trace back to a specific line than a label sitting right at its end.
+
+**`.panel-row` (style.css) pairs two narrower panels side by side instead of each eating the
+full-width column.** Plain flexbox: `display: flex; flex-wrap: wrap; gap: 20px;` on the row, and
+`flex: 1 1 320px; margin-bottom: 0; min-width: 0;` on each `.panel` child (the row itself carries
+the `margin-bottom` instead, so pairs still space out from whatever comes next) — no JS involved,
+it's purely an `index.html` structural change (wrap two adjacent `<div class="panel">...</div>`
+blocks in a `<div class="panel-row">`). Below the ~900px breakpoint the pair wraps to stacked
+full-width automatically via `flex-wrap: wrap`, so no separate mobile rule was needed. Three pairs
+exist so far, chosen because each pair is a natural "look at both together" comparison: Two-Way
+Quadrant + Volume vs. Efficiency; Game-Winning Buckets + Close-Game Shooting; TS% by Shot Distance +
+League TS% Over Time. That third pair required physically moving the League TS% Over Time `<div>`
+up in `index.html` to sit immediately after TS% by Shot Distance (it wasn't adjacent before) —
+if you're porting this and your panel order differs, `.panel-row` only works on panels that are
+already next to each other in the DOM, so reorder first. Hint text that referenced a panel by
+relative position ("the chart above," "unlike the over-time chart above") was also reworded to name
+the panel directly (`<strong>Panel Name</strong>`) wherever panel-row reordering could make the old
+spatial wording wrong.
 
 **Shot Distance is now a single merged panel, not two.** It used to be split into "Shot Distance"
 (FG% per zone) and "Shot Selection" (share of attempts per zone) — both per-player, both the exact
@@ -1179,6 +1238,28 @@ default; each panel remembers its own open/closed state only via the browser's n
 behavior for that render (no persistence across reload — a deliberate simplicity choice, not an
 oversight, since which panels someone wants expanded is a very session-specific thing).
 
+## Games/Leaderboard standings sidebar
+
+**Both `#tab-games` and `#tab-leaderboard` wrap their entire existing panel stack (unchanged) in
+a `.tab-body-with-sidebar` two-column grid — a `.tab-main` div holding every original panel, plus
+a sibling `<aside class="tab-sidebar">` with a collapse-toggle button and a `Standings` widget.**
+Purely an HTML wrapper added around already-existing content — no panel inside `.tab-main` moved
+or changed. `renderStandingsSidebar(containerId)` (`app.js`, right after the sidebar-collapse
+wiring) is one shared function serving both sidebars (`#gamesSidebarStandings`/
+`#leaderboardSidebarStandings`): rank + `renderPlayerAvatar()` + name (a button —
+`openPlayerDetail()` on click) + W-L(-T) + Two-Way/20, straight off `computeLeaderboard()` sorted
+descending by `twoWayPer20` — same numbers and sort as the main table's own default, so it can
+never drift out of sync. Called from `renderGames()` (so it refreshes on every game create/edit/
+delete) and from `renderLeaderboard()` (so it also respects Include Imbalanced Games/Include Past
+Seasons/Include Outlier Games, since those change `computeLeaderboard()`'s own output). **Collapse
+state persists per sidebar**, keyed by the wrapper's own DOM id, in one JSON object at
+`localStorage["poolLeagueSidebarCollapsed"]` (`{wrapId: boolean}`) — `applySidebarCollapseState()`
+runs once at load and re-applies on every toggle click; the toggle button
+(`.sidebar-toggle-btn[data-sidebar-toggle="<wrapId>"]`) stays visible whether collapsed or not, so
+collapsing is never a dead end. Below 900px, `.tab-body-with-sidebar` drops to a single column
+(the sidebar stacks below main content instead of beside it) via a plain media query — no JS
+involved in that part.
+
 ## Theming — matching your site's look
 
 All colors, fonts, radii, and shadows are CSS custom properties defined in one place,
@@ -1426,16 +1507,22 @@ answering separately. Leadership and sportsmanship have no data source in this t
 "makes teammates better" could be built from the existing `computeTeammateSynergy()`/chemistry
 lift (already used in Balance Teams) but hasn't been, by the same reasoning.
 
-**`renderPlayerAvatar(player, size)` (`app.js`, right above `renderPlayers()`) is a small colored
-circle with the player's first initial — purely decorative, no new data — rendered wherever a
-name appears as a list item: the Players tab roster, the Leaderboard table's player-name cell,
-and (at `size = "large"`) the Player Detail page header.** `avatarHueForPlayer(id)` hashes the
-player's own id into a 0-360 hue (a simple `hash = hash * 31 + charCode` loop, same shape as any
-string hash) — deliberately independent of the role/build/effort tag colors elsewhere, so it
-never implies a second meaning layered on top of an actual stat; the point is purely "same player,
-same color, everywhere," never "this color means something." `size` is `"normal"` (24px, inline
-with text) or `"large"` (52px, Player Detail header) — both share the same `.player-avatar` base
-class in `style.css`, only width/height/font-size differ per `.player-avatar-<size>`.
+**`renderPlayerAvatar(player, size)` (`app.js`, right above `renderPlayers()`) is a small circle
+rendered wherever a name appears as a list item: the Players tab roster, the Leaderboard table's
+player-name cell, and (at `size = "large"`) the Player Detail page header.** `PLAYER_PHOTO_FILES`
+(right above it) maps a player id to a filename in the `photos/` folder alongside `index.html` —
+real photos Ben supplied (`poolean-player-photos.zip`; the zip's own `players.json` confirms
+filenames are deliberately keyed on this app's own player ids, not a coincidence), rendered as a
+plain `<img>`. A player missing from that map falls back to the colored-initial circle: first
+initial on a hue from `avatarHueForPlayer(id)` (a simple `hash = hash * 31 + charCode` loop hashed
+into 0-360) — deliberately independent of the role/build/effort tag colors elsewhere, so it never
+implies a second meaning layered on top of an actual stat; the point is purely "same player, same
+identity, everywhere," never "this color means something." `size` is `"normal"` (24px, inline
+with text) or `"large"` (52px, Player Detail header) — both `<img>` and the fallback `<span>`
+share the same `.player-avatar` base class in `style.css` (which sets `object-fit: cover` for the
+photo case and is a no-op for the span), only width/height/font-size differ per
+`.player-avatar-<size>`. `svgAvatarDot()` (documented near the Two-Way Quadrant chart below) draws
+the SVG equivalent for the scatter charts, same `PLAYER_PHOTO_FILES` map, same fallback.
 
 **The Players tab itself (`renderPlayers()`) now shows a color-coded tag row per player, driven
 by `physicalProfileTags(phys)`** — one `{label, kind}` entry per role. Height and build stay real
@@ -1620,15 +1707,20 @@ later, decide which of these three buckets it belongs in the same way; nothing a
 direction from the stat's own shape.
 
 **The main Leaderboard table itself reuses those same two sets to highlight each column's season
-leader** — `renderLeaderboard()` builds a `columnBest` map once per render (before the per-row
-loop, over the *unsorted* `rows` — column leadership doesn't depend on which column the table
-happens to be sorted by), skipping `"player"`, `"last5"`, and everything in
-`COMPARISON_NEUTRAL_KEYS` the same way Player Comparison does, and taking `Math.min`/`Math.max`
-per column depending on `COMPARISON_LOWER_IS_BETTER_KEYS`. Any cell whose own value strictly
-equals its column's best gets `.leaderboard-leader-cell` (a green background tint, same
-better-means-green language as `.compare-better`, just as a tint since a whole table column is a
-busier context than two side-by-side numbers) — ties all get highlighted, not just whichever row
-happens to sort first.
+leader (green) and its season worst (red)** — `renderLeaderboard()` builds `columnBest`/
+`columnWorst` maps once per render (before the per-row loop, over the *unsorted* `rows` — column
+leadership doesn't depend on which column the table happens to be sorted by), skipping
+`"player"`, `"last5"`, and everything in `COMPARISON_NEUTRAL_KEYS` the same way Player Comparison
+does, and taking `Math.min`/`Math.max` (and their inverse for worst) per column depending on
+`COMPARISON_LOWER_IS_BETTER_KEYS`. `columnWorst[col.key]` is only set when it's actually distinct
+from that column's best — with every value tied (or just one row), best and worst are the same
+number, and highlighting one cell as simultaneously "leader" and "last place" would be confusing
+rather than informative, so it just gets the green. Any cell whose own value strictly equals its
+column's best gets `.leaderboard-leader-cell` (green tint, checked first); failing that, a value
+equal to the worst gets `.leaderboard-worst-cell` (red tint) — same better-means-green/
+worse-means-red language as `.compare-better`/`.compare-worse`, just as a background tint since a
+whole table column is a busier context than two side-by-side numbers. Ties all get highlighted on
+both ends, not just whichever row happens to sort first.
 
 **Player Detail's Game Log (`renderPlayerGameLog()`) highlights that one player's own best and
 worst game this season, same 🔥/👎 badge language as the Games list's per-game best/worst.**

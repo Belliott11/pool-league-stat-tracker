@@ -123,6 +123,78 @@ main {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Two-column layout (main content + a standings sidebar) for the Games and Leaderboard tabs —
+   both have grown into a long single-column stack of panels; a sticky sidebar gives an
+   always-visible "how's everyone doing" reference without scrolling back up to it. Collapsible
+   (toggleTabSidebar() in app.js) since the sidebar is a nice-to-have, not essential — the toggle
+   strip stays visible either way so it's never a dead end. */
+.tab-body-with-sidebar {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 20px;
+  align-items: start;
+}
+.tab-body-with-sidebar.sidebar-collapsed {
+  grid-template-columns: 1fr auto;
+}
+.tab-main { min-width: 0; }
+.tab-sidebar {
+  position: sticky;
+  top: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sidebar-toggle-btn {
+  align-self: flex-end;
+  background: var(--surface-muted);
+  color: var(--muted);
+  border-radius: 999px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.sidebar-toggle-btn:hover { background: var(--surface-muted-hover); }
+.tab-body-with-sidebar.sidebar-collapsed .tab-sidebar-inner { display: none; }
+@media (max-width: 900px) {
+  .tab-body-with-sidebar, .tab-body-with-sidebar.sidebar-collapsed { grid-template-columns: 1fr; }
+  .tab-sidebar { position: static; }
+}
+
+/* Compact standings widget (renderStandingsSidebar() in app.js) — tighter than the main
+   Leaderboard table on purpose, this is an at-a-glance reference, not a full stat line. */
+.standings-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.standings-mini-table th {
+  text-align: left;
+  padding: 4px 6px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+.standings-mini-table td {
+  padding: 5px 6px;
+  border-top: 1px solid var(--surface-muted);
+}
+.standings-mini-table tr:first-child td { border-top: none; }
+.standings-mini-player-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  color: var(--text);
+  font-weight: 600;
+  padding: 0;
+}
+.standings-mini-player-btn:hover { background: none; color: var(--accent); }
+.standings-mini-player-btn .player-avatar { width: 18px; height: 18px; font-size: 0.62rem; }
+
 .panel {
   background: var(--panel-bg);
   border: 1px solid var(--border);
@@ -130,6 +202,22 @@ main {
   padding: 20px 24px;
   margin-bottom: 20px;
   box-shadow: var(--shadow-sm);
+}
+
+/* Groups two or more narrow panels (a small chart, a compact table) side by side instead of each
+   one eating a full row's width and leaving the rest as dead space — wraps to a stacked column on
+   narrow viewports same as everything else. The row itself carries the bottom margin so its own
+   .panel children don't double up on spacing. */
+.panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.panel-row > .panel {
+  flex: 1 1 320px;
+  margin-bottom: 0;
+  min-width: 0;
 }
 
 .panel h2 {
@@ -662,6 +750,9 @@ button:disabled {
   color: white;
   font-weight: 700;
   line-height: 1;
+  /* When this is an <img> (a real photo) rather than a colored-initial <span> */
+  object-fit: cover;
+  background: var(--surface-muted);
 }
 .player-avatar-normal {
   width: 24px;
@@ -690,6 +781,12 @@ button:disabled {
 .leaderboard-leader-cell {
   background: var(--success-light);
   color: var(--success);
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+}
+.leaderboard-worst-cell {
+  background: var(--danger-light);
+  color: var(--danger);
   font-weight: 700;
   border-radius: var(--radius-sm);
 }
@@ -1464,6 +1561,15 @@ button:disabled {
   stroke: var(--panel-bg);
   stroke-width: 1.5;
 }
+/* The border ring drawn over a photo dot (svgAvatarDot() in app.js) — deliberately its own class
+   rather than reusing .quadrant-dot: CSS `fill` overrides an SVG presentation attribute, so a
+   `fill="none"` circle still classed `.quadrant-dot` would paint solid var(--accent) and hide the
+   photo underneath it entirely. */
+.quadrant-dot-ring {
+  fill: none;
+  stroke: var(--panel-bg);
+  stroke-width: 1.5;
+}
 .quadrant-dot-initial {
   fill: white;
   font-size: 9px;
@@ -1475,6 +1581,16 @@ button:disabled {
   font-size: 10px;
   font-weight: 600;
   fill: var(--text);
+  font-family: var(--font-body);
+}
+.rank-line-path {
+  fill: none;
+  stroke-width: 2;
+  opacity: 0.85;
+}
+.rank-line-label {
+  font-size: 10px;
+  font-weight: 700;
   font-family: var(--font-body);
 }
 .quadrant-axis-label {

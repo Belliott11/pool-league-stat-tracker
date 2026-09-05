@@ -312,6 +312,66 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => showTab(btn.dataset.tab));
 });
 
+// Collapsible sidebar (Games/Leaderboard tabs) — collapsed state persists per sidebar (keyed by
+// its wrapper id) across reloads, same toggle-remembers-itself pattern as everything else in this
+// file. The toggle strip (.sidebar-toggle-btn) stays visible either way, collapsed or not, so it's
+// never a dead end — only .tab-sidebar-inner (the actual content) hides.
+const SIDEBAR_COLLAPSE_KEY = "poolLeagueSidebarCollapsed";
+function loadSidebarCollapseState() {
+  try { return JSON.parse(localStorage.getItem(SIDEBAR_COLLAPSE_KEY)) || {}; } catch (e) { return {}; }
+}
+function applySidebarCollapseState() {
+  const collapsed = loadSidebarCollapseState();
+  document.querySelectorAll("[data-sidebar-toggle]").forEach(btn => {
+    const wrap = document.getElementById(btn.dataset.sidebarToggle);
+    if (wrap) wrap.classList.toggle("sidebar-collapsed", !!collapsed[btn.dataset.sidebarToggle]);
+  });
+}
+document.querySelectorAll("[data-sidebar-toggle]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const wrapId = btn.dataset.sidebarToggle;
+    const wrap = document.getElementById(wrapId);
+    if (!wrap) return;
+    const isCollapsed = wrap.classList.toggle("sidebar-collapsed");
+    const collapsed = loadSidebarCollapseState();
+    collapsed[wrapId] = isCollapsed;
+    localStorage.setItem(SIDEBAR_COLLAPSE_KEY, JSON.stringify(collapsed));
+  });
+});
+applySidebarCollapseState();
+
+// Compact "at a glance" standings widget for the Games/Leaderboard sidebars — rank + avatar +
+// name + record + Two-Way/20, sorted by Two-Way/20 same as the Leaderboard's own default sort.
+// Reuses computeLeaderboard() directly rather than a separate query, so it can never drift from
+// the main table's own numbers.
+function renderStandingsSidebar(containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const rows = computeLeaderboard().filter(r => r.gp > 0).sort((a, b) => b.twoWayPer20 - a.twoWayPer20);
+  if (rows.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games with players yet.</p>';
+    return;
+  }
+  wrap.innerHTML = `
+    <table class="standings-mini-table">
+      <thead><tr><th>#</th><th>Player</th><th>W-L</th><th>Two-Way/20</th></tr></thead>
+      <tbody>
+        ${rows.map((r, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td class="standings-mini-name"><button type="button" class="icon-btn standings-mini-player-btn" data-player-id="${r.player.id}">${renderPlayerAvatar(r.player)}${escapeHtml(r.player.name)}</button></td>
+            <td>${r.wins}-${r.losses}${r.ties ? `-${r.ties}` : ""}</td>
+            <td class="num-cell">${r.twoWayPer20.toFixed(1)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+  wrap.querySelectorAll(".standings-mini-player-btn").forEach(btn => {
+    btn.addEventListener("click", () => openPlayerDetail(btn.dataset.playerId));
+  });
+}
+
 function showTab(tab) {
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -383,13 +443,28 @@ function renderPlayersRoleFilter() {
   });
 }
 
-// A small colored circle with a player's first initial, wherever their name shows up as a list
-// item (roster, Leaderboard, Player Detail header) — purely decorative, no new data. Color is
-// deterministic from the player's id (a simple string hash into a hue), not tied to role/build/
-// effort tag colors elsewhere, so it never implies a second meaning on top of an actual stat —
-// same player always gets the same color, different players usually land on visibly different
-// ones, that's the whole job. `size` lets the Player Detail header use a bigger version of the
-// same thing instead of a separate component.
+// Real photos Ben supplied (poolean-player-photos.zip), one file per player id — filenames match
+// this app's own player ids exactly (the zip's own players.json confirms this is deliberate, not
+// a coincidence), living in the `photos/` folder alongside index.html. A player missing here just
+// falls back to the colored-initial circle below, same as anyone missing from
+// PLAYER_PHYSICAL_DATA falls back to no tags — a photo is a nice-to-have, never required.
+const PLAYER_PHOTO_FILES = {
+  adam: "adam.jpg", alex: "alex.png", ben: "ben.png", evan: "evan.jpg",
+  "g-danny": "g-danny.jpg", "g-ian": "g-ian.jpg", "g-lukas": "g-lukas.jpg",
+  "g-michael-k": "g-michael-k.jpg", "g-michael-t": "g-michael-t.jpg",
+  jason: "jason.jpg", kayla: "kayla.jpg", "logan-hoskins": "logan-hoskins.jpg",
+  "logan-watson": "logan-watson.jpg", michael: "michael.png", phillip: "phillip.jpg",
+  reilly: "reilly.jpg", ryder: "ryder.png", sean: "sean.jpg", viraj: "viraj.png",
+  will: "will.png", zach: "zach.jpg"
+};
+
+// A small circle wherever a player's name shows up as a list item (roster, Leaderboard, Player
+// Detail header) — a real photo when one exists (PLAYER_PHOTO_FILES), otherwise the player's
+// first initial on a color deterministic from their id (a simple string hash into a hue), not
+// tied to role/build/effort tag colors elsewhere so it never implies a second meaning on top of
+// an actual stat — same player always gets the same color, different players usually land on
+// visibly different ones, that's the whole job. `size` lets the Player Detail header use a bigger
+// version of the same thing instead of a separate component.
 function avatarHueForPlayer(id) {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
@@ -397,6 +472,10 @@ function avatarHueForPlayer(id) {
 }
 function renderPlayerAvatar(player, size = "normal") {
   if (!player) return "";
+  const photoFile = PLAYER_PHOTO_FILES[player.id];
+  if (photoFile) {
+    return `<img src="photos/${photoFile}" alt="" class="player-avatar player-avatar-${size}">`;
+  }
   const initial = (player.name.trim().charAt(0) || "?").toUpperCase();
   const hue = avatarHueForPlayer(player.id);
   return `<span class="player-avatar player-avatar-${size}" style="background:hsl(${hue}, 55%, 42%)">${escapeHtml(initial)}</span>`;
@@ -813,6 +892,7 @@ function renderGames() {
   // date, so the recent-RSVP list's Pending/Everyone showed/missed status needs to stay in sync
   // with whatever renderGames() itself is reacting to.
   renderRsvpRecentList();
+  renderStandingsSidebar("gamesSidebarStandings");
   const list = document.getElementById("gamesList");
   list.innerHTML = "";
   if (state.games.length === 0) {
@@ -4382,12 +4462,34 @@ function renderPowerRankingVsPerformance() {
 // chart and every other view in the app, not a color that happens to depend on sort order or
 // who else is in the room. Replaced an earlier index-cycling categorical palette (Okabe-Ito)
 // that gave the same player a different color on every render depending on array order.
-function svgAvatarDot(player, cx, cy, r = 9) {
-  const initial = (player.name.trim().charAt(0) || "?").toUpperCase();
+// `label` overrides the default photo/initial with something else (e.g. a rank number for the
+// Two-Way/20 Rank Over the Season chart below) — same dot, same color, a number takes priority
+// over a photo there since the number is the actual information that chart needs at a glance.
+// With no override, a real photo (PLAYER_PHOTO_FILES, same as renderPlayerAvatar()'s HTML
+// version) draws as a circle-clipped SVG <image> when one exists for this player, falling back to
+// the colored-initial circle otherwise. The clip path's id is randomized per call — multiple
+// charts render their own <svg> on the same page simultaneously, and DOM ids must stay unique
+// across the whole document, not just within one <svg>.
+function svgAvatarDot(player, cx, cy, r = 9, label = null) {
   const hue = avatarHueForPlayer(player.id);
+  const photoFile = label === null ? PLAYER_PHOTO_FILES[player.id] : null;
+  if (photoFile) {
+    const clipId = `avatarClip-${player.id}-${Math.random().toString(36).slice(2, 8)}`;
+    // The border ring uses its own .quadrant-dot-ring class, not .quadrant-dot — CSS `fill`
+    // beats an SVG presentation attribute in the cascade, so a plain `fill="none"` on a
+    // `.quadrant-dot`-classed circle would still paint solid (that class sets `fill:
+    // var(--accent)`), completely covering the photo underneath. Learned this the hard way: it
+    // rendered as a plain colored dot with the image invisibly stuck behind it.
+    return `
+      <clipPath id="${clipId}"><circle cx="${cx}" cy="${cy}" r="${r}" /></clipPath>
+      <image href="photos/${photoFile}" x="${cx - r}" y="${cy - r}" width="${r * 2}" height="${r * 2}" clip-path="url(#${clipId})" preserveAspectRatio="xMidYMid slice" />
+      <circle cx="${cx}" cy="${cy}" r="${r}" class="quadrant-dot-ring" />
+    `;
+  }
+  const displayLabel = label !== null ? String(label) : (player.name.trim().charAt(0) || "?").toUpperCase();
   return `
     <circle cx="${cx}" cy="${cy}" r="${r}" style="fill:hsl(${hue}, 55%, 42%)" class="quadrant-dot" />
-    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" class="quadrant-dot-initial">${escapeHtml(initial)}</text>
+    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" class="quadrant-dot-initial">${escapeHtml(displayLabel)}</text>
   `;
 }
 
@@ -4441,7 +4543,7 @@ function renderQuadrantChart() {
       <line x1="${zeroX}" y1="${PAD}" x2="${zeroX}" y2="${H - PAD}" class="quadrant-axis" />
       ${dotsSvg}
       <text x="${W - PAD}" y="${H - PAD + 16}" text-anchor="end" class="quadrant-axis-label">Off Rating/20 &#8594;</text>
-      <text x="${PAD - 10}" y="${PAD}" text-anchor="end" class="quadrant-axis-label">&#8593; Def Rating/20</text>
+      <text x="4" y="${PAD - 10}" text-anchor="start" class="quadrant-axis-label">&#8593; Def Rating/20</text>
     </svg>
   `;
 }
@@ -4494,6 +4596,92 @@ function renderVolumeEfficiencyChart() {
       ${dotsSvg}
       <text x="${W - PAD_R}" y="${H - PAD_B + 16}" text-anchor="end" class="quadrant-axis-label">FGA/20 &#8594;</text>
       <text x="${PAD_L - 10}" y="${PAD_T + 4}" text-anchor="end" class="quadrant-axis-label">&#8593; TS%</text>
+    </svg>
+  `;
+}
+
+// Two-Way/20 rank at every checkpoint across the season, one line per player — the "how's my
+// standing actually trended" question the single-snapshot Leaderboard table can't answer on its
+// own. A checkpoint is every date with at least one qualifying game; a player's rank at that
+// checkpoint comes from their *cumulative* Two-Way/20 across every qualifying game up through
+// (and including) that date — not just that date's own games — ranked against everyone else's
+// own cumulative number at the same point in time, so this is a real "if the season had ended
+// here" snapshot repeated at every checkpoint, not a per-night score. Deliberately built on the
+// plain `isQualifyingGame()` gate rather than each player's own `qualifyingGamesForPlayer()` (with
+// Exclude Outlier Games in play) — a per-player outlier exclusion would mean two players could
+// disagree about which dates even exist as checkpoints, which breaks the "everyone ranked at the
+// same moments in time" premise this chart depends on.
+function computeTwoWayRankOverSeason() {
+  const qualifyingGames = state.games.filter(isQualifyingGame);
+  const dates = [...new Set(qualifyingGames.map(g => g.date).filter(Boolean))].sort();
+  const series = {}; // playerId -> [{date, rank, twoWay}], chronological
+  dates.forEach(date => {
+    const gamesSoFar = qualifyingGames.filter(g => g.date <= date);
+    const snapshot = state.players.map(p => {
+      const playerGames = gamesSoFar.filter(g => g.teamA.includes(p.id) || g.teamB.includes(p.id));
+      if (playerGames.length === 0) return null;
+      return { player: p, twoWay: computeRateSummaryForGames(p.id, playerGames).twoWayPer20 };
+    }).filter(Boolean);
+    snapshot.sort((a, b) => b.twoWay - a.twoWay);
+    snapshot.forEach((s, i) => {
+      (series[s.player.id] = series[s.player.id] || []).push({ date, rank: i + 1, twoWay: s.twoWay });
+    });
+  });
+  return { dates, series };
+}
+
+function renderTwoWayRankChart() {
+  const wrap = document.getElementById("twoWayRankChart");
+  if (!wrap) return;
+  const { dates, series } = computeTwoWayRankOverSeason();
+  const playerIds = Object.keys(series);
+  if (dates.length === 0 || playerIds.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games logged yet.</p>';
+    return;
+  }
+  const W = 680, H = 360, PAD_L = 32, PAD_R = 96, PAD_T = 16, PAD_B = 34;
+  const plotW = W - PAD_L - PAD_R, plotH = H - PAD_T - PAD_B;
+  const maxRank = Math.max(1, ...playerIds.flatMap(pid => series[pid].map(p => p.rank)));
+  const xScale = i => dates.length === 1 ? PAD_L + plotW / 2 : PAD_L + (i / (dates.length - 1)) * plotW;
+  // Rank 1 at the top — a "climbing" line reads as improving, matching how a real standings
+  // table already reads (1st at the top), not an arbitrary choice of which way is "up."
+  const yScale = rank => PAD_T + ((rank - 1) / Math.max(1, maxRank - 1)) * plotH;
+  const dateIndex = {};
+  dates.forEach((d, i) => dateIndex[d] = i);
+
+  const linesSvg = playerIds.map(pid => {
+    const player = state.players.find(p => p.id === pid);
+    if (!player) return "";
+    const points = series[pid];
+    const hue = avatarHueForPlayer(pid);
+    const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${xScale(dateIndex[p.date])},${yScale(p.rank)}`).join(" ");
+    const dotsSvg = points.map(p => `
+      <g>
+        <title>${escapeHtml(player.name)}: #${p.rank} as of ${escapeHtml(formatDateDisplay(p.date))} (${p.twoWay.toFixed(1)} Two-Way/20)</title>
+        ${svgAvatarDot(player, xScale(dateIndex[p.date]), yScale(p.rank), 8, p.rank)}
+      </g>
+    `).join("");
+    const last = points[points.length - 1];
+    const labelSvg = `<text x="${xScale(dateIndex[last.date]) + 12}" y="${yScale(last.rank)}" dominant-baseline="central" class="rank-line-label" style="fill:hsl(${hue}, 55%, 42%)">${escapeHtml(player.name)}</text>`;
+    return `<path d="${pathD}" style="stroke:hsl(${hue}, 55%, 42%)" class="rank-line-path" />${dotsSvg}${labelSvg}`;
+  }).join("");
+
+  const labelEvery = Math.max(1, Math.ceil(dates.length / 6));
+  const xLabelsSvg = dates.map((d, i) => (i % labelEvery !== 0 && i !== dates.length - 1) ? "" : `
+    <text x="${xScale(i)}" y="${H - PAD_B + 16}" text-anchor="middle" class="quadrant-axis-label">${escapeHtml(formatDateDisplay(d))}</text>
+  `).join("");
+  const yTicksSvg = Array.from({ length: maxRank }, (_, i) => i + 1).map(r =>
+    `<text x="${PAD_L - 8}" y="${yScale(r) + 3}" text-anchor="end" class="quadrant-axis-label">${r}</text>`
+  ).join("");
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" class="quadrant-svg">
+      <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${H - PAD_B}" class="quadrant-axis" />
+      <line x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" class="quadrant-axis" />
+      ${yTicksSvg}
+      ${linesSvg}
+      ${xLabelsSvg}
+      <text x="${PAD_L - 10}" y="${PAD_T - 4}" text-anchor="end" class="quadrant-axis-label">Rank</text>
     </svg>
   `;
 }
@@ -5743,6 +5931,7 @@ function renderLeaderboard() {
   updateImbalancedGamesBtnLabel();
   updatePastSeasonsBtnLabel();
   updateOutlierGamesBtnLabel();
+  renderStandingsSidebar("leaderboardSidebarStandings");
   renderLeaderboardHeader();
   renderLeagueSeasonStandings();
   renderConsistencyStandings();
@@ -5750,6 +5939,7 @@ function renderLeaderboard() {
   renderPowerRankingVsPerformance();
   renderQuadrantChart();
   renderVolumeEfficiencyChart();
+  renderTwoWayRankChart();
   renderLeagueHeatmap();
   renderShotZonePanel();
   renderLeagueTsByZoneChart();
@@ -5786,11 +5976,19 @@ function renderLeaderboard() {
   // "last5" is excluded too — its own display is a trend arrow, not a plain number, same
   // reasoning Player Comparison uses to skip it.
   const columnBest = {};
+  const columnWorst = {};
   cols.forEach(col => {
     if (col.key === "player" || col.key === "last5" || COMPARISON_NEUTRAL_KEYS.has(col.key)) return;
     const values = rows.map(r => col.accessor(r)).filter(v => typeof v === "number" && !Number.isNaN(v));
     if (values.length === 0) return;
-    columnBest[col.key] = COMPARISON_LOWER_IS_BETTER_KEYS.has(col.key) ? Math.min(...values) : Math.max(...values);
+    const lowerBetter = COMPARISON_LOWER_IS_BETTER_KEYS.has(col.key);
+    const best = lowerBetter ? Math.min(...values) : Math.max(...values);
+    const worst = lowerBetter ? Math.max(...values) : Math.min(...values);
+    columnBest[col.key] = best;
+    // Only mark a worst when it's actually distinct from the best — with every value tied (or
+    // just one row), the same cell being both "leader" and "last place" would be confusing
+    // rather than informative.
+    if (worst !== best) columnWorst[col.key] = worst;
   });
 
   rows.forEach(r => {
@@ -5813,6 +6011,9 @@ function renderLeaderboard() {
         if (columnBest[col.key] !== undefined && value === columnBest[col.key]) {
           td.classList.add("leaderboard-leader-cell");
           td.title = "Season leader in this column";
+        } else if (columnWorst[col.key] !== undefined && value === columnWorst[col.key]) {
+          td.classList.add("leaderboard-worst-cell");
+          td.title = "Season worst in this column";
         }
       }
       tr.appendChild(td);

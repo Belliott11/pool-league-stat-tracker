@@ -57,6 +57,8 @@
 
   <!-- GAMES -->
   <section id="tab-games" class="tab-panel active">
+  <div class="tab-body-with-sidebar" id="gamesSidebarWrap">
+  <div class="tab-main">
     <div class="panel">
       <h2>Who's Coming?</h2>
       <p class="hint">Pick a date and mark who said they're showing up — this doesn't create a game or affect stats by itself, it's just a plan to check actual attendance against later. Once at least one game is logged for that date, whoever RSVP'd but never ended up rostered on any game that day counts toward their <strong>Flake %</strong> on their own Player Detail page. Saving again for a date already RSVP'd overwrites that entry rather than adding a second one.</p>
@@ -148,6 +150,15 @@
     </div>
 
     <div id="gamesList" class="games-list"></div>
+  </div>
+  <aside class="tab-sidebar">
+    <button type="button" class="icon-btn sidebar-toggle-btn" data-sidebar-toggle="gamesSidebarWrap" title="Collapse/expand sidebar">☰</button>
+    <div class="tab-sidebar-inner panel">
+      <h4>Standings</h4>
+      <div id="gamesSidebarStandings"></div>
+    </div>
+  </aside>
+  </div>
   </section>
 
   <!-- STAT ENTRY -->
@@ -292,6 +303,8 @@
 
   <!-- LEADERBOARD -->
   <section id="tab-leaderboard" class="tab-panel">
+  <div class="tab-body-with-sidebar" id="leaderboardSidebarWrap">
+  <div class="tab-main">
     <!-- Overview -->
     <div class="panel">
       <h2>Season Rates (Individual)</h2>
@@ -363,17 +376,28 @@
     </div>
 
     <!-- Comparison Scatters (not to be confused with the Player Comparison panel above, a
-         side-by-side stat table for two named players — these are whole-roster scatter plots) -->
-    <div class="panel">
-      <h2>Two-Way Quadrant</h2>
-      <p class="hint">Off Rating/20 (offense) vs. Def Rating/20 for every player who's played, plotted separately instead of pre-summed into Two-Way Score — so "who's good" splits into "good at what." Quadrant lines are drawn at zero on each axis.</p>
-      <div id="quadrantChart"></div>
+         side-by-side stat table for two named players — these are whole-roster scatter plots).
+         The two square-ish charts sit side by side (.panel-row) instead of each eating a full
+         row's width for a ~340px chart — the wider Rank Over the Season line chart below stays
+         its own full-width panel, since it actually uses that width. -->
+    <div class="panel-row">
+      <div class="panel">
+        <h2>Two-Way Quadrant</h2>
+        <p class="hint">Off Rating/20 (offense) vs. Def Rating/20 for every player who's played, plotted separately instead of pre-summed into Two-Way Score — so "who's good" splits into "good at what." Quadrant lines are drawn at zero on each axis.</p>
+        <div id="quadrantChart"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Volume vs. Efficiency</h2>
+        <p class="hint">Offense only, separate from the Two-Way Quadrant above — pure shot volume (FGA/20) on the x-axis against season TS% on the y-axis, so a high-volume/low-efficiency player and a low-volume/high-efficiency player show up as mirror opposites directly, instead of needing someone to cross-reference the FGA and TS% columns on the main table by hand.</p>
+        <div id="volumeEfficiencyChart"></div>
+      </div>
     </div>
 
     <div class="panel">
-      <h2>Volume vs. Efficiency</h2>
-      <p class="hint">Offense only, separate from the Two-Way Quadrant above — pure shot volume (FGA/20) on the x-axis against season TS% on the y-axis, so a high-volume/low-efficiency player and a low-volume/high-efficiency player show up as mirror opposites directly, instead of needing someone to cross-reference the FGA and TS% columns on the main table by hand.</p>
-      <div id="volumeEfficiencyChart"></div>
+      <h2>Two-Way/20 Rank Over the Season</h2>
+      <p class="hint">One line per player, tracking where they'd rank if the season had ended at each date shown — a checkpoint exists for every date with at least one qualifying game, and a player's rank there comes from their <em>cumulative</em> Two-Way/20 across every qualifying game up through that date (not just that date's own games), ranked against everyone else's own cumulative number at that same moment. Rank 1 is at the top, so a climbing line means genuinely improving standing, not just a good single night. Each point is the same colored avatar used everywhere else in the app, with that checkpoint's rank number inside it instead of an initial. Built on the same games <strong>Include Imbalanced Games</strong>/<strong>Include Past Seasons</strong> already gate — deliberately not on <strong>Include Outlier Games</strong>, since a per-player outlier exclusion would mean two players could disagree about which dates even count as checkpoints.</p>
+      <div id="twoWayRankChart"></div>
     </div>
 
     <!-- Shot Location & Efficiency -->
@@ -400,10 +424,18 @@
       </div>
     </div>
 
-    <div class="panel">
-      <h2>TS% by Shot Distance</h2>
-      <p class="hint">True Shooting %, league-wide, for each of the four Shot Distance bands — the same numbers as the Shot Distance table above, laid out so "shooting gets worse with distance" (or wherever it actually breaks down) lands in one glance instead of a table someone has to compare in their head. Free throws have no shot location, so this excludes them (unlike the over-time chart above) — each bar is just that zone's own points-per-attempt. Only field goals with a marked shot location count.</p>
-      <div id="leagueTsByZoneChart"></div>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>TS% by Shot Distance</h2>
+        <p class="hint">True Shooting %, league-wide, for each of the four Shot Distance bands — the same numbers as the Shot Distance table above, laid out so "shooting gets worse with distance" (or wherever it actually breaks down) lands in one glance instead of a table someone has to compare in their head. Free throws have no shot location, so this excludes them (unlike <strong>League TS% Over Time</strong>) — each bar is just that zone's own points-per-attempt. Only field goals with a marked shot location count.</p>
+        <div id="leagueTsByZoneChart"></div>
+      </div>
+
+      <div class="panel">
+        <h2>League TS% Over Time</h2>
+        <p class="hint">True Shooting % pooled across every player, per date with a reviewed game — a single league-wide efficiency line, useful for spotting drift over the season or checking the effect of a future rule change. Not a player-comparison stat.</p>
+        <div id="leagueTsChart"></div>
+      </div>
     </div>
 
     <div class="panel">
@@ -415,12 +447,6 @@
           <tbody id="wideOpenBody"></tbody>
         </table>
       </div>
-    </div>
-
-    <div class="panel">
-      <h2>League TS% Over Time</h2>
-      <p class="hint">True Shooting % pooled across every player, per date with a reviewed game — a single league-wide efficiency line, useful for spotting drift over the season or checking the effect of a future rule change. Not a player-comparison stat.</p>
-      <div id="leagueTsChart"></div>
     </div>
 
     <!-- Matchups & Chemistry -->
@@ -483,25 +509,27 @@
       </div>
     </div>
 
-    <div class="panel">
-      <h2>Game-Winning Buckets</h2>
-      <p class="hint">How many times a player's shot was the one that actually closed out a game their team won — the real game-ending basket in a race-to-a-target format. Worth being precise about what this is: in a race-to-target format with no clock, the last basket of every decided game is *by definition* scored by the winning team — so this isn't tracking rare, buzzer-beater moments, it's a "who tends to be the one closing games out" tally that grows by exactly one per fully-timestamped decided game. That's exactly why the Clutch comparison above is built on Close-Game Shooting (below) instead of this — still a real signal here (it correlates with who's on the floor and scoring late in wins), just not a scarce one. Only credited when that specific shot has a real video timestamp; without one, there's no trustworthy way to say it was really the last shot of the game, so the game is skipped rather than guessed at. A season count, not a rate.</p>
-      <div class="table-scroll">
-        <table class="matchup-table" id="gameWinningBucketsTable">
-          <thead><tr><th>Player</th><th>Game-Winning Buckets</th></tr></thead>
-          <tbody id="gameWinningBucketsBody"></tbody>
-        </table>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>Game-Winning Buckets</h2>
+        <p class="hint">How many times a player's shot was the one that actually closed out a game their team won — the real game-ending basket in a race-to-a-target format. Worth being precise about what this is: in a race-to-target format with no clock, the last basket of every decided game is *by definition* scored by the winning team — so this isn't tracking rare, buzzer-beater moments, it's a "who tends to be the one closing games out" tally that grows by exactly one per fully-timestamped decided game. That's exactly why the Clutch comparison above is built on <strong>Close-Game Shooting</strong> instead of this — still a real signal here (it correlates with who's on the floor and scoring late in wins), just not a scarce one. Only credited when that specific shot has a real video timestamp; without one, there's no trustworthy way to say it was really the last shot of the game, so the game is skipped rather than guessed at. A season count, not a rate.</p>
+        <div class="table-scroll">
+          <table class="matchup-table" id="gameWinningBucketsTable">
+            <thead><tr><th>Player</th><th>Game-Winning Buckets</th></tr></thead>
+            <tbody id="gameWinningBucketsBody"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <div class="panel">
-      <h2>Close-Game Shooting</h2>
-      <p class="hint">This is the tracked stat behind the Clutch comparison above — a margin-aware read, not Game-Winning Buckets below, since GWB is explicitly non-scarce by construction (the last basket of every decided game belongs to the winning team, full stop) and measures "who tends to close games out," not performance under real pressure. This instead is TS%, but only counting attempts from games that actually finished close: decided by 5 points or fewer (`CLUTCH_MARGIN_THRESHOLD` in <code>app.js</code>, a starting guess, not a value backed by real season margin data yet). Tied games count here even though a tie has no "winning shot" for GWB to credit. Click any column header to sort.</p>
-      <div class="table-scroll">
-        <table class="matchup-table" id="closeGameShootingTable">
-          <thead><tr id="closeGameShootingHeaderRow"></tr></thead>
-          <tbody id="closeGameShootingBody"></tbody>
-        </table>
+      <div class="panel">
+        <h2>Close-Game Shooting</h2>
+        <p class="hint">This is the tracked stat behind the Clutch comparison above — a margin-aware read, not <strong>Game-Winning Buckets</strong>, since GWB is explicitly non-scarce by construction (the last basket of every decided game belongs to the winning team, full stop) and measures "who tends to close games out," not performance under real pressure. This instead is TS%, but only counting attempts from games that actually finished close: decided by 5 points or fewer (`CLUTCH_MARGIN_THRESHOLD` in <code>app.js</code>, a starting guess, not a value backed by real season margin data yet). Tied games count here even though a tie has no "winning shot" for GWB to credit. Click any column header to sort.</p>
+        <div class="table-scroll">
+          <table class="matchup-table" id="closeGameShootingTable">
+            <thead><tr id="closeGameShootingHeaderRow"></tr></thead>
+            <tbody id="closeGameShootingBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -530,6 +558,15 @@
         <video id="leagueExportVideo" class="league-export-preview" muted playsinline></video>
       </div>
     </div>
+  </div>
+  <aside class="tab-sidebar">
+    <button type="button" class="icon-btn sidebar-toggle-btn" data-sidebar-toggle="leaderboardSidebarWrap" title="Collapse/expand sidebar">☰</button>
+    <div class="tab-sidebar-inner panel">
+      <h4>Standings</h4>
+      <div id="leaderboardSidebarStandings"></div>
+    </div>
+  </aside>
+  </div>
   </section>
 
   <!-- PLAYER DETAIL -->
