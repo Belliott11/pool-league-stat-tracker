@@ -995,10 +995,14 @@ qualities — players who set this player up more often count for more, same ide
 mean anywhere else.
 
 All four panels share `renderTrendLineChart(containerId, points, seasonAvg, unitLabel)` — a
-generalized version of the hand-written SVG line chart `renderTwoWayTrendChart()` already used
+generalized version of the hand-written SVG line chart `renderTwoWayTrendChart()` originally used
 (same per-game-points-plus-dashed-season-average shape, parameterized instead of hardwired to
-Two-Way/20). `renderTwoWayTrendChart()` itself was left untouched rather than rewritten on top of
-the new shared function, so the existing chart wasn't put at risk for a cosmetic dedupe.
+Two-Way/20). `renderTwoWayTrendChart()` was initially left as its own separate copy when this was
+built, so the existing chart wasn't put at risk for a cosmetic dedupe — later merged into a thin
+two-line wrapper over `renderTrendLineChart()` once the shared version had proven itself in three
+other panels: `computeTwoWayTrend()`'s points now use the generic `{date, value}` shape (`value`,
+not `twoWay`) to match what `renderTrendLineChart()` expects, and `computeConsistencyStandings()`
+(the one other reader of `computeTwoWayTrend()`'s points) was updated to match.
 
 **Teammate Context on the Leaderboard is the same four panels' season averages, league-wide,
 also purely computed.** `computeTeammateContext()` (`app.js`, near `renderTeammateLiftMatrix()`)

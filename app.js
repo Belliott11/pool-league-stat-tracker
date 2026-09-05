@@ -3839,7 +3839,7 @@ function computeLeaderboard() {
 function computeConsistencyStandings() {
   const board = computeLeaderboard().filter(r => r.gp >= 2);
   return board.map(r => {
-    const values = computeTwoWayTrend(r.player.id).points.map(p => p.twoWay);
+    const values = computeTwoWayTrend(r.player.id).points.map(p => p.value);
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
     const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
     return { player: r.player, gp: r.gp, twoWayPer20: r.twoWayPer20, stdDev: Math.sqrt(variance) };
@@ -5298,62 +5298,20 @@ function renderTeammateSynergy(playerId) {
 function computeTwoWayTrend(playerId) {
   const qualifyingGames = qualifyingGamesForPlayer(playerId);
   const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-  const points = sorted.map(g => ({ date: g.date, twoWay: computeRateSummaryForGames(playerId, [g]).twoWayPer20 }));
+  const points = sorted.map(g => ({ date: g.date, value: computeRateSummaryForGames(playerId, [g]).twoWayPer20 }));
   const seasonAvg = computeRateSummaryForGames(playerId, qualifyingGames).twoWayPer20;
   return { points, seasonAvg };
 }
 
 function renderTwoWayTrendChart(playerId) {
-  const wrap = document.getElementById("playerTwoWayTrend");
-  if (!wrap) return;
   const { points, seasonAvg } = computeTwoWayTrend(playerId);
-  if (points.length === 0) {
-    wrap.innerHTML = '<p class="empty-state">No games logged yet.</p>';
-    return;
-  }
-  const W = 560, H = 220, PAD_L = 40, PAD_R = 16, PAD_T = 16, PAD_B = 34;
-  const plotW = W - PAD_L - PAD_R, plotH = H - PAD_T - PAD_B;
-  const values = [...points.map(p => p.twoWay), seasonAvg];
-  const rawMin = Math.min(...values), rawMax = Math.max(...values);
-  const span = Math.max(1, rawMax - rawMin);
-  const yMin = rawMin - span * 0.15;
-  const yMax = rawMax + span * 0.15;
-  const xScale = i => points.length === 1 ? PAD_L + plotW / 2 : PAD_L + (i / (points.length - 1)) * plotW;
-  const yScale = v => PAD_T + plotH - ((v - yMin) / (yMax - yMin || 1)) * plotH;
-
-  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${xScale(i)},${yScale(p.twoWay)}`).join(" ");
-  const dotsSvg = points.map((p, i) => `
-    <circle cx="${xScale(i)}" cy="${yScale(p.twoWay)}" r="3.5" class="ts-line-dot">
-      <title>${escapeHtml(formatDateDisplay(p.date))}: ${p.twoWay.toFixed(1)} Two-Way/20</title>
-    </circle>
-  `).join("");
-  const labelEvery = Math.max(1, Math.ceil(points.length / 6));
-  const xLabelsSvg = points.map((p, i) => (i % labelEvery !== 0 && i !== points.length - 1) ? "" : `
-    <text x="${xScale(i)}" y="${H - PAD_B + 16}" text-anchor="middle" class="ts-line-axis-label">${escapeHtml(formatDateDisplay(p.date))}</text>
-  `).join("");
-  const seasonY = yScale(seasonAvg);
-
-  wrap.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" class="ts-line-svg">
-      <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${H - PAD_B}" class="ts-line-axis" />
-      <line x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" class="ts-line-axis" />
-      <line x1="${PAD_L}" y1="${seasonY}" x2="${W - PAD_R}" y2="${seasonY}" class="ts-line-ref">
-        <title>Season average: ${seasonAvg.toFixed(1)} Two-Way/20</title>
-      </line>
-      <text x="${W - PAD_R}" y="${seasonY - 4}" text-anchor="end" class="ts-line-axis-label">season avg ${seasonAvg.toFixed(1)}</text>
-      <path d="${pathD}" class="ts-line-path" />
-      ${dotsSvg}
-      ${xLabelsSvg}
-    </svg>
-  `;
+  renderTrendLineChart("playerTwoWayTrend", points, seasonAvg, "Two-Way/20");
 }
 
-// Generic version of the SVG line-chart renderTwoWayTrendChart() draws above — same shape
-// (per-game points + a dashed season-average reference line), just parameterized over a
-// {date, value} point list and a unit label instead of being hardwired to Two-Way/20. Written
-// once Teammate Quality and Defensive Matchup Difficulty below needed the identical chart a
-// third time; renderTwoWayTrendChart() itself is left as its own hand-written copy rather than
-// rewritten on top of this, so the existing chart isn't put at risk for a cosmetic dedupe.
+// Generic SVG line-chart renderer — per-game points plus a dashed season-average reference
+// line, parameterized over a {date, value} point list and a unit label rather than hardwired to
+// one stat. renderTwoWayTrendChart() (above) is now just a thin wrapper over this; Teammate
+// Quality and both Matchup Difficulty charts below use it directly.
 function renderTrendLineChart(containerId, points, seasonAvg, unitLabel) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
