@@ -940,7 +940,21 @@ but a data table's "wants full width or not" isn't always obvious from column co
 actually looking at it squeezed before committing. Season Rates (Individual, the giant leaderboard
 table), Head-to-Head Matchup Grid, and Teammate Lift Matrix (both NxN grids that grow with roster
 size) were the other full-width holdouts — a `.panel-row` pairing only helps when both panels are
-already narrow enough that halving their width doesn't hurt them.
+already narrow enough that halving their width doesn't hurt them. **`align-items: stretch` is set
+explicitly on `.panel-row`** (it's flexbox's own default, but written out so it isn't accidentally
+lost to a future change) — this equalizes the two `.panel` boxes' rendered height to match
+whichever one is naturally taller, so a row's borders always line up evenly instead of the shorter
+panel's box visibly ending higher than its partner's. It does NOT make the two panels' actual
+*content* the same length — a table with fewer rows, or a chart with a narrower aspect ratio, just
+leaves blank panel background below its own content, up to the stretched height. That's most
+visible on the League Shot Heatmap + Two-Way/20 Rank Over the Season pairing: the heatmap's own
+chart (`.shot-chart`) is a **fixed** 140×280px regardless of panel width (see the shot-chart-wrap
+comment in `style.css`), while the rank chart's `<svg class="quadrant-svg">` scales proportionally
+with the panel's own width — two genuinely different sizing strategies that don't naturally
+converge on the same content height just because their boxes now do. Fixing that for real would
+mean either giving the heatmap a responsive size (used in three places — Player Heatmap and
+Defensive Heatmap too, so a bigger change than it looks) or distorting the rank chart's aspect
+ratio until it stops being legible. Left as a known, acceptable mismatch rather than forcing either.
 
 **Assist Connections on the Leaderboard is trimmed, not the full list — but to a row count that
 tracks its `.panel-row` partner, Teammate Context, rather than a fixed number.**
@@ -1286,27 +1300,49 @@ default; each panel remembers its own open/closed state only via the browser's n
 behavior for that render (no persistence across reload — a deliberate simplicity choice, not an
 oversight, since which panels someone wants expanded is a very session-specific thing).
 
-## Games/Leaderboard standings sidebar
+## Games/Leaderboard sidebar
 
 **Both `#tab-games` and `#tab-leaderboard` wrap their entire existing panel stack (unchanged) in
 a `.tab-body-with-sidebar` two-column grid — a `.tab-main` div holding every original panel, plus
-a sibling `<aside class="tab-sidebar">` with a collapse-toggle button and a `Standings` widget.**
-Purely an HTML wrapper added around already-existing content — no panel inside `.tab-main` moved
-or changed. `renderStandingsSidebar(containerId)` (`app.js`, right after the sidebar-collapse
-wiring) is one shared function serving both sidebars (`#gamesSidebarStandings`/
-`#leaderboardSidebarStandings`): rank + `renderPlayerAvatar()` + name (a button —
-`openPlayerDetail()` on click) + W-L(-T) + Two-Way/20, straight off `computeLeaderboard()` sorted
-descending by `twoWayPer20` — same numbers and sort as the main table's own default, so it can
-never drift out of sync. Called from `renderGames()` (so it refreshes on every game create/edit/
-delete) and from `renderLeaderboard()` (so it also respects Include Imbalanced Games/Include Past
-Seasons/Include Outlier Games, since those change `computeLeaderboard()`'s own output). **Collapse
-state persists per sidebar**, keyed by the wrapper's own DOM id, in one JSON object at
+a sibling `<aside class="tab-sidebar">` with a collapse-toggle button and a widget.** Purely an
+HTML wrapper added around already-existing content — no panel inside `.tab-main` moved or changed.
+**Collapse state persists per sidebar**, keyed by the wrapper's own DOM id, in one JSON object at
 `localStorage["poolLeagueSidebarCollapsed"]` (`{wrapId: boolean}`) — `applySidebarCollapseState()`
 runs once at load and re-applies on every toggle click; the toggle button
 (`.sidebar-toggle-btn[data-sidebar-toggle="<wrapId>"]`) stays visible whether collapsed or not, so
 collapsing is never a dead end. Below 900px, `.tab-body-with-sidebar` drops to a single column
 (the sidebar stacks below main content instead of beside it) via a plain media query — no JS
 involved in that part.
+
+**The two sidebars show different things, deliberately.** They both started out identical (a
+compact standings widget), until it was pointed out that on the Leaderboard tab specifically,
+showing standings right next to the full Season Rates table sitting in `.tab-main` is pure
+duplication — every number in the sidebar is already visible one glance to the left. Games' own
+sidebar doesn't have that problem (Games doesn't show a season standings table anywhere else), so
+it kept the original widget while Leaderboard's got replaced:
+
+- **Games** (`#gamesSidebarStandings`) — `renderStandingsSidebar(containerId)` (`app.js`, right
+  after the sidebar-collapse wiring): rank + `renderPlayerAvatar()` + name (a button —
+  `openPlayerDetail()` on click) + W-L(-T) + Two-Way/20, straight off `computeLeaderboard()` sorted
+  descending by `twoWayPer20`, same numbers and sort as the main Leaderboard table's own default.
+  Called from `renderGames()`, so it refreshes on every game create/edit/delete.
+- **Leaderboard** (`#leaderboardSidebarHighlights`) — `renderLeaderboardHighlights()` (`app.js`,
+  right after `renderStandingsSidebar()`): a short stack of `.sidebar-highlight-card`s, each
+  surfacing a single stat leader that ISN'T obvious from the main table's own default sort —
+  **Hot Streak** (biggest positive gap between last-5-games Two-Way/20 and season Two-Way/20, not
+  just the highest raw Last 5 number — a great player having a normal week shouldn't outrank
+  someone genuinely trending up; needs `last5Gp >= 3` and a real `delta > 0.5` improvement, the
+  same ▲ threshold the Last 5 column itself uses), **Most Consistent** (the Consistency panel's
+  own #1, reusing `computeConsistencyStandings()`), **Clutch** (best TS% in close games from
+  `computeCloseGameShooting()`, gated to `attempts >= 5` so one hot make doesn't read as a real
+  clutch performer), and **Top Assist Duo** (the #1 row of `computeAssistConnections()`). Each card
+  is independently optional — a card just doesn't render if nothing qualifies yet (e.g. no games
+  decided by `CLUTCH_MARGIN_THRESHOLD` points or fewer means no Clutch card), and the whole panel
+  falls back to an empty-state message only if literally none of the four qualify. Called from
+  `renderLeaderboard()`, so it also respects Include Imbalanced Games/Include Past Seasons/Include
+  Outlier Games like everything else on that tab. If you're porting this and want to add a fifth
+  highlight, follow the same shape: compute it, gate it behind a real minimum sample, push a
+  `{icon, label, player, detail}` object onto `cards` only if it qualifies.
 
 ## Theming — matching your site's look
 

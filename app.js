@@ -372,6 +372,73 @@ function renderStandingsSidebar(containerId) {
   });
 }
 
+// Leaderboard sidebar shows "highlights" instead of the standings table Games' sidebar uses —
+// that would just repeat the full Season Rates table sitting right next to it. These cards
+// surface things that aren't obvious from the main table's own default sort: who's actually
+// trending up over their last 5 games (not just who has a high Last 5 number), who's the steadiest
+// night to night, who shoots best specifically in close games, and the league's top assist duo.
+// Each has its own minimum sample size before showing a leader, so an early-season fluke doesn't
+// get top billing just because nobody else qualifies yet.
+function renderLeaderboardHighlights() {
+  const wrap = document.getElementById("leaderboardSidebarHighlights");
+  if (!wrap) return;
+  const board = computeLeaderboard().filter(r => r.gp > 0);
+  const cards = [];
+
+  // Biggest positive Last 5 vs. season Two-Way/20 gap, not just the highest raw Last 5 number —
+  // a great player having a normal week shouldn't outrank someone actually trending up. Needs at
+  // least 3 of their last 5 games logged to count as a real trend, and a real ▲ (same >0.5
+  // threshold the Last 5 column itself uses), not just noise around a flat week.
+  const hotStreak = board
+    .filter(r => r.last5Gp >= 3)
+    .map(r => ({ player: r.player, delta: r.last5TwoWayPer20 - r.twoWayPer20, last5: r.last5TwoWayPer20, season: r.twoWayPer20 }))
+    .filter(r => r.delta > 0.5)
+    .sort((a, b) => b.delta - a.delta)[0];
+  if (hotStreak) {
+    cards.push({ icon: "🔥", label: "Hot Streak", player: hotStreak.player,
+      detail: `${hotStreak.last5.toFixed(1)} Two-Way/20 over their last 5, up from ${hotStreak.season.toFixed(1)} on the season` });
+  }
+
+  // Same ranking as the full Consistency panel, just the #1 surfaced here.
+  const consistent = computeConsistencyStandings()[0];
+  if (consistent) {
+    cards.push({ icon: "🧊", label: "Most Consistent", player: consistent.player,
+      detail: `±${consistent.stdDev.toFixed(1)} Two-Way/20 std dev across ${consistent.gp} games` });
+  }
+
+  // Best TS% in games decided by CLUTCH_MARGIN_THRESHOLD points or fewer — needs at least 5
+  // combined FGA+FTA in those games so one hot make doesn't read as a real clutch performer.
+  const clutch = computeCloseGameShooting().filter(r => r.attempts >= 5).sort((a, b) => b.ts - a.ts)[0];
+  if (clutch) {
+    cards.push({ icon: "🧯", label: "Clutch", player: clutch.player,
+      detail: `${clutch.ts}% TS in ${clutch.gp} close game${clutch.gp === 1 ? "" : "s"} (${clutch.attempts} att)` });
+  }
+
+  // The single most-repeated passer-to-scorer connection, league-wide — same data as the
+  // Assist Connections panel, just its #1 row surfaced here.
+  const topDuo = computeAssistConnections()[0];
+  if (topDuo) {
+    cards.push({ icon: "🤝", label: "Top Assist Duo", player: topDuo.passer,
+      detail: `${topDuo.count} assist${topDuo.count === 1 ? "" : "s"} to ${escapeHtml(topDuo.scorer.name)}` });
+  }
+
+  if (cards.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">Not enough games logged yet for any highlight to qualify.</p>';
+    return;
+  }
+
+  wrap.innerHTML = cards.map(c => `
+    <div class="sidebar-highlight-card">
+      <div class="sidebar-highlight-label">${c.icon} ${escapeHtml(c.label)}</div>
+      <button type="button" class="icon-btn standings-mini-player-btn sidebar-highlight-player" data-player-id="${c.player.id}">${renderPlayerAvatar(c.player)}${escapeHtml(c.player.name)}</button>
+      <div class="sidebar-highlight-detail">${c.detail}</div>
+    </div>
+  `).join("");
+  wrap.querySelectorAll(".sidebar-highlight-player").forEach(btn => {
+    btn.addEventListener("click", () => openPlayerDetail(btn.dataset.playerId));
+  });
+}
+
 function showTab(tab) {
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -5940,7 +6007,7 @@ function renderLeaderboard() {
   updateImbalancedGamesBtnLabel();
   updatePastSeasonsBtnLabel();
   updateOutlierGamesBtnLabel();
-  renderStandingsSidebar("leaderboardSidebarStandings");
+  renderLeaderboardHighlights();
   renderLeaderboardHeader();
   renderLeagueSeasonStandings();
   renderConsistencyStandings();

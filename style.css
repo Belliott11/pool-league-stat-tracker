@@ -195,6 +195,32 @@ main {
 .standings-mini-player-btn:hover { background: none; color: var(--accent); }
 .standings-mini-player-btn .player-avatar { width: 18px; height: 18px; font-size: 0.62rem; }
 
+/* Leaderboard sidebar's "highlight" cards (renderLeaderboardHighlights() in app.js) — one stat
+   leader per card instead of the full standings table Games' sidebar uses, since that would just
+   repeat the Season Rates table sitting right next to it. */
+.sidebar-highlight-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--surface-tint);
+}
+.sidebar-highlight-card + .sidebar-highlight-card { margin-top: 8px; }
+.sidebar-highlight-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.sidebar-highlight-card .standings-mini-player-btn { font-size: 0.85rem; }
+.sidebar-highlight-card .standings-mini-player-btn .player-avatar { width: 20px; height: 20px; font-size: 0.68rem; }
+.sidebar-highlight-detail {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
 .panel {
   background: var(--panel-bg);
   border: 1px solid var(--border);
@@ -211,6 +237,7 @@ main {
 .panel-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
   gap: 20px;
   margin-bottom: 20px;
 }
