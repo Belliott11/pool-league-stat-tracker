@@ -282,16 +282,18 @@ the whole label+switch row together. `toggleAdvancedColsBtn` was converted in a 
 after the other three, for visual consistency — it was the one leftover plain button sitting in
 the same toolbar row as three switches.
 
-**`excludeOutlierGames` (`localStorage["poolLeagueExcludeOutlierGames"]`) is a third toggle, same
-default-off/persisted/button-relabels-itself pattern as the two above (`toggleOutlierGamesBtn`,
-`updateOutlierGamesBtnLabel()`) — but it can't live inside `isQualifyingGame()` itself, since
+**`includeOutlierGames` (`localStorage["poolLeagueIncludeOutlierGames"]`) is a third toggle,
+persisted the same way as the two above (`toggleOutlierGamesBtn`, `updateOutlierGamesBtnLabel()`)
+— but unlike them it defaults **on** (`!== "false"`, not `=== "true"`), since outliers being
+included is the original always-been-true behavior, not an opt-in change; it's phrased to match
+the other two ("Include X") anyway. It also can't live inside `isQualifyingGame()` itself, since
 "outlier" is inherently a per-player question, not a per-game one.** A game that's a wild outlier
 for Player A might be completely ordinary for Player B who shared it — `isQualifyingGame(game)`
 takes no player argument and never will, so this toggle instead reaches into
 `qualifyingGamesForPlayer(playerId)` (`app.js`, right after `isQualifyingGame()`), a new shared
 helper that wraps the same base filter (`isQualifyingGame(g) && (teamA/teamB includes playerId)`)
-every per-player computation used to inline separately, then — only when `excludeOutlierGames` is
-on and the player has `>= OUTLIER_MIN_GAMES` (4) qualifying games — drops whichever of their own
+every per-player computation used to inline separately, then — only when `includeOutlierGames` is
+**off** and the player has `>= OUTLIER_MIN_GAMES` (4) qualifying games — drops whichever of their own
 games fall outside `[Q1 - 1.5×IQR, Q3 + 1.5×IQR]` of their own per-game Two-Way/20 (`quantile()`,
 linear interpolation, computed once against the full base set, not iteratively re-tightened after
 each exclusion). Below 4 games, bounds would be too noisy to mean anything, so nothing is
@@ -308,9 +310,13 @@ Past Seasons panels (which are already documented above as intentionally off the
 entirely) — none of those have one single player to compute an outlier bound against, and
 dropping a whole game from them over one player's outlier would silently remove other players'
 perfectly ordinary data too. One notable interaction worth knowing: `computeConsistencyStandings()`
-reads `computeTwoWayTrend()`'s points, so with this toggle on, Consistency's standard deviation is
-computed *after* each player's own outliers are already set aside — it measures the spread of
-their typical games, not their true variance including the extremes.
+reads `computeTwoWayTrend()`'s points, so with this toggle turned off, Consistency's standard
+deviation is computed *after* each player's own outliers are already set aside — it measures the
+spread of their typical games, not their true variance including the extremes. Originally shipped
+as "Exclude Outlier Games" (off by default, `excludeOutlierGames`/`EXCLUDE_OUTLIER_GAMES_KEY`) and
+renamed to "Include Outlier Games" per direct feedback to match the other two toggles' naming —
+the variable, storage key, and default all flipped along with it (on by default now, since
+"outliers included" was always the pre-existing behavior), not just the label text.
 
 **Export → Data Management → Start New Season** (`app.js`, near `resetDataBtn`) is the only thing
 that writes to these two fields: it `prompt()`s for a label, pushes `{label, startedAt:

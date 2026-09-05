@@ -315,8 +315,9 @@ individual player, not a team.
    exports, Highlights & Lowlights all still show them as real history. **Include Imbalanced
    Games**, next to the advanced-columns toggle above the table, brings them back into every
    rate/award/chart if you'd rather see the old numbers (remembers your choice on reload, same as
-   the advanced-columns toggle). **Exclude Outlier Games**, next to it (off by default), sets
-   aside a player's own statistical outlier games — for anyone with at least 4 qualifying games,
+   the advanced-columns toggle). **Include Outlier Games**, next to it (on by default, matching
+   the original always-been-true behavior), sets aside a player's own statistical outlier games
+   when turned off — for anyone with at least 4 qualifying games,
    any single game whose Two-Way/20 falls outside 1.5x their own IQR (computed fresh from their
    own games each time, not a fixed cutoff) is excluded from their rates, so one absurdly good or
    bad night doesn't dominate a small-sample average. Reaches every per-player computation (this
@@ -737,7 +738,7 @@ individual player, not a team.
      from the source video file — the dashboard only marks *where* the clips are, since it can't
      export video itself.
    - **Leaderboard CSV** — season totals per player (across the exact same games the page itself
-     counts, computed by the same function — respects the Include Imbalanced Games and Exclude
+     counts, computed by the same function — respects the Include Imbalanced Games and Include
      Outlier Games toggles just like the on-screen table does, unlike every other CSV above), including the full
      shot-distance split, plus PTS/20, Off Rating/20, Def Rating/20, and Two-Way/20.
      Not the per-20 rates the Leaderboard page displays for every other counting stat — the CSV

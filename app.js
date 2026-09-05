@@ -48,21 +48,23 @@ function isQualifyingGame(game) {
     && (includePastSeasons || isCurrentSeasonGame(game));
 }
 
-// Off by default, same reversible-choice pattern as the two toggles above — this one can't live
-// inside isQualifyingGame() itself, though, since "outlier" is inherently a per-player question
-// (a wild game for Player A might be a totally normal one for Player B who shared it), not a
-// blanket per-game one. Every per-player stat computation that used to inline its own
-// `state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) ||
-// g.teamB.includes(playerId)))` now goes through qualifyingGamesForPlayer(playerId) below
-// instead, so this toggle reaches computeLeaderboard(), Two-Way Trend, Teammate Synergy/Quality,
-// and both Matchup Difficulty charts — everywhere a player's own rate stats get built game by
-// game. It deliberately does NOT reach panels that pool many players' shots within the same game
-// (League Heatmap, Matchup Grid, Assist Connections, Head-to-Head, Balance Teams' chemistry/
-// win-rate maps, etc.) — those have no single player to compute an outlier bound against, and
-// excluding a whole game from them because it was an outlier for one specific player would
-// silently drop other players' perfectly normal data too.
-const EXCLUDE_OUTLIER_GAMES_KEY = "poolLeagueExcludeOutlierGames";
-let excludeOutlierGames = localStorage.getItem(EXCLUDE_OUTLIER_GAMES_KEY) === "true";
+// On by default (unlike the two toggles above) — outliers being included is the original,
+// always-been-true behavior, so "on" here means "same as before this toggle existed," not an
+// opt-in change. Named/phrased to match the other two anyway ("Include X"): checked = included
+// (normal), unchecked = excluded. This one can't live inside isQualifyingGame() itself, though,
+// since "outlier" is inherently a per-player question (a wild game for Player A might be a
+// totally normal one for Player B who shared it), not a blanket per-game one. Every per-player
+// stat computation that used to inline its own `state.games.filter(g => isQualifyingGame(g) &&
+// (g.teamA.includes(playerId) || g.teamB.includes(playerId)))` now goes through
+// qualifyingGamesForPlayer(playerId) below instead, so this toggle reaches computeLeaderboard(),
+// Two-Way Trend, Teammate Synergy/Quality, and both Matchup Difficulty charts — everywhere a
+// player's own rate stats get built game by game. It deliberately does NOT reach panels that pool
+// many players' shots within the same game (League Heatmap, Matchup Grid, Assist Connections,
+// Head-to-Head, Balance Teams' chemistry/win-rate maps, etc.) — those have no single player to
+// compute an outlier bound against, and excluding a whole game from them because it was an
+// outlier for one specific player would silently drop other players' perfectly normal data too.
+const INCLUDE_OUTLIER_GAMES_KEY = "poolLeagueIncludeOutlierGames";
+let includeOutlierGames = localStorage.getItem(INCLUDE_OUTLIER_GAMES_KEY) !== "false";
 
 // Linear-interpolation quantile (the same method most stats software defaults to for Q1/Q3).
 function quantile(sortedValues, q) {
@@ -86,7 +88,7 @@ const OUTLIER_MIN_GAMES = 4;
 // normal games.
 function qualifyingGamesForPlayer(playerId) {
   const base = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
-  if (!excludeOutlierGames || base.length < OUTLIER_MIN_GAMES) return base;
+  if (includeOutlierGames || base.length < OUTLIER_MIN_GAMES) return base;
   const withTwoWay = base.map(g => ({ game: g, twoWay: computeRateSummaryForGames(playerId, [g]).twoWayPer20 }));
   const sorted = [...withTwoWay.map(x => x.twoWay)].sort((a, b) => a - b);
   const q1 = quantile(sorted, 0.25);
@@ -5648,11 +5650,11 @@ document.getElementById("toggleImbalancedGamesBtn").addEventListener("change", e
 
 function updateOutlierGamesBtnLabel() {
   const input = document.getElementById("toggleOutlierGamesBtn");
-  if (input) input.checked = excludeOutlierGames;
+  if (input) input.checked = includeOutlierGames;
 }
 document.getElementById("toggleOutlierGamesBtn").addEventListener("change", e => {
-  excludeOutlierGames = e.target.checked;
-  localStorage.setItem(EXCLUDE_OUTLIER_GAMES_KEY, String(excludeOutlierGames));
+  includeOutlierGames = e.target.checked;
+  localStorage.setItem(INCLUDE_OUTLIER_GAMES_KEY, String(includeOutlierGames));
   updateOutlierGamesBtnLabel();
   // qualifyingGamesForPlayer() feeds Leaderboard rates and every per-player Player Detail
   // trend/panel that routes through it — same full-rerender pattern as the other two toggles.
