@@ -39,17 +39,23 @@ individual player, not a team.
    Both the **Games** and **Leaderboard** tabs have grown into a long single column of panels, so
    each keeps a sidebar alongside the main content, collapsible via the ☰ button at its top
    (remembers your choice per sidebar on reload — the toggle stays visible either way, so
-   collapsing it is never a dead end). They show different things on purpose: **Games**' sidebar is
-   **Standings** — rank, avatar, W-L, and Two-Way/20 for everyone, sorted the same way the
-   Leaderboard's own default sort does, always visible without switching tabs. **Leaderboard**'s
-   sidebar is **Highlights** instead — showing the same standings there would just repeat the full
-   table sitting right next to it, so it surfaces four things that aren't obvious from that table's
-   default sort: 🔥 **Hot Streak** (whoever's improved the most over their last 5 games vs. their
-   season number, not just whoever's last-5 number happens to be highest), 🧊 **Most Consistent**
-   (the Consistency panel's #1), 🧯 **Clutch** (best shooting specifically in close games), and 🤝
-   **Top Assist Duo** (the single most-repeated passer-to-scorer connection). A card only shows up
+   collapsing it is never a dead end). If the sidebar's own content is taller than your window, it
+   scrolls independently — the same thin scrollbar used elsewhere in this tool — so nothing in it
+   is ever stuck below the fold with no way to reach it.
+
+   They show different things on purpose. **Games**' sidebar has two cards: **Standings** — rank,
+   avatar, W-L, and Two-Way/20 for everyone, sorted the same way the Leaderboard's own default sort
+   does — and below it, **Recent Games** — the last 5 games, most recent first, showing the final
+   score or "Not reviewed" for one that's rostered but doesn't have its shots logged yet. Click
+   either a name or a game to jump straight to their Player Detail page or back into Stat Entry for
+   that game. **Leaderboard**'s sidebar is **Highlights** instead — showing the same standings
+   there would just repeat the full table sitting right next to it, so it surfaces five things that
+   aren't obvious from that table's default sort: 🔥 **Hot Streak** (whoever's improved the most
+   over their last 5 games vs. their season number, not just whoever's last-5 number happens to be
+   highest), 🧊 **Most Consistent** (the Consistency panel's #1), 🧯 **Clutch** (best shooting
+   specifically in close games), 🤝 **Top Assist Duo** (the single most-repeated passer-to-scorer
+   connection), and 🛡️ **Best Defender** (the league's top Def Rating/20). A card only shows up
    once there's enough data for it to mean something — on an early season some may be missing.
-   Either sidebar: click a name to jump straight to their Player Detail page.
 2. **Games** — **Who's Coming?**, at the top, is a separate "who said they're showing up" plan
    for a date, not a game roster — pick a date, check off names, **Save RSVPs**. It doesn't
    create anything or touch stats by itself; once at least one game is logged for that date,

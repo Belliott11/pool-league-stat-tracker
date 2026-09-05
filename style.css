@@ -138,16 +138,28 @@ main {
   grid-template-columns: 1fr auto;
 }
 .tab-main { min-width: 0; }
+/* Sticky, but capped to the viewport height so a tall stack of sidebar cards (Standings +
+   Recent Games, or a future third card) can never end up partly below the fold with no way to
+   reach it — a sticky element doesn't shrink to fit on its own, it just pins its top edge and lets
+   its bottom run off-screen on a short window. overflow-y:auto here means the sidebar scrolls
+   independently of the page once it's taller than the space available under the sticky offset. */
 .tab-sidebar {
   position: sticky;
   top: 84px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 .sidebar-toggle-btn {
+  /* Sticky within .tab-sidebar's own internal scroll (not just the page), so it's still reachable
+     without scrolling back up when the card stack below it is taller than the viewport. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
   align-self: flex-end;
-  background: var(--surface-muted);
+  background: var(--bg);
   color: var(--muted);
   border-radius: 999px;
   width: 30px;
@@ -160,7 +172,10 @@ main {
 .tab-body-with-sidebar.sidebar-collapsed .tab-sidebar-inner { display: none; }
 @media (max-width: 900px) {
   .tab-body-with-sidebar, .tab-body-with-sidebar.sidebar-collapsed { grid-template-columns: 1fr; }
-  .tab-sidebar { position: static; }
+  /* Stacked below the main content instead of pinned beside it, so the viewport-relative
+     max-height/scroll above (needed only to keep a sticky sidebar's bottom reachable) would just
+     get in the way here — let it flow at its natural height like everything else on the page. */
+  .tab-sidebar { position: static; max-height: none; overflow-y: visible; }
 }
 
 /* Compact standings widget (renderStandingsSidebar() in app.js) — tighter than the main
@@ -177,6 +192,7 @@ main {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--muted);
+  white-space: nowrap;
 }
 .standings-mini-table td {
   padding: 5px 6px;
@@ -194,6 +210,29 @@ main {
 }
 .standings-mini-player-btn:hover { background: none; color: var(--accent); }
 .standings-mini-player-btn .player-avatar { width: 18px; height: 18px; font-size: 0.62rem; }
+
+/* Games sidebar's second card — last 5 games (renderGamesSidebarRecent() in app.js), each row a
+   full-width button so the whole row is clickable, not just the text. */
+.sidebar-recent-games-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sidebar-recent-games-list li + li { border-top: 1px solid var(--surface-muted); }
+.sidebar-recent-game-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  padding: 7px 2px;
+  font-size: 0.8rem;
+  color: var(--text);
+  font-weight: 500;
+}
+.sidebar-recent-game-btn:hover { color: var(--accent); }
+.sidebar-recent-game-score { font-weight: 700; font-variant-numeric: tabular-nums; }
+.sidebar-recent-game-unreviewed { color: var(--muted); font-size: 0.72rem; font-style: italic; }
 
 /* Leaderboard sidebar's "highlight" cards (renderLeaderboardHighlights() in app.js) — one stat
    leader per card instead of the full standings table Games' sidebar uses, since that would just
@@ -1187,14 +1226,14 @@ button:disabled {
   scrollbar-width: thin;
   scrollbar-color: var(--muted) transparent;
 }
-.table-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-.table-scroll::-webkit-scrollbar-track { background: transparent; }
-.table-scroll::-webkit-scrollbar-thumb {
+.table-scroll::-webkit-scrollbar, .tab-sidebar::-webkit-scrollbar { height: 6px; width: 6px; }
+.table-scroll::-webkit-scrollbar-track, .tab-sidebar::-webkit-scrollbar-track { background: transparent; }
+.table-scroll::-webkit-scrollbar-thumb, .tab-sidebar::-webkit-scrollbar-thumb {
   background: var(--muted);
   border-radius: 999px;
   opacity: 0.5;
 }
-.table-scroll::-webkit-scrollbar-thumb:hover { background: var(--text); }
+.table-scroll::-webkit-scrollbar-thumb:hover, .tab-sidebar::-webkit-scrollbar-thumb:hover { background: var(--text); }
 
 /* Scoring log defender picker */
 .stat-cell.expanded {

@@ -1314,6 +1314,24 @@ collapsing is never a dead end. Below 900px, `.tab-body-with-sidebar` drops to a
 (the sidebar stacks below main content instead of beside it) via a plain media query — no JS
 involved in that part.
 
+**`.tab-sidebar` caps its own height to the viewport and scrolls internally
+(`max-height: calc(100vh - 104px); overflow-y: auto;`) once it has more than one card in it.**
+`position: sticky` alone doesn't shrink an element to fit — it just pins the top edge and lets the
+bottom run off-screen on a short window, which is exactly what happened once a second card
+(Recent Games) was added below Games' Standings widget: on a short-enough viewport, part of the
+sidebar became genuinely unreachable, since scrolling the page doesn't move a sticky element away
+from its pinned position, and the sidebar itself wasn't scrollable on its own. Fixing it meant two
+things together, not just the overflow rule alone: `.sidebar-toggle-btn` also needed
+`position: sticky; top: 0` (nested inside `.tab-sidebar`'s own new scroll container, which modern
+browsers resolve correctly — a sticky child scrolls relative to its nearest scrolling ancestor,
+which is now `.tab-sidebar` itself) plus an explicit `background: var(--bg)` so scrolled content
+doesn't show through behind it while it floats — otherwise the collapse toggle would scroll out of
+reach right along with the cards beneath it, recreating the exact "collapsing is never a dead end"
+problem this UI was already careful about elsewhere. The <900px media query resets both
+(`max-height: none; overflow-y: visible;`) since `.tab-sidebar` goes `position: static` there and
+just flows at its natural height like the rest of the stacked-mobile layout — the viewport-relative
+cap only matters while the sidebar is actually pinned beside the main content.
+
 **The two sidebars show different things, deliberately.** They both started out identical (a
 compact standings widget), until it was pointed out that on the Leaderboard tab specifically,
 showing standings right next to the full Season Rates table sitting in `.tab-main` is pure
@@ -1321,13 +1339,29 @@ duplication — every number in the sidebar is already visible one glance to the
 sidebar doesn't have that problem (Games doesn't show a season standings table anywhere else), so
 it kept the original widget while Leaderboard's got replaced:
 
-- **Games** (`#gamesSidebarStandings`) — `renderStandingsSidebar(containerId)` (`app.js`, right
-  after the sidebar-collapse wiring): rank + `renderPlayerAvatar()` + name (a button —
+- **Games** — two stacked cards inside one `<aside>` (`.tab-sidebar` is a flex column with
+  `gap: 8px`, so multiple `.tab-sidebar-inner.panel` blocks just stack; collapsing hides both at
+  once since the collapse rule targets every `.tab-sidebar-inner` under the collapsed wrapper).
+  **Standings** (`#gamesSidebarStandings`) — `renderStandingsSidebar(containerId)` (`app.js`,
+  right after the sidebar-collapse wiring): rank + `renderPlayerAvatar()` + name (a button —
   `openPlayerDetail()` on click) + W-L(-T) + Two-Way/20, straight off `computeLeaderboard()` sorted
   descending by `twoWayPer20`, same numbers and sort as the main Leaderboard table's own default.
-  Called from `renderGames()`, so it refreshes on every game create/edit/delete.
+  The W-L header used to wrap onto two lines ("W-" / "L") at the sidebar's narrow width — fixed
+  with `white-space: nowrap` on `.standings-mini-table th`, which fit fine once tried (the column
+  only needed a few more px, well within the sidebar's available width). **Recent Games**
+  (`#gamesSidebarRecent`) — `renderGamesSidebarRecent()` (`app.js`, right after
+  `renderStandingsSidebar()`): the last 5 games by date descending, each a full-width button
+  (`openGame()` on click) showing the date and either the final score (`teamScore(g, g.teamA)` −
+  `teamScore(g, g.teamB)`) or "Not reviewed" in muted italic when `g.scoringEvents.length === 0` —
+  deliberately not gated by `isQualifyingGame()` (which would filter out exactly the
+  not-yet-reviewed games this card exists to surface). Added because the sidebar's standings card
+  alone left a lot of visibly empty space below it next to Games' much longer main column; this
+  gives a second, genuinely useful reason to glance at the sidebar — jumping back into a game
+  mid-review, or seeing at a glance which recent game still needs its shots logged — without
+  scrolling down through the full games list in `.tab-main`. Both cards refresh from
+  `renderGames()`, so they update on every game create/edit/delete.
 - **Leaderboard** (`#leaderboardSidebarHighlights`) — `renderLeaderboardHighlights()` (`app.js`,
-  right after `renderStandingsSidebar()`): a short stack of `.sidebar-highlight-card`s, each
+  right after `renderGamesSidebarRecent()`): a short stack of `.sidebar-highlight-card`s, each
   surfacing a single stat leader that ISN'T obvious from the main table's own default sort —
   **Hot Streak** (biggest positive gap between last-5-games Two-Way/20 and season Two-Way/20, not
   just the highest raw Last 5 number — a great player having a normal week shouldn't outrank
@@ -1335,12 +1369,15 @@ it kept the original widget while Leaderboard's got replaced:
   same ▲ threshold the Last 5 column itself uses), **Most Consistent** (the Consistency panel's
   own #1, reusing `computeConsistencyStandings()`), **Clutch** (best TS% in close games from
   `computeCloseGameShooting()`, gated to `attempts >= 5` so one hot make doesn't read as a real
-  clutch performer), and **Top Assist Duo** (the #1 row of `computeAssistConnections()`). Each card
-  is independently optional — a card just doesn't render if nothing qualifies yet (e.g. no games
+  clutch performer), **Top Assist Duo** (the #1 row of `computeAssistConnections()`), and **Best
+  Defender** (top `defensiveRating(r.rate, r.rateDefense)` across the board — the same formula and
+  number as the main table's own Def Rating/20 column, added since the first four highlights all
+  lean offense/situational and this rounds things out with a defense-focused one). Each card is
+  independently optional — a card just doesn't render if nothing qualifies yet (e.g. no games
   decided by `CLUTCH_MARGIN_THRESHOLD` points or fewer means no Clutch card), and the whole panel
-  falls back to an empty-state message only if literally none of the four qualify. Called from
+  falls back to an empty-state message only if literally none of the five qualify. Called from
   `renderLeaderboard()`, so it also respects Include Imbalanced Games/Include Past Seasons/Include
-  Outlier Games like everything else on that tab. If you're porting this and want to add a fifth
+  Outlier Games like everything else on that tab. If you're porting this and want to add another
   highlight, follow the same shape: compute it, gate it behind a real minimum sample, push a
   `{icon, label, player, detail}` object onto `cards` only if it qualifies.
 

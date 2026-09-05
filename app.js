@@ -372,13 +372,49 @@ function renderStandingsSidebar(containerId) {
   });
 }
 
+// Second card in the Games sidebar, below Standings — the last 5 games logged, most recent
+// first, so jumping back into a game you were mid-review on (or checking whether last night's
+// game still needs its shots logged) doesn't require scrolling down through the whole games list
+// in .tab-main to find it. A game with no scoringEvents yet shows "Not reviewed" instead of a
+// score, since it has no real score to show — same "has real shots logged" bar isQualifyingGame()
+// uses, just without the balanced-teams/current-season filters, since a not-yet-reviewed game is
+// exactly the kind of thing this card exists to surface, not filter out.
+function renderGamesSidebarRecent() {
+  const wrap = document.getElementById("gamesSidebarRecent");
+  if (!wrap) return;
+  const games = [...state.games].sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 5);
+  if (games.length === 0) {
+    wrap.innerHTML = '<p class="empty-state">No games logged yet.</p>';
+    return;
+  }
+  wrap.innerHTML = `
+    <ul class="sidebar-recent-games-list">
+      ${games.map(g => {
+        const reviewed = g.scoringEvents.length > 0;
+        const scoreLine = reviewed ? `${teamScore(g, g.teamA)}–${teamScore(g, g.teamB)}` : "Not reviewed";
+        return `
+          <li>
+            <button type="button" class="icon-btn sidebar-recent-game-btn" data-game-id="${g.id}">
+              <span class="sidebar-recent-game-date">${escapeHtml(formatDateDisplay(g.date))}</span>
+              <span class="${reviewed ? "sidebar-recent-game-score" : "sidebar-recent-game-unreviewed"}">${scoreLine}</span>
+            </button>
+          </li>
+        `;
+      }).join("")}
+    </ul>
+  `;
+  wrap.querySelectorAll(".sidebar-recent-game-btn").forEach(btn => {
+    btn.addEventListener("click", () => openGame(btn.dataset.gameId));
+  });
+}
+
 // Leaderboard sidebar shows "highlights" instead of the standings table Games' sidebar uses —
 // that would just repeat the full Season Rates table sitting right next to it. These cards
 // surface things that aren't obvious from the main table's own default sort: who's actually
 // trending up over their last 5 games (not just who has a high Last 5 number), who's the steadiest
-// night to night, who shoots best specifically in close games, and the league's top assist duo.
-// Each has its own minimum sample size before showing a leader, so an early-season fluke doesn't
-// get top billing just because nobody else qualifies yet.
+// night to night, who shoots best specifically in close games, the league's top assist duo, and
+// who's the top defender. Each has its own minimum sample size before showing a leader, so an
+// early-season fluke doesn't get top billing just because nobody else qualifies yet.
 function renderLeaderboardHighlights() {
   const wrap = document.getElementById("leaderboardSidebarHighlights");
   if (!wrap) return;
@@ -420,6 +456,17 @@ function renderLeaderboardHighlights() {
   if (topDuo) {
     cards.push({ icon: "🤝", label: "Top Assist Duo", player: topDuo.passer,
       detail: `${topDuo.count} assist${topDuo.count === 1 ? "" : "s"} to ${escapeHtml(topDuo.scorer.name)}` });
+  }
+
+  // League's top Def Rating/20 — every other card here leans offense/situational, so this rounds
+  // things out with a defense-focused one. Same formula and column as the main table's own
+  // Def Rating/20, just the #1 surfaced here instead of requiring a sort click.
+  const bestDefender = [...board]
+    .map(r => ({ player: r.player, defRating: defensiveRating(r.rate, r.rateDefense) }))
+    .sort((a, b) => b.defRating - a.defRating)[0];
+  if (bestDefender) {
+    cards.push({ icon: "🛡️", label: "Best Defender", player: bestDefender.player,
+      detail: `${bestDefender.defRating.toFixed(1)} Def Rating/20` });
   }
 
   if (cards.length === 0) {
@@ -960,6 +1007,7 @@ function renderGames() {
   // with whatever renderGames() itself is reacting to.
   renderRsvpRecentList();
   renderStandingsSidebar("gamesSidebarStandings");
+  renderGamesSidebarRecent();
   const list = document.getElementById("gamesList");
   list.innerHTML = "";
   if (state.games.length === 0) {
