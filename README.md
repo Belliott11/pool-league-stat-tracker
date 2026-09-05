@@ -315,7 +315,17 @@ individual player, not a team.
    exports, Highlights & Lowlights all still show them as real history. **Include Imbalanced
    Games**, next to the advanced-columns toggle above the table, brings them back into every
    rate/award/chart if you'd rather see the old numbers (remembers your choice on reload, same as
-   the advanced-columns toggle). Right after PTS/20 sits **Shot%** — not a per-20 rate
+   the advanced-columns toggle). **Exclude Outlier Games**, next to it (off by default), sets
+   aside a player's own statistical outlier games — for anyone with at least 4 qualifying games,
+   any single game whose Two-Way/20 falls outside 1.5x their own IQR (computed fresh from their
+   own games each time, not a fixed cutoff) is excluded from their rates, so one absurdly good or
+   bad night doesn't dominate a small-sample average. Reaches every per-player computation (this
+   table, Two-Way Trend, Teammate Synergy/Quality, both Matchup Difficulty charts) but
+   deliberately not panels that pool many players within the same game (League Heatmap, Matchup
+   Grid, Head-to-Head, Balance Teams' chemistry/win-rate) — a game that's an outlier for one
+   player isn't necessarily one for everyone else who happened to share it. With fewer than 4
+   qualifying games nothing gets excluded either way — not enough data to call anything an
+   outlier yet. Right after PTS/20 sits **Shot%** — not a per-20 rate
    like its neighbors, but a season-long share: what percentage of their own *team's* total field
    goal attempts were theirs, across the games they played (their FGA ÷ their team's FGA in those
    same games — teammates included in the denominator, opponents' shots never counted). Free
@@ -727,8 +737,8 @@ individual player, not a team.
      from the source video file — the dashboard only marks *where* the clips are, since it can't
      export video itself.
    - **Leaderboard CSV** — season totals per player (across the exact same games the page itself
-     counts, computed by the same function — respects the Include Imbalanced Games toggle just
-     like the on-screen table does, unlike every other CSV above), including the full
+     counts, computed by the same function — respects the Include Imbalanced Games and Exclude
+     Outlier Games toggles just like the on-screen table does, unlike every other CSV above), including the full
      shot-distance split, plus PTS/20, Off Rating/20, Def Rating/20, and Two-Way/20.
      Not the per-20 rates the Leaderboard page displays for every other counting stat — the CSV
      keeps raw totals plus `games_played`, so anyone consuming it can derive whichever rate or

@@ -48,6 +48,55 @@ function isQualifyingGame(game) {
     && (includePastSeasons || isCurrentSeasonGame(game));
 }
 
+// Off by default, same reversible-choice pattern as the two toggles above — this one can't live
+// inside isQualifyingGame() itself, though, since "outlier" is inherently a per-player question
+// (a wild game for Player A might be a totally normal one for Player B who shared it), not a
+// blanket per-game one. Every per-player stat computation that used to inline its own
+// `state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) ||
+// g.teamB.includes(playerId)))` now goes through qualifyingGamesForPlayer(playerId) below
+// instead, so this toggle reaches computeLeaderboard(), Two-Way Trend, Teammate Synergy/Quality,
+// and both Matchup Difficulty charts — everywhere a player's own rate stats get built game by
+// game. It deliberately does NOT reach panels that pool many players' shots within the same game
+// (League Heatmap, Matchup Grid, Assist Connections, Head-to-Head, Balance Teams' chemistry/
+// win-rate maps, etc.) — those have no single player to compute an outlier bound against, and
+// excluding a whole game from them because it was an outlier for one specific player would
+// silently drop other players' perfectly normal data too.
+const EXCLUDE_OUTLIER_GAMES_KEY = "poolLeagueExcludeOutlierGames";
+let excludeOutlierGames = localStorage.getItem(EXCLUDE_OUTLIER_GAMES_KEY) === "true";
+
+// Linear-interpolation quantile (the same method most stats software defaults to for Q1/Q3).
+function quantile(sortedValues, q) {
+  const pos = (sortedValues.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  return sortedValues[base + 1] !== undefined
+    ? sortedValues[base] + rest * (sortedValues[base + 1] - sortedValues[base])
+    : sortedValues[base];
+}
+
+// Below this many qualifying games, IQR bounds are too noisy to mean anything (Q1/Q3 on 2-3
+// points are basically just the points themselves) — nothing gets excluded and every game counts,
+// same as the toggle being off.
+const OUTLIER_MIN_GAMES = 4;
+
+// The classic 1.5×IQR rule, applied to a player's own per-game Two-Way/20 — computed fresh from
+// their own games every time, never a stored/cached bound, so it can't go stale as new games get
+// logged. Bounds are computed once against the *full* qualifying set, not recomputed after each
+// exclusion, since iteratively tightening the bounds would just keep eating into legitimately
+// normal games.
+function qualifyingGamesForPlayer(playerId) {
+  const base = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  if (!excludeOutlierGames || base.length < OUTLIER_MIN_GAMES) return base;
+  const withTwoWay = base.map(g => ({ game: g, twoWay: computeRateSummaryForGames(playerId, [g]).twoWayPer20 }));
+  const sorted = [...withTwoWay.map(x => x.twoWay)].sort((a, b) => a - b);
+  const q1 = quantile(sorted, 0.25);
+  const q3 = quantile(sorted, 0.75);
+  const iqr = q3 - q1;
+  const lowerBound = q1 - 1.5 * iqr;
+  const upperBound = q3 + 1.5 * iqr;
+  return withTwoWay.filter(x => x.twoWay >= lowerBound && x.twoWay <= upperBound).map(x => x.game);
+}
+
 // STL/TOV/PF each tag the one opponent involved — single-select, unlike shot defenders,
 // since these are inherently one-on-one events. Drives both the box score picker and the
 // event log. A steal is always also a turnover for whoever it was stolen from, so logging a
@@ -3672,9 +3721,10 @@ function computeLeaderboard() {
     // Only games actually logged with real shots count toward GP/averages — a game that's
     // just been rostered (or only carries a historical winner imported with no shot-level
     // detail, see playerGameResult()) has nothing to average, and counting it would drag
-    // every average toward 0 for a game nobody has reviewed yet. isQualifyingGame() also
-    // excludes an imbalanced (e.g. 3-on-2) game unless includeImbalancedGames is toggled on.
-    const gamesPlayed = state.games.filter(g => (g.teamA.includes(p.id) || g.teamB.includes(p.id)) && isQualifyingGame(g));
+    // every average toward 0 for a game nobody has reviewed yet. qualifyingGamesForPlayer()
+    // also excludes an imbalanced (e.g. 3-on-2) game unless includeImbalancedGames is toggled
+    // on, and this player's own statistical outlier games if Exclude Outlier Games is on.
+    const gamesPlayed = qualifyingGamesForPlayer(p.id);
     const totals = { pts: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, pf: 0 };
     const shooting = { fgm: 0, fga: 0, tpm: 0, tpa: 0, closeM: 0, closeA: 0, midM: 0, midA: 0, tpArcM: 0, tpArcA: 0, tpDeepM: 0, tpDeepA: 0, ftm: 0, fta: 0 };
     const defense = { ptsAllowed: 0, timesBeaten: 0, stops: 0, blocksNotAlreadyStopped: 0 };
@@ -5192,7 +5242,7 @@ function renderFlakeStatsPanel(playerId) {
 // split that player's own games into "with" (teammate on their side) and "without" (teammate
 // on the other team, or not playing) and compare per-20 output across the split.
 function computeTeammateSynergy(playerId) {
-  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = qualifyingGamesForPlayer(playerId);
   const teammateIds = new Set();
   qualifyingGames.forEach(g => {
     const myTeam = g.teamA.includes(playerId) ? g.teamA : g.teamB;
@@ -5244,7 +5294,7 @@ function renderTeammateSynergy(playerId) {
 // computeRateSummaryForGames() run on a single game, so it's the same per-20 math as everywhere
 // else, just normalized against that one game's own combined score instead of the season's.
 function computeTwoWayTrend(playerId) {
-  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = qualifyingGamesForPlayer(playerId);
   const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const points = sorted.map(g => ({ date: g.date, twoWay: computeRateSummaryForGames(playerId, [g]).twoWayPer20 }));
   const seasonAvg = computeRateSummaryForGames(playerId, qualifyingGames).twoWayPer20;
@@ -5360,7 +5410,7 @@ function computeTeammateQualityTrend(playerId) {
   const board = computeLeaderboard();
   const offRtgById = {};
   board.forEach(r => { offRtgById[r.player.id] = r.gp > 0 ? r.offRatingPer20 : null; });
-  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = qualifyingGamesForPlayer(playerId);
   const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const points = [];
   let sumQuality = 0, countAppearances = 0;
@@ -5390,7 +5440,7 @@ function computeDefensiveMatchupDifficultyTrend(playerId) {
   const board = computeLeaderboard();
   const offRtgById = {};
   board.forEach(r => { offRtgById[r.player.id] = r.gp > 0 ? r.offRatingPer20 : null; });
-  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = qualifyingGamesForPlayer(playerId);
   const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const points = [];
   let sumQuality = 0, countShots = 0;
@@ -5425,7 +5475,7 @@ function computeOffensiveMatchupDifficultyTrend(playerId) {
   const board = computeLeaderboard();
   const defRtgById = {};
   board.forEach(r => { defRtgById[r.player.id] = r.gp > 0 ? defensiveRating(r.rate, r.rateDefense) : null; });
-  const qualifyingGames = state.games.filter(g => isQualifyingGame(g) && (g.teamA.includes(playerId) || g.teamB.includes(playerId)));
+  const qualifyingGames = qualifyingGamesForPlayer(playerId);
   const sorted = [...qualifyingGames].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const points = [];
   let sumQuality = 0, countTags = 0;
@@ -5591,6 +5641,19 @@ document.getElementById("toggleImbalancedGamesBtn").addEventListener("click", ()
   renderLeaderboard();
 });
 
+function updateOutlierGamesBtnLabel() {
+  const btn = document.getElementById("toggleOutlierGamesBtn");
+  if (btn) btn.textContent = excludeOutlierGames ? "Include Outlier Games" : "Exclude Outlier Games";
+}
+document.getElementById("toggleOutlierGamesBtn").addEventListener("click", () => {
+  excludeOutlierGames = !excludeOutlierGames;
+  localStorage.setItem(EXCLUDE_OUTLIER_GAMES_KEY, String(excludeOutlierGames));
+  updateOutlierGamesBtnLabel();
+  // qualifyingGamesForPlayer() feeds Leaderboard rates and every per-player Player Detail
+  // trend/panel that routes through it — same full-rerender pattern as the other two toggles.
+  renderLeaderboard();
+});
+
 // Two buttons drive the same one global includePastSeasons flag — the original on the
 // Leaderboard, and a second on Player Detail's own Past Seasons panel (added so combining a
 // player's history doesn't require hopping back to the Leaderboard first just to flip it). Both
@@ -5689,6 +5752,7 @@ function renderLeaderboard() {
   updateAdvancedColsBtnLabel();
   updateImbalancedGamesBtnLabel();
   updatePastSeasonsBtnLabel();
+  updateOutlierGamesBtnLabel();
   renderLeaderboardHeader();
   renderLeagueSeasonStandings();
   renderConsistencyStandings();

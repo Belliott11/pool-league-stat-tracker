@@ -265,6 +265,36 @@ whichever exist), then re-renders `renderLeaderboard()` unconditionally and `ren
 only if `currentPlayerId` is set — so the view not currently on screen still ends up correct
 without an extra render call showing up as a visible cost.
 
+**`excludeOutlierGames` (`localStorage["poolLeagueExcludeOutlierGames"]`) is a third toggle, same
+default-off/persisted/button-relabels-itself pattern as the two above (`toggleOutlierGamesBtn`,
+`updateOutlierGamesBtnLabel()`) — but it can't live inside `isQualifyingGame()` itself, since
+"outlier" is inherently a per-player question, not a per-game one.** A game that's a wild outlier
+for Player A might be completely ordinary for Player B who shared it — `isQualifyingGame(game)`
+takes no player argument and never will, so this toggle instead reaches into
+`qualifyingGamesForPlayer(playerId)` (`app.js`, right after `isQualifyingGame()`), a new shared
+helper that wraps the same base filter (`isQualifyingGame(g) && (teamA/teamB includes playerId)`)
+every per-player computation used to inline separately, then — only when `excludeOutlierGames` is
+on and the player has `>= OUTLIER_MIN_GAMES` (4) qualifying games — drops whichever of their own
+games fall outside `[Q1 - 1.5×IQR, Q3 + 1.5×IQR]` of their own per-game Two-Way/20 (`quantile()`,
+linear interpolation, computed once against the full base set, not iteratively re-tightened after
+each exclusion). Below 4 games, bounds would be too noisy to mean anything, so nothing is
+excluded regardless of the toggle. **Five call sites were changed from their own inline
+`state.games.filter(g => isQualifyingGame(g) && (teamA/teamB includes playerId))` to
+`qualifyingGamesForPlayer(playerId)`**: `computeLeaderboard()`, `computeTeammateSynergy()`,
+`computeTwoWayTrend()`, `computeTeammateQualityTrend()`, `computeDefensiveMatchupDifficultyTrend()`,
+and `computeOffensiveMatchupDifficultyTrend()` — so the toggle reaches the main Leaderboard table,
+Two-Way Trend, Teammate Synergy/Quality, and both Matchup Difficulty charts, all in one place,
+with no per-call-site logic duplicated. **Deliberately does not reach** anything that pools
+multiple players' data within the same game — League Heatmap, Matchup Grid, Assist Connections,
+Head-to-Head, Balance Teams' `computeChemistryLiftMap()`/`computeTeamWinRateMap()`, or the two
+Past Seasons panels (which are already documented above as intentionally off the toggle path
+entirely) — none of those have one single player to compute an outlier bound against, and
+dropping a whole game from them over one player's outlier would silently remove other players'
+perfectly ordinary data too. One notable interaction worth knowing: `computeConsistencyStandings()`
+reads `computeTwoWayTrend()`'s points, so with this toggle on, Consistency's standard deviation is
+computed *after* each player's own outliers are already set aside — it measures the spread of
+their typical games, not their true variance including the extremes.
+
 **Export → Data Management → Start New Season** (`app.js`, near `resetDataBtn`) is the only thing
 that writes to these two fields: it `prompt()`s for a label, pushes `{label, startedAt:
 state.currentSeasonStartedAt, endedAt: today}` onto `seasonHistory`, and sets
