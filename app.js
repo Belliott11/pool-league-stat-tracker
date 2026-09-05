@@ -5611,11 +5611,11 @@ function visibleLeaderboardColumns() {
   return LEADERBOARD_COLUMNS.filter(c => !c.advanced || showAdvancedCols);
 }
 function updateAdvancedColsBtnLabel() {
-  const btn = document.getElementById("toggleAdvancedColsBtn");
-  if (btn) btn.textContent = showAdvancedCols ? "Hide Advanced % Columns" : "Show Advanced % Columns";
+  const input = document.getElementById("toggleAdvancedColsBtn");
+  if (input) input.checked = showAdvancedCols;
 }
-document.getElementById("toggleAdvancedColsBtn").addEventListener("click", () => {
-  showAdvancedCols = !showAdvancedCols;
+document.getElementById("toggleAdvancedColsBtn").addEventListener("change", e => {
+  showAdvancedCols = e.target.checked;
   localStorage.setItem(SHOW_ADVANCED_COLS_KEY, String(showAdvancedCols));
   // A column that just got hidden can't be clicked again to sort by — fall back to the default
   // rather than leaving the table sorted by a column nobody can see or un-sort.

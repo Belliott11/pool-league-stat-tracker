@@ -1053,14 +1053,11 @@ button:disabled {
   max-height: none;
 }
 
-.table-scroll {
-  overflow-x: auto;
-}
-
 /* Thin overlay scrollbar, iOS-style — a slim translucent thumb that doesn't compete visually
    with the content, rather than the OS's default chunky bar. Firefox gets the closest built-in
    equivalent (scrollbar-width/-color); WebKit/Blink get the full treatment below. */
 .table-scroll {
+  overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--muted) transparent;
 }

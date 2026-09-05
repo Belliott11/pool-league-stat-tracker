@@ -267,17 +267,20 @@ rather than rewriting a label — see the iOS-switch note below), then re-render
 — so the view not currently on screen still ends up correct without an extra render call showing
 up as a visible cost.
 
-**All three Leaderboard toggles (`toggleImbalancedGamesBtn`, `togglePastSeasonsBtn`,
-`toggleOutlierGamesBtn`) plus the Player Detail one changed from `<button>` elements whose own
-text flipped between "Include X"/"Exclude X" to real `<input type="checkbox">`s styled as iOS
-switches (`.ios-switch-row`/`.ios-switch` in `style.css`).** A static `<span>` label now names
-the setting once, and the switch's own `.checked` state (green fill, knob slid right) shows
-whether it's on — no more relabeling text on every update. Every `updateXBtnLabel()` function
-sets `.checked`/`.disabled` on the input instead of `.textContent`, and every click listener
-became a `change` listener reading the new value straight off `e.target.checked` (already
-reflecting the just-toggled state by the time `change` fires) instead of manually inverting a
-boolean. `:disabled` on the underlying checkbox drives `.ios-switch-row:has(input:disabled)`'s
-dimmed appearance via `:has()` — a JS-free way to gray out the whole label+switch row together.
+**All four Leaderboard toggles (`toggleImbalancedGamesBtn`, `togglePastSeasonsBtn`,
+`toggleOutlierGamesBtn`, `toggleAdvancedColsBtn`) plus the Player Detail one changed from
+`<button>` elements whose own text flipped between "Include X"/"Exclude X" (or "Show"/"Hide") to
+real `<input type="checkbox">`s styled as iOS switches (`.ios-switch-row`/`.ios-switch` in
+`style.css`).** A static `<span>` label now names the setting once, and the switch's own
+`.checked` state (green fill, knob slid right) shows whether it's on — no more relabeling text on
+every update. Every `updateXBtnLabel()` function sets `.checked`/`.disabled` on the input instead
+of `.textContent`, and every click listener became a `change` listener reading the new value
+straight off `e.target.checked` (already reflecting the just-toggled state by the time `change`
+fires) instead of manually inverting a boolean. `:disabled` on the underlying checkbox drives
+`.ios-switch-row:has(input:disabled)`'s dimmed appearance via `:has()` — a JS-free way to gray out
+the whole label+switch row together. `toggleAdvancedColsBtn` was converted in a follow-up pass
+after the other three, for visual consistency — it was the one leftover plain button sitting in
+the same toolbar row as three switches.
 
 **`excludeOutlierGames` (`localStorage["poolLeagueExcludeOutlierGames"]`) is a third toggle, same
 default-off/persisted/button-relabels-itself pattern as the two above (`toggleOutlierGamesBtn`,
