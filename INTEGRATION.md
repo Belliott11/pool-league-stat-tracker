@@ -972,6 +972,26 @@ background. `.rank-line-path`'s `stroke-width` also went from 2 to 2.5 (`style.c
 scoped to just this chart's own two color call sites, not a change to `avatarHueForPlayer()` or
 the shared `55%, 42%` formula used elsewhere — those weren't the ones reported as hard to read.
 
+**Awards vs. Stats is the other panel-row pairing with a real length mismatch (an expandable award
+list next to a per-night table), and it gets a different fix than the rank chart above: scroll
+instead of resize.** `align-items: stretch` already makes the two panel boxes the same height (the
+row's cross-size is the taller panel's own natural content height, and both stretch to match it) —
+the problem was purely that Awards vs. Stats' own *content*, not its box, kept growing past
+whatever height Power Ranking vs. Performance happened to stretch it to, since a plain block panel
+just overflows rather than clipping. Fixed with a scoped rule: `.panel:has(> #awardsVsStats)` (the
+`>` matters — `#awardsVsStats` is a direct child of that `.panel`, and the plain instructions above
+this note documenting the rank-chart fix are the neighboring reference if you need a syntax
+reminder) becomes `display: flex; flex-direction: column`, and `#awardsVsStats` itself gets
+`flex: 1 1 auto; min-height: 0; overflow-y: auto`. That combination — flex column parent, flexible
+scrolling child with `min-height: 0` (without it, a flex child refuses to shrink below its own
+content size, and the scroll never kicks in) — makes the award grid fill exactly whatever height
+the stretched panel box ends up at and scroll internally past that, rather than pushing the panel
+taller than its neighbor the way it used to. On real data this rarely visibly scrolls at all — the
+award grid's own `repeat(auto-fill, minmax(260px, 1fr))` columns mean it needs much less vertical
+room at a real panel width than it would squeezed to nothing, so the two panels often end up close
+in natural height anyway; the scroll is there as a guarantee for whenever they aren't, not because
+it's constantly visible.
+
 **Assist Connections on the Leaderboard is trimmed, not the full list — but to a row count that
 tracks its `.panel-row` partner, Teammate Context, rather than a fixed number.**
 `renderAssistSynergy()` (`app.js`) computes `rowLimit = computeLeaderboard().filter(r => r.gp >
