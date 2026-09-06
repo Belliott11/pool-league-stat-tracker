@@ -780,6 +780,28 @@ that the code ran without throwing. The per-game version (`exportReelVideo()`, r
 one) was never affected, since it captures from `currentVideoEl`, which already has a real,
 already-loaded video by the time a game's Stat Entry page is open at all.
 
+**Real bug, since fixed: both exports could hang forever on one clip with no way out except
+Cancel, and no way to tell "still working" from "will never finish."** `waitForSeek()` (resolves
+once a seek actually lands) and `waitUntilTime()` (polls until playback reaches a clip's end) had
+no timeout at all — only the `video.play()` step in between them did (an 8-second race already
+guarded against a blocked-autoplay/stalled-play failure). If a seek never fired its `seeked` event,
+or playback stalled/never reached `clip.end` for any reason (a bad timestamp past the video's real
+duration, a decode stall, `ended` never firing), the whole export just sat on that one clip forever
+— frozen status line, no error, indistinguishable from it merely taking a while. Both functions now
+take a `timeoutMs` (default 15s for `waitForSeek`, 30s for `waitUntilTime`) and resolve `"done"` or
+`"timeout"` instead of always resolving the same way — `raceCancel()` had to change too, from
+always flattening its wrapped promise to `"done"` to passing its actual resolved value through
+unchanged, so a caller can tell the three outcomes (`"done"`/`"timeout"`/`"cancelled"`) apart. Both
+`exportReelVideo()` and `exportLeagueVideo()` size `waitUntilTime`'s timeout to that specific clip's
+own remaining length (`Math.max(15000, remaining * 3000)`, i.e. 3x the clip's own duration with a
+15s floor) rather than a flat constant, so a normal long clip doesn't trip a timeout meant to catch
+an actually-stuck one. A timeout now degrades exactly like the existing play-timeout case already
+did: `stoppedEarly` gets set to a clip-specific message, the loop breaks, and whatever was already
+recorded up to that point still downloads — a partial result with a clear reason, not a silent
+freeze. Verified directly (not through a real 15-30s wait): a stub video-like object whose
+`currentTime` never advances confirms `waitUntilTime` resolves `"timeout"` right at its deadline,
+and a real `<video>` with no `src` (so `seeked` never fires) confirms the same for `waitForSeek`.
+
 **Player Detail's Shot Chart is also purely computed, nothing stored — the ungrouped
 counterpart to the heatmap just below it.** `renderPlayerShotChart()` (`app.js`) plots every one
 of a player's own field goals with a non-null `shot_x`/`shot_y` at its literal coordinates
