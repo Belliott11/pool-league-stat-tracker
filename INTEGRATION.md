@@ -706,10 +706,15 @@ whether/how to port it.** `exportReelVideo()` (`app.js`) plays every clip in `ga
 (filtered to `end > start`, sorted by `start` ascending — chronological regardless of the Reel
 table's current UI sort) back-to-back through the already-loaded `<video>` element, capturing the
 live playback with `HTMLMediaElement.captureStream()` piped into a `MediaRecorder`. No ffmpeg, no
-server round-trip, no new dependency — but also no fast/batch trim-and-concat: it runs in wall-clock
-real time (recording a clip takes exactly as long as that clip's own duration), and output is
-`.webm`, `MediaRecorder`'s one broadly-supported container — there's no in-browser path to `.mp4`
-without taking on an ffmpeg.wasm-sized dependency, which this tool deliberately doesn't carry.
+server round-trip, no new dependency — but also no fast/batch trim-and-concat: it runs in
+wall-clock real time (recording a clip takes exactly as long as that clip's own duration).
+`pickRecorderMimeType()` tries `video/mp4` variants first (recent Chrome/Edge can record straight
+to MP4 — confirmed via `MediaRecorder.isTypeSupported()`, not assumed) and falls back to
+`video/webm` for browsers that can't, with `pickRecorderExtension(mimeType)` naming the downloaded
+file to match whichever container actually got used. This isn't transcoding — there's still no
+in-browser path from a recorded `.webm` to `.mp4` after the fact without an ffmpeg.wasm-sized
+dependency this tool deliberately doesn't carry — it's recording directly to MP4 from the start,
+on browsers that support it, and both output containers play back identically fine either way.
 
 If you build an equivalent against Poolean's own video infrastructure, the two things worth
 replicating exactly, both hardened after a real bug found in testing:
