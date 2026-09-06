@@ -956,6 +956,22 @@ mean either giving the heatmap a responsive size (used in three places — Playe
 Defensive Heatmap too, so a bigger change than it looks) or distorting the rank chart's aspect
 ratio until it stops being legible. Left as a known, acceptable mismatch rather than forcing either.
 
+**The rank chart's own squeeze turned out to have a real bug in it, not just a size mismatch with
+its neighbor.** Once actually tested at the panel-row's half width, `renderTwoWayRankChart()`'s
+viewBox rendered genuinely tiny (H was 360 against a W of 680, and an `<svg>` scaled to
+`width:100%` with no explicit height renders at `containerWidth * H/W` — at ~420px wide that's
+only ~220px tall) — and the per-player line/label color, `hsl(hue, 55%, 42%)`, is hard to see
+against this app's own dark navy panel background specifically for the blue/purple third of the
+hue wheel, since that lightness is genuinely low-contrast there (and blue reads darker than yellow
+at equal HSL lightness to begin with). Fixed by bumping `H` from 360 to 520 (same `W`, so more
+vertical room between rank rows as a side effect, not just a bigger chart) and the line/label
+color to `hsl(hue, 70%, 62%)` — brighter and more saturated than the 55%/42% still used for
+avatars and the quadrant-scatter dots elsewhere, which get away with the darker tone since they
+sit on a filled circle with its own contrasting ring rather than a bare line on the panel
+background. `.rank-line-path`'s `stroke-width` also went from 2 to 2.5 (`style.css`). Deliberately
+scoped to just this chart's own two color call sites, not a change to `avatarHueForPlayer()` or
+the shared `55%, 42%` formula used elsewhere — those weren't the ones reported as hard to read.
+
 **Assist Connections on the Leaderboard is trimmed, not the full list — but to a row count that
 tracks its `.panel-row` partner, Teammate Context, rather than a fixed number.**
 `renderAssistSynergy()` (`app.js`) computes `rowLimit = computeLeaderboard().filter(r => r.gp >
