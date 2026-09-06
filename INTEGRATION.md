@@ -802,6 +802,40 @@ freeze. Verified directly (not through a real 15-30s wait): a stub video-like ob
 `currentTime` never advances confirms `waitUntilTime` resolves `"timeout"` right at its deadline,
 and a real `<video>` with no `src` (so `seeked` never fires) confirms the same for `waitForSeek`.
 
+**Deeper real bug, found only by actually reproducing the league-wide export across two
+different session videos: a `src` swap can silently kill the `MediaRecorder` itself, not just
+stall playback.** Per the MediaRecorder spec, a recorder auto-stops (`state` flips to
+`"inactive"`) once its captured track ends — and swapping `#leagueExportVideo`'s `src` mid-export
+(loading a *different* game's session video) does end the track `captureStream()` originally
+grabbed, even though nothing in this code ever calls `.stop()` directly. Calling `.resume()` on an
+already-inactive recorder throws `InvalidStateError`, and that exception used to propagate straight
+out of `exportLeagueVideo()` uncaught — past the `try`/`finally`'s cleanup, past
+`leagueExportState = null`, past re-enabling the export button — so `leagueExportState` stayed
+non-null forever and every subsequent click of "Combine All Clips" silently no-op'd (the function
+bails out immediately whenever that's still set). From the outside this looked exactly like a
+permanent freeze on whichever clip happened to be the *first* one needing a source swap — which is
+exactly the symptom this surfaced as ("stuck on clip 3," clip 3 being the first clip belonging to a
+different session video than clips 1-2). A per-game export never hits this at all, since it only
+ever plays one already-loaded video and its `src` never changes mid-recording.
+
+The tricky part: *when* the recorder actually flips to `"inactive"` isn't reliably predictable.
+The first fix attempt checked `recorder.state === "inactive"` immediately after the new `src`
+finished loading (`loadedmetadata` fired) — that was too early; testing showed the recorder was
+still `"paused"` at that point and only transitioned some time after, apparently once real decoding
+of the new source actually got underway. So instead of guessing at the right moment to check,
+`recorder.resume()` itself is now wrapped in a `try`/`catch` — the one place the failure can
+actually happen — and on catching it, `createLeagueRecorder()` (a small function pulled out of the
+duplicated setup code, since this is now the second place a recorder needs to be built from
+scratch) rebuilds a fresh recorder bound to the now-current video and resumes that one instead.
+Both the original and the rebuilt recorder push into the same shared `chunks` array, so their
+output concatenates into one downloadable blob rather than being lost or split into separate
+files. Verified by storing two distinct real session videos under two different `masterVideoId`s
+and running a real 3-clip export spanning both (2 clips from the first video, 1 from the second,
+matching the exact "3 clips across a source swap" shape of the original report): the export
+completed without throwing, and sampling decoded frames from both *before* and *after* the swap
+point in the final concatenated blob confirmed real, non-black content on both sides — not just
+that the code ran to completion.
+
 **Player Detail's Shot Chart is also purely computed, nothing stored — the ungrouped
 counterpart to the heatmap just below it.** `renderPlayerShotChart()` (`app.js`) plots every one
 of a player's own field goals with a non-null `shot_x`/`shot_y` at its literal coordinates
