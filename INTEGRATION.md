@@ -761,6 +761,25 @@ Two things specific to spanning multiple games, not present in the per-game vers
   once no matter how many of that game's clips end up in the queue, since the fetch is
   cache-keyed on `masterVideoId || game.id`, not on the clip.
 
+**Real bug, since fixed: the league-wide export used to record nothing but black frames, every
+time, on Chrome.** The original code called `video.captureStream()` and built the `MediaRecorder`
+immediately, before the loop ever loaded a source into `#leagueExportVideo` — meaning
+`captureStream()` bound to an element that, at that exact moment, had no `src` and nothing decoded
+to show. On Chrome, a stream captured from an empty video element stays black for the rest of that
+capture session regardless of every later `src` swap; the recording itself ran fine (right
+duration, no errors, a real downloadable file) and just contained nothing but black. Fixed by
+deferring `captureStream()`/`new MediaRecorder(...)` until *after* the very first queued clip's
+video source has actually loaded (`loadVideoSrc()` now runs once, up front, outside the main loop,
+before `recorder` gets created at all) — every subsequent `src` swap later in the loop is fine,
+since by then the stream is already bound to a real, already-playing video. `recorder` is `null`
+until that first load succeeds (guards against a cancel landing during that window, or a queue
+that ends up empty), so the loop condition and the `finally` cleanup both check for that. Verified
+by actually storing a real session video into IndexedDB, running the export end-to-end, and
+sampling a decoded frame from the resulting blob for non-black pixel content — not just checking
+that the code ran without throwing. The per-game version (`exportReelVideo()`, right above this
+one) was never affected, since it captures from `currentVideoEl`, which already has a real,
+already-loaded video by the time a game's Stat Entry page is open at all.
+
 **Player Detail's Shot Chart is also purely computed, nothing stored — the ungrouped
 counterpart to the heatmap just below it.** `renderPlayerShotChart()` (`app.js`) plots every one
 of a player's own field goals with a non-null `shot_x`/`shot_y` at its literal coordinates
