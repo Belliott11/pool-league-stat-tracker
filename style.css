@@ -791,6 +791,19 @@ button:disabled {
   background: var(--surface-hover);
 }
 
+/* On a narrow screen, a sticky first column with a long header (like the Head-to-Head grid's
+   "Scorer / Defender") claims so much of the viewport's own width that only one or two data
+   columns are ever visible beside it, and every other column is a further horizontal scroll away.
+   Letting just the sticky header wrap onto multiple lines, and capping its width, gives the rest
+   of the table room to actually show side by side. */
+@media (max-width: 520px) {
+  .matchup-table th.sticky-col {
+    white-space: normal;
+    max-width: 84px;
+    line-height: 1.2;
+  }
+}
+
 .empty-state {
   color: var(--muted);
   font-style: italic;
