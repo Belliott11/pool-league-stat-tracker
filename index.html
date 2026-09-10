@@ -23,7 +23,10 @@
   <div class="header-inner">
     <div class="header-top-row">
       <h1>Pool League <em>Stat Tracker</em></h1>
-      <button id="themeToggleBtn" class="theme-toggle-btn" type="button" title="Toggle dark mode">🌙</button>
+      <div class="header-actions">
+        <button id="shareSiteBtn" class="theme-toggle-btn" type="button" title="Share this site">🔗</button>
+        <button id="themeToggleBtn" class="theme-toggle-btn" type="button" title="Toggle dark mode">🌙</button>
+      </div>
     </div>
     <nav class="tabs">
       <button class="tab-btn active" data-tab="games">Games</button>
@@ -99,6 +102,7 @@
     </div>
 
     <p id="needsReviewSummary" class="hint" style="margin:0 0 10px"></p>
+    <p id="shotLocationGapSummary" class="hint" style="margin:0 0 10px"></p>
 
     <div class="inline-form" style="margin-bottom:12px">
       <input type="text" id="gameFilterInput" placeholder="Filter by date, player, or notes…" style="flex:1;min-width:220px">
@@ -601,6 +605,14 @@
       <button id="backToLeaderboardBtn" class="secondary-btn">&larr; Back to Leaderboard</button>
       <h2 id="playerDetailTitle"></h2>
       <div id="playerDetailSummary" class="score-display"></div>
+      <button id="sharePlayerBtn" type="button" class="icon-btn" title="Copy a link straight to this player">Share</button>
+    </div>
+
+    <!-- Personalized Tips -->
+    <div class="panel">
+      <h2>Personalized Tips</h2>
+      <p class="hint">This player's own numbers next to the league average for that same stat — only shown when something actually stands out, not a fixed checklist. Doubles as a real scouting note on whoever you're looking at: their preferred shot zone and a real strength/weakness zone (checked against the league's own FG% from that same distance), plus real matchup-specific splits (a defender who's genuinely held them below their own usual shooting, or a scorer who's shot well above what they normally allow), each needing 5+ real attempts before it counts as a pattern rather than one bad or good night.</p>
+      <div id="playerTips"></div>
     </div>
 
     <!-- Past Seasons -->
