@@ -53,6 +53,42 @@ forward, both bigger asks than this prototype:
 Not pursuing either without checking in first — this findings doc is the "worth confirming before
 assuming this is easy" checkpoint the plan itself asked for.
 
+## Update: release-point (wrist) tracking prototype — a much better result
+
+Ran `pose_release.py` against the same 10-shot sample using stock `yolo11s-pose.pt` (no local
+fine-tuning — see `POOLVISION-NOTES.md`: this is the one piece of PoolVision that works
+un-fine-tuned). Tracked wrist height relative to shoulder width per detected person, per frame.
+
+**Person + wrist keypoints detected in 720/720 sampled frames (100%)** — a complete reversal of
+the ball-detection result above. Confirms PoolVision's own experience: people are easy for a
+stock model on this camera; the ball is the hard part.
+
+**But the per-shot "peak release height" numbers this run printed are not trustworthy yet.**
+Spot-checked shot `01_Adam_make`'s series around its reported peak:
+
+```
+t=0.500  3.39
+t=0.533  3.76
+t=0.567  8.22
+t=0.600  2.20
+t=0.633  5.23
+t=0.667  9.60
+t=0.700  0.45
+```
+
+That's not one person's arm rising and falling — it's too noisy frame to frame. The script takes
+the max wrist-height reading across *every* detected person in each frame, and with several
+people in the pool, it's silently jumping between different people rather than following the
+shooter. This is exactly the problem PoolVision's own `shooter.py` spends real effort solving
+(matching a person to the ball's release point, cap-color voting across frames) — a problem this
+prototype hasn't attempted, since it has no ball-tracking or cap-color logic to anchor on.
+
+**Real next step, not yet done:** track one consistent person across the window (simple
+frame-to-frame nearest-box matching would remove the identity-swapping noise) and pick that person
+using some anchor — ball-track proximity if the ball detector ever works, a hand-labeled shooter
+box (the labeling tool could be extended for this), or a per-game calibrated hoop-proximity
+heuristic. Not attempted here — flagging it rather than presenting noisy numbers as real.
+
 ## Files (prototype only, not wired into the app)
 
 All local to `shot-arc/`. `frames/`, `*.pt` (model weights), `*.png` (including the debug crops

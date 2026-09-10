@@ -25,3 +25,4 @@ shot-arc/*.pt
 shot-arc/*.png
 shot-arc/sample_shots.json
 shot-arc/results.json
+shot-arc/pose_results.json
