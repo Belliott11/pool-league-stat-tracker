@@ -12,6 +12,11 @@ poolean-seed.json
 # just never pushed to this public repo's history.
 photos/
 
+# Adam's own repos, cloned locally for reference/research (each is its own separate git repo,
+# not part of this one -- never meant to be committed here).
+/poolean/
+/poolvision/
+
 # Shot-arc extraction prototype (standalone-shot-arc-plan.md): pretrained model weights
 # (100MB+ each), extracted frame PNGs, and debug crops are all regenerable local scratch —
 # none of it belongs in git history. The actual pipeline scripts (*.py) still get tracked.
