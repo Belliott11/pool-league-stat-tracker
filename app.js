@@ -2222,31 +2222,80 @@ function openGame(gameId) {
   }
 }
 
-// Same as openGame(), but also seeks straight to one specific moment once the video's ready —
-// used by "Watch film" links (Personalized Tips, Notable Matchups, Areas to Work On) so clicking
-// one lands on the actual instance it's about, not just the right game at 0:00. The video itself
-// loads asynchronously (from IndexedDB, possibly a multi-hundred-MB blob), so this polls briefly
-// for currentVideoEl to show up rather than assuming it's already there the instant openGame returns.
-function openGameAtTime(gameId, videoTime) {
-  openGame(gameId);
-  if (videoTime === null || videoTime === undefined) return;
-  const tryJump = attemptsLeft => {
-    if (currentGameId !== gameId) return; // navigated elsewhere before the video was ready
-    if (currentVideoEl) {
-      currentVideoEl.currentTime = videoTime;
-      currentVideoEl.play();
-      currentVideoEl.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
+// Loads a game's video into an arbitrary <video> element and seeks to one moment, for the inline
+// players "Watch film" buttons open right where they're clicked (Personalized Tips, Notable
+// Matchups, Areas to Work On, Review Possible Dunks) instead of switching away to Stat Entry.
+// Deliberately doesn't touch the global currentVideoEl, which stays reserved for the actual Stat
+// Entry panel's own video. Mirrors renderVideoPanel's own source resolution (master video vs
+// local video). viewer-videos.js patches this the same way it already patches openGame/
+// createJumpButton, so hosted per-game files and their own time offset work here too without
+// this function needing to know about them.
+async function loadInlineVideo(game, videoEl, videoTime) {
+  let url = null;
+  if (game.masterVideoId) {
+    if (!masterVideoBlobUrls[game.masterVideoId]) {
+      const file = await getVideoFile(game.masterVideoId);
+      if (file) masterVideoBlobUrls[game.masterVideoId] = URL.createObjectURL(file);
     }
-    if (attemptsLeft > 0) setTimeout(() => tryJump(attemptsLeft - 1), 200);
+    url = masterVideoBlobUrls[game.masterVideoId] || null;
+  } else {
+    if (!localVideoBlobUrls[game.id]) {
+      const file = await getVideoFile(game.id);
+      if (file) localVideoBlobUrls[game.id] = URL.createObjectURL(file);
+    }
+    url = localVideoBlobUrls[game.id] || game.videoUrl || null;
+  }
+  if (!url) return false;
+  if (videoEl.dataset.loadedUrl !== url) {
+    videoEl.src = url;
+    videoEl.dataset.loadedUrl = url;
+  }
+  const seekAndPlay = () => {
+    if (videoTime !== null && videoTime !== undefined) videoEl.currentTime = videoTime;
+    videoEl.play();
   };
-  tryJump(25);
+  if (videoEl.readyState >= 1) seekAndPlay();
+  else videoEl.addEventListener("loadedmetadata", seekAndPlay, { once: true });
+  return true;
 }
 
-// Shared by every "Watch film" row (Personalized Tips, Notable Matchups, Areas to Work On):
-// renders one button per matching instance, labeled with the date AND that instance's own
-// timestamp when one was captured (so two games on the same day, or several instances in one
-// game, are never ambiguous the way a bare date list was), wired to jump straight to it.
+// One inline player per container (Player Detail's Personalized Tips/Notable Matchups/Areas to
+// Work On each get their own; Review Possible Dunks gets its own too) -- clicking a different
+// "Watch film" instance within the same panel reuses the same player rather than stacking a new
+// one per click.
+function ensureInlineVideoPlayer(wrap) {
+  let player = wrap.querySelector(".inline-video-player");
+  if (!player) {
+    player = document.createElement("div");
+    player.className = "inline-video-player";
+    player.innerHTML = '<p class="hint inline-video-label" style="margin:0 0 4px"></p><video controls style="max-width:100%;display:block;margin-bottom:10px"></video>';
+    wrap.prepend(player); // top of the panel, not the bottom -- no scrolling past a long list to see it
+  }
+  return player;
+}
+
+async function playInlineVideoAt(wrap, gameId, videoTime) {
+  const game = state.games.find(g => g.id === gameId);
+  const player = ensureInlineVideoPlayer(wrap);
+  const video = player.querySelector("video");
+  const labelEl = player.querySelector(".inline-video-label");
+  if (!game) {
+    labelEl.textContent = "Game not found.";
+    return;
+  }
+  labelEl.textContent = `Loading ${formatDateDisplay(game.date)}…`;
+  const ok = await loadInlineVideo(game, video, videoTime);
+  labelEl.textContent = ok
+    ? `${formatDateDisplay(game.date)}${videoTime !== null && videoTime !== undefined ? " · " + formatVideoTime(videoTime) : ""}`
+    : `No video available for ${formatDateDisplay(game.date)}.`;
+  player.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// Shared by every "Watch film" row (Personalized Tips, Notable Matchups, Areas to Work On, Review
+// Possible Dunks): renders one button per matching instance, labeled with the date AND that
+// instance's own timestamp when one was captured (so two games on the same day, or several
+// instances in one game, are never ambiguous the way a bare date list was), wired to play right
+// there inline instead of switching tabs.
 function watchFilmLinksHtml(games) {
   if (!games || games.length === 0) return "";
   return `<div class="player-tip-watch">Watch film: ${games.map(g => {
@@ -2261,7 +2310,7 @@ function watchFilmLinksHtml(games) {
 function wireWatchFilmButtons(root) {
   root.querySelectorAll(".player-tip-game-btn").forEach(btn => {
     const videoTime = btn.dataset.videoTime !== undefined ? parseFloat(btn.dataset.videoTime) : null;
-    btn.addEventListener("click", () => openGameAtTime(btn.dataset.gameId, videoTime));
+    btn.addEventListener("click", () => playInlineVideoAt(root, btn.dataset.gameId, videoTime));
   });
 }
 
@@ -8615,6 +8664,11 @@ function computeUnresolvedDunkCandidates() {
   return rows.sort((a, b) => (a.game.date || "").localeCompare(b.game.date || ""));
 }
 
+// Resolving one row only ever removes that one <li> rather than re-rendering the whole panel --
+// same reason Backfill Shot Locations avoids a full re-render per click: the inline video player
+// (see ensureInlineVideoPlayer/loadInlineVideo above) lives in this same wrap, and a full
+// innerHTML rebuild would tear it down and stop playback every time a DIFFERENT row got resolved
+// while a clip was open.
 function renderDunkReview() {
   const wrap = document.getElementById("dunkReview");
   if (!wrap) return;
@@ -8623,12 +8677,12 @@ function renderDunkReview() {
     wrap.innerHTML = '<p class="empty-state">Every close/midrange field goal has been reviewed for dunks.</p>';
     return;
   }
-  wrap.innerHTML = `<p class="hint" style="margin-top:0">${rows.length} close/midrange field goal${rows.length === 1 ? "" : "s"} still unreviewed.</p>
+  wrap.innerHTML = `<p class="hint dunk-review-summary" style="margin-top:0">${rows.length} close/midrange field goal${rows.length === 1 ? "" : "s"} still unreviewed.</p>
   <ul class="player-tips-list">${rows.map(({ game, ev }) => {
     const scorer = state.players.find(p => p.id === ev.scorerId);
     const hasTime = ev.videoTime !== null && ev.videoTime !== undefined;
     const watchLinks = watchFilmLinksHtml(hasTime ? [{ id: game.id, date: game.date, videoTime: ev.videoTime }] : []);
-    return `<li>
+    return `<li data-event-id="${ev.id}">
       <span>${scorer ? escapeHtml(scorer.name) : "?"}: ${ev.made !== false ? "Make" : "Miss"} (${ev.points}pt, ${escapeHtml(formatDateDisplay(game.date))})${watchLinks}</span>
       <div class="button-row" style="margin-top:4px">
         <button type="button" class="secondary-btn" data-mark-dunk="${ev.id}">🏀 Dunk</button>
@@ -8637,17 +8691,34 @@ function renderDunkReview() {
     </li>`;
   }).join("")}</ul>`;
   wireWatchFilmButtons(wrap);
+
+  const summaryEl = wrap.querySelector(".dunk-review-summary");
+  const listEl = wrap.querySelector("ul");
+  const resolveRow = (eventId, value) => {
+    const ev = state.games.flatMap(g => g.scoringEvents).find(e => e.id === eventId);
+    if (!ev) return;
+    ev.dunk = value;
+    saveState();
+    listEl.querySelector(`li[data-event-id="${eventId}"]`)?.remove();
+    const left = listEl.querySelectorAll("li").length;
+    if (left === 0) {
+      listEl.remove();
+      summaryEl.textContent = "";
+      if (!wrap.querySelector(".dunk-review-done-msg")) {
+        const doneMsg = document.createElement("p");
+        doneMsg.className = "empty-state dunk-review-done-msg";
+        doneMsg.textContent = "Every close/midrange field goal has been reviewed for dunks.";
+        wrap.appendChild(doneMsg);
+      }
+    } else {
+      summaryEl.textContent = `${left} close/midrange field goal${left === 1 ? "" : "s"} still unreviewed.`;
+    }
+  };
   wrap.querySelectorAll("[data-mark-dunk]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const ev = state.games.flatMap(g => g.scoringEvents).find(e => e.id === btn.dataset.markDunk);
-      if (ev) { ev.dunk = true; saveState(); renderDunkReview(); }
-    });
+    btn.addEventListener("click", () => resolveRow(btn.dataset.markDunk, true));
   });
   wrap.querySelectorAll("[data-mark-notdunk]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const ev = state.games.flatMap(g => g.scoringEvents).find(e => e.id === btn.dataset.markNotdunk);
-      if (ev) { ev.dunk = false; saveState(); renderDunkReview(); }
-    });
+    btn.addEventListener("click", () => resolveRow(btn.dataset.markNotdunk, false));
   });
 }
 
