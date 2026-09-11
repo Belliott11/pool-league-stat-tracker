@@ -89,6 +89,20 @@ using some anchor — ball-track proximity if the ball detector ever works, a ha
 box (the labeling tool could be extended for this), or a per-game calibrated hoop-proximity
 heuristic. Not attempted here — flagging it rather than presenting noisy numbers as real.
 
+### Follow-up: fixed the tracking bug, found a second one underneath it
+
+`pose_release.py` now does real single-person tracking (greedy nearest-box matching across
+frames, picking the track with the cleanest single rise-then-fall rather than the max across
+everyone per frame). That removed the identity-swapping noise, but the peak numbers are *still*
+not trustworthy: shot `01_Adam_make`'s now-correctly-tracked single-person series still jumps
+`2.99 -> 5.0 -> 5.23 -> 9.6 -> 3.29` frame to frame, and 9.6 shoulder-widths above the shoulder
+line isn't physically real for an arm. Root cause is almost certainly normalizing by shoulder
+*width*: during the actual release/follow-through, a shooter often turns more face-on to the
+hoop, foreshortening the shoulder-to-shoulder pixel distance toward zero — and dividing by a
+small, noisy denominator blows up the ratio. Worth trying a more stable body-scale reference
+(person bounding-box height, or nose-to-shoulder distance) instead of shoulder width, and/or
+smoothing the series before reading off a peak. Not attempted yet.
+
 ## Checked: does Adam's own labeled ball-training data already exist somewhere accessible?
 
 Now that repo access exists, searched both `poolvision` and `poolean` directly rather than
@@ -119,6 +133,14 @@ Two things worth knowing before asking for it:
    fed the detector the full 1280x720 frame, landing almost exactly in his stated bad case.
    **Worth trying a tight crop around the hoop before detection on our own footage — actionable
    now, independent of getting anything from Adam.**
+
+**Tried the crop idea on one shot already, inconclusive**: cropped `00_Adam_make`'s frames to a
+hand-picked hoop-region box and re-ran stock detection there vs. full-frame. Full-frame: 1/72
+hits; cropped: 0/72. Doesn't confirm the crop theory, but doesn't rule it out either — a single
+fixed crop box for the whole clip is fragile (the play moves around; a shooter well away from the
+hoop falls outside a hoop-centered box, and my box was hand-eyeballed, not computed), so this
+isn't a fair test yet. A real test needs a crop that tracks the action (e.g. around the pose
+tracker's own person box from the Part 3 prototype above) rather than one static region.
 
 Combining his 323 labeled images (different camera/pool/lighting) with our own would likely
 generalize better than either alone (same physical object, different conditions is a real,
