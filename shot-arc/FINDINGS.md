@@ -366,3 +366,33 @@ frames, then propagate a moving crop from each seed forward/backward a few frame
 position can't jump far frame-to-frame at 30fps), refitting the crop as new detections come in --
 the same temporal-tracking idea Adam's own crop-follows-the-ball description implies, just not
 implemented here yet.
+
+## Built the bootstrapping script -- matches the oracle-crop ceiling almost exactly
+
+`bootstrap_track.py`: full-frame pass to find one seed detection anywhere in the clip (any
+confidence, ranked -- same calibration finding as above), then propagates a moving 960px crop
+frame-by-frame in both directions from there, centered each step on wherever the previous frame's
+own top-1 detection landed. A frame with no detection in its tracked crop gets one full-frame
+retry before being marked lost; the crop center carries forward through a lost frame instead of
+resetting, and a direction gives up after `LOST_STREAK_LIMIT` (10) consecutive misses rather than
+drifting on stale data.
+
+Ran it on the same dunk shot as the oracle-crop test, fully automatically (no hand-picked seed --
+it found its own, at frame 85, confidence 0.141), and checked the result against the same real
+hand-labeled ground truth:
+
+| | within 20px | within 100px |
+|---|---|---|
+| Oracle crop (cheats: centered on the TRUE position every frame) | 54/120 (45%) | 73/120 (61%) |
+| **Bootstrap tracking (fully automatic, zero prior knowledge)** | **54/120 (45%)** | **71/120 (59%)** |
+
+Essentially the same result as the version that cheated. All 120 frames got a position (100%
+coverage, no direction lost track), and the automatic version's accuracy tracks the theoretical
+ceiling this model can reach on our footage almost exactly -- the seed-and-propagate approach isn't
+leaving real accuracy on the table.
+
+**What's genuinely not validated yet:** one shot, the one real ground-truth clip available. Worth
+running against more real hand-labeled shots as they exist (the labeling tool already makes those)
+before trusting this as a general result rather than one good outcome. Also untested: a shot where
+the ball leaves the frame entirely, multiple balls/lookalikes in view, or a genuinely fast release
+where 30fps isn't dense enough for the "can't jump far frame-to-frame" assumption to hold.

@@ -30,3 +30,4 @@ shot-arc/labeling-manifest.js
 shot-arc/*-labels.json
 shot-arc/__pycache__/
 shot-arc/adam-balldata/
+shot-arc/*-tracked.json
