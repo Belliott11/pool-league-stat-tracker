@@ -396,3 +396,37 @@ running against more real hand-labeled shots as they exist (the labeling tool al
 before trusting this as a general result rather than one good outcome. Also untested: a shot where
 the ball leaves the frame entirely, multiple balls/lookalikes in view, or a genuinely fast release
 where 30fps isn't dense enough for the "can't jump far frame-to-frame" assumption to hold.
+
+## Caught a second, different window-timing problem while hand-labeling `03_Alex_make`
+
+Ben's own report: "no shot here." He labeled exactly one real frame (118 of 120) and marked the
+shot range 118-120 -- meaning the only genuine ball-visible moment in this entire clip is right at
+the very last few frames of the window, not somewhere in the middle where the window's own
+PRE_ROLL/POST_ROLL split assumes a release-to-landing arc will fall.
+
+Checked directly: this shot passes `CLEAN_SHOT_GAP_SECONDS` (no other scoring event nearby -- a
+genuinely isolated possession, Alex made, assisted by Viraj, not a rebound/putback like the earlier
+case), so this is a **different failure mode**, not the same bug re-appearing. Extracted a wider,
+8-second window around the same timestamp as a one-off diagnostic: a real, visible ball and clear
+game action shows up well past where the original 120-frame window ends. The real shot genuinely
+happens later, relative to this event's own `videoTime`, than the window assumed.
+
+**What this means, stated plainly:** `videoTime` doesn't have a fixed, reliable offset from the
+real release across all shots. The earlier PRE_ROLL/POST_ROLL tuning (3.0s / 1.0s) was calibrated
+against a small handful of examples and clearly doesn't generalize to every clean, isolated shot --
+this one needed meaningfully more lead time after `videoTime`, not before it. No single fixed
+window is going to get every shot right.
+
+**Real implication for `run_pipeline.py`'s background batch, running at the same time this was
+found:** some fraction of its "usable" fits are likely fitting a parabola to whatever motion the
+tracker found in a window that doesn't actually contain the real shot -- a plausible-looking
+downward curve doesn't guarantee it's fitting the right thing. `points_used`/`tracked_fraction`
+being high is *not* the same guarantee as "the window contained the real shot." Worth treating
+that batch's results as a first pass to spot-check against hand labels, not a trustworthy final
+table, until this is better understood.
+
+**Not yet done:** figure out whether this is truly per-shot unpredictable (needing per-shot manual
+review either way, which the hand-labeling tool's shotStartFrame/shotEndFrame + "Not a valid shot"
+button already partially covers) or whether there's a real pattern behind it (e.g. does lead time
+vary systematically by shot type, by how it was scored, by something else in the data) worth
+tuning the extraction window against instead of guessing again.
