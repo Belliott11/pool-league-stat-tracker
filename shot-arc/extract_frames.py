@@ -7,8 +7,15 @@ import subprocess
 import shutil
 from pathlib import Path
 
-PRE_ROLL = 1.8
-POST_ROLL = 0.6
+PRE_ROLL = 3.0  # widened from 1.8s after real hand-labeling on 02_Evan_make: the ball wasn't
+                 # visible at all for the first ~0.57s of a 1.8s pre-roll, and was already near
+                 # its peak height and roughly level (barely changing) once it appeared -- signs
+                 # the true release happened before the window even started, so the label data
+                 # was catching the back half of the arc (peak, descent, net-settle) and missing
+                 # release/rise entirely. See FINDINGS.md.
+POST_ROLL = 0.4  # shrunk slightly to compensate -- by the old window's own last ~0.3s the ball
+                  # had already settled into the net with no new flight information, based on the
+                  # same real label (y_from_bottom oscillating in a narrow band, not still falling)
 FPS = 30  # matches typical source footage; frame-detection step doesn't need more than this
 
 FRAMES_ROOT = Path(__file__).parent / "frames"

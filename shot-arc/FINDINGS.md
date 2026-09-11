@@ -147,6 +147,29 @@ generalize better than either alone (same physical object, different conditions 
 well-established benefit for training a small detector), but his 4K/different-angle data
 probably doesn't fully replace labeling some of our own 1280x720 footage on top.
 
+## Real hand-labeling: first shot done, found (and fixed) a window-calibration bug
+
+Ben labeled `02_Evan_make` by hand through the new tool (51/72 frames). Sanity-checked the result
+by fitting a parabola to the real clicked positions rather than assuming the tool worked: the
+fitted curve opened the wrong way (upward, `a=40.5 > 0`) with an 18.6px RMS residual, and printing
+the raw `(t, y_from_bottom)` series explained why -- the ball wasn't visible at all for the first
+~0.57s of the 1.8s pre-roll window, and once it appeared it was already near its peak height and
+barely moving for several frames, before descending and settling into a narrow band (net entry).
+That's the *back half* of an arc (peak, descent, net-settle), not a full release-to-landing flight
+-- the true release happened before the window even started.
+
+**Fixed**: widened `PRE_ROLL` from 1.8s to 3.0s and shrunk `POST_ROLL` from 0.6s to 0.4s in
+`extract_frames.py` (the old window's last ~0.3s showed no new flight info, just net-settle).
+Re-extracted all 10 sample shots and visually confirmed on `02_Evan_make`: the ball is now visible
+in the very first frame, already in the shooter's hand mid-windup, well before release. Regenerated
+`labeling-manifest.js` too.
+
+**One real cost**: `02_Evan_make`'s existing labels no longer line up with the re-extracted frames
+(different window, different frame numbering) and need to be redone. Saved at
+`shot-arc/labels/02_Evan_make-labels.json` for reference, but it's now stale -- worth re-labeling
+that one shot under the new window before doing the other 9, so all of them land in one consistent
+window from the start.
+
 ## Files (prototype only, not wired into the app)
 
 All local to `shot-arc/`. `frames/`, `*.pt` (model weights), `*.png` (including the debug crops
