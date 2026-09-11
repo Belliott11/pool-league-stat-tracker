@@ -309,3 +309,60 @@ source was recorded at a higher resolution and only downscaled for GitHub hostin
 real, recoverable opportunity: re-export the master videos at native resolution for this pipeline
 specifically (a separate, non-hosted export, since 4K files have no reason to go through the same
 100MB-per-file GitHub Pages constraint the public viewer's clips do).
+
+Update: it's Adam's phone recording (his camera app, "probably 1080p or 4K" per Ben) -- almost
+certainly not natively 1280x720, so the `game-videos/*.mp4` files really are just a downscaled
+hosting copy, not a ceiling on what's actually recoverable. Still hasn't been directly confirmed
+(no raw master file inspected yet), but the resolution test below no longer needs that answer to
+be useful on its own.
+
+## Downloaded and tested Adam's fine-tuned weights -- real result, with a real complication caught along the way
+
+Downloaded `poolvision-ball-best.pt` (18.3MB, share link from his email) and validated it properly
+before trusting it, since a checkpoint that merely *loads* isn't the same as one that *works*.
+
+**First pass looked broken, and almost got reported that way.** Running it at the same settings
+train_args records (imgsz 640) against Adam's own held-out val set: 0 real detections out of 20
+images even at a very low 0.01 confidence threshold, and `model.val()` (once its own `path: .`
+resolution issue in `data.yaml` was worked around by running from inside the unzipped folder, as
+his README warned it might need) gave a real but unimpressive mAP50 of 0.275 -- nowhere near
+"60/60." Ground-truth label positions, checked directly against the same images, are correctly
+placed right on the ball every time, ruling out a labeling problem on his end or a loading problem
+on mine.
+
+**The actual explanation: a threshold-vs-ranking mismatch, not a broken model.** Checked whether
+the model's own *top-ranked* detection (by confidence, regardless of the absolute confidence
+number, which never got very high) lands near the true position -- it does: 62/69 within 50px,
+68/69 within 100px on his val set, matching his "60/60" claim once evaluated the way he almost
+certainly meant it (best candidate per frame, not "how many detections clear an arbitrary absolute
+threshold"). The model's confidence *calibration* is off; its *localization* is not. Worth telling
+Adam about the calibration finding -- it's a real, useful thing to know about his own checkpoint,
+independent of anything about our footage.
+
+**Then tested directly against real hand-labeled frames from our own footage** (the dunk shot
+labeled earlier, `labels/rejected/00_Evan_make-labels.json` -- its own frames had been overwritten
+by the later clean-sample re-extraction, so re-extracted just that one shot's 120 frames again from
+the same game/timestamp to match the label file exactly):
+
+- **Full 1280x720 frame, no crop:** 0/120 within 20px, 3/120 within 100px. Essentially the same
+  wall this doc already hit with stock detection.
+- **960px crop centered exactly on the true ball position** (an "oracle" crop -- cheats by using
+  the real label to place it, isolating "does cropping help" from "can we find the ball to crop
+  around" as two separate questions): **54/120 (45%) within 20px, 73/120 (61%) within 100px.**
+
+That's the real answer to the open question above, and it didn't need to wait on the master-file
+resolution question at all: **the crop matters far more than this doc's earlier test suggested,
+and matters more than a moderate resolution gap.** Adam's own warning still shows up as a real,
+honest cost -- 45-61% on our footage against his own 90-98.6% on native 4K is a genuine gap, not
+nothing -- but it's a longer, still-usable tail, not the near-total wipeout full-frame detection
+produced. Combined with the same parabola-fit bootstrapping his own dataset was built with (only
+some real detections per shot are needed to fit an arc and predict the rest), this looks like a
+real, viable path, not a dead end.
+
+**Real next step, not yet done:** the oracle crop cheats by already knowing where the ball is,
+which a fresh, unlabeled shot never does going in. The actual bootstrapping problem is: run
+detection on the full frame first (accepting a very low hit rate) to find a small number of seed
+frames, then propagate a moving crop from each seed forward/backward a few frames at a time (ball
+position can't jump far frame-to-frame at 30fps), refitting the crop as new detections come in --
+the same temporal-tracking idea Adam's own crop-follows-the-ball description implies, just not
+implemented here yet.
