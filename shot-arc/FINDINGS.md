@@ -89,6 +89,42 @@ using some anchor — ball-track proximity if the ball detector ever works, a ha
 box (the labeling tool could be extended for this), or a per-game calibrated hoop-proximity
 heuristic. Not attempted here — flagging it rather than presenting noisy numbers as real.
 
+## Checked: does Adam's own labeled ball-training data already exist somewhere accessible?
+
+Now that repo access exists, searched both `poolvision` and `poolean` directly rather than
+assuming. Findings:
+
+- `poolvision/labels/` **is** committed, but it's shot-*outcome* ground truth (make/miss/behind
+  calls, timestamps, confidence — `shots.csv`, `answerkey_*.json`, `judged.json`), not ball-
+  position training data. Different kind of "label" entirely.
+- The real ball-detection training set (`src/balldata.py`/`src/balltrain.py`, YOLO format:
+  `images/{train,val}`, `labels/{train,val}`, `data.yaml`, 323 images) lives at `out/balldata/`
+  on Adam's own machine. `out/` and `*.pt` are both gitignored ("regenerable" / weights). Not a
+  live-database situation (unlike the earlier award-ballot case) — just local files that never
+  got committed. Repo access alone doesn't surface it; asking Adam to export/zip that one folder
+  would.
+- `poolean` itself has nothing relevant, consistent with its own README's stated separation
+  ("a Python project with torch, model weights and thousands of frames has no business inside
+  it").
+
+Two things worth knowing before asking for it:
+
+1. **His labels aren't hand-drawn boxes.** `balldata.py`'s own docstring: fit a parabola to the
+   frames where the stock detector *did* find the ball, then use the fitted curve to predict
+   position in the frames it missed — exactly the hard cases (blurred, in the net, against skin).
+   Self-bootstrapping from partial detections, not manual clicking through hundreds of frames.
+2. **Likely root cause for our own ~0% stock-detection rate, found in his own comment:** he crops
+   to 960px around the region of interest *before* detection, not the full frame — "puts a 35px
+   ball at ~4% of the frame, against 0.9% in a 3840-wide frame downscaled to 1280." Our pipeline
+   fed the detector the full 1280x720 frame, landing almost exactly in his stated bad case.
+   **Worth trying a tight crop around the hoop before detection on our own footage — actionable
+   now, independent of getting anything from Adam.**
+
+Combining his 323 labeled images (different camera/pool/lighting) with our own would likely
+generalize better than either alone (same physical object, different conditions is a real,
+well-established benefit for training a small detector), but his 4K/different-angle data
+probably doesn't fully replace labeling some of our own 1280x720 footage on top.
+
 ## Files (prototype only, not wired into the app)
 
 All local to `shot-arc/`. `frames/`, `*.pt` (model weights), `*.png` (including the debug crops
