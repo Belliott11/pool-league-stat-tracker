@@ -7,15 +7,17 @@ import subprocess
 import shutil
 from pathlib import Path
 
-PRE_ROLL = 3.0  # widened from 1.8s after real hand-labeling on 02_Evan_make: the ball wasn't
-                 # visible at all for the first ~0.57s of a 1.8s pre-roll, and was already near
-                 # its peak height and roughly level (barely changing) once it appeared -- signs
-                 # the true release happened before the window even started, so the label data
-                 # was catching the back half of the arc (peak, descent, net-settle) and missing
-                 # release/rise entirely. See FINDINGS.md.
-POST_ROLL = 0.4  # shrunk slightly to compensate -- by the old window's own last ~0.3s the ball
-                  # had already settled into the net with no new flight information, based on the
-                  # same real label (y_from_bottom oscillating in a narrow band, not still falling)
+PRE_ROLL = 3.0  # widened from 1.8s after real hand-labeling on 02_Evan_make -- see FINDINGS.md.
+                 # That specific sample later turned out to be a rebound/putback (a scramble
+                 # play, not a clean shot -- see CLEAN_SHOT_GAP_SECONDS in select_sample_shots.py),
+                 # so the exact 3.0s/0.4s split this produced was tuned on messy, non-representative
+                 # data. Left PRE_ROLL where it landed since a clean shot's release is unlikely to
+                 # need MORE lead time than a scramble play's did; POST_ROLL below is walked back up
+                 # as a safety margin instead of trusting the 0.4s figure derived from that sample.
+POST_ROLL = 1.0  # walked back up from 0.4s (see above) -- that number came from a scramble play's
+                  # own net-settle tail, not a clean shot's landing time, and isn't trustworthy.
+                  # 1.0s is a safer margin until real hand-labeling on an actual clean sample
+                  # (post CLEAN_SHOT_GAP_SECONDS filtering) says otherwise.
 FPS = 30  # matches typical source footage; frame-detection step doesn't need more than this
 
 FRAMES_ROOT = Path(__file__).parent / "frames"

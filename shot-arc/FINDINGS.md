@@ -170,6 +170,41 @@ in the very first frame, already in the shooter's hand mid-windup, well before r
 that one shot under the new window before doing the other 9, so all of them land in one consistent
 window from the start.
 
+## Real bug: some "shots" are actually two connected plays, not one clean flight
+
+Ben caught this directly: `00_Adam_make` was "named Adam make but it is an Adam miss and it only
+starts after the ball hits the rim and then the ensuing rebound." Checked the real game log --
+he was exactly right. Two separate scoring events, 6.8s apart:
+
+```
+t=228.26  Adam  made=False  rebounderId=Ian
+t=235.07  Adam  made=True   assistId=Ian
+```
+
+Adam missed, Ian rebounded, passed it right back, Adam put it back in. `00_Adam_make` is that
+*second* event (a real, correctly-recorded make) -- but no fixed-size window anchored on it can
+ever show a single clean parabola, because the actual story is two possessions stitched together,
+not one shot. My own earlier window-widening (see above) had been *tuned against exactly this
+kind of sample* without knowing it -- 02_Evan_make, the shot that drove that tuning, turned out to
+have the identical signature (a miss 3.4s earlier, different shooter, same rebound-putback
+pattern). That data was never representative of a clean shot to begin with.
+
+Checked all 10 original samples for the same signature (any other scoring event in the same game
+within 8s before it): **3 of 10 (00, 02, 05) had it.** Common enough that this needs to be a
+selection-time filter, not something caught one at a time by hand-labeling.
+
+**Fixed**: `select_sample_shots.py` now excludes any candidate preceded within
+`CLEAN_SHOT_GAP_SECONDS = 8` by another scoring event in the same game (104 of 362 originally
+eligible shots got excluded by this -- almost 30%, a real rate, not an edge case). Re-ran
+selection + extraction with the new filter; all 10 current samples are isolated possessions.
+Also walked `POST_ROLL` back up from 0.4s to 1.0s, since that number had been derived from a
+scramble play's own net-settle tail, not a clean shot's actual landing time, and wasn't
+trustworthy either.
+
+The two stale label files (`00_Adam_make`, `02_Evan_make`) are kept at `shot-arc/labels/rejected/`
+for reference -- both are real, checkable examples of the scramble-play signature this filter now
+catches -- but shouldn't be used for training.
+
 ## Files (prototype only, not wired into the app)
 
 All local to `shot-arc/`. `frames/`, `*.pt` (model weights), `*.png` (including the debug crops

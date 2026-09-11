@@ -27,6 +27,16 @@ def load_game_video_files():
     return {gid: {"file": file, "videoStart": float(start)} for gid, file, start in rows}
 
 
+# Minimum gap (seconds) from ANY other scoring event in the same game right before this one.
+# Added after real hand-labeling caught a sample ("00_Adam_make") that turned out to be a
+# putback: Adam missed, Ian rebounded, Ian passed back to Adam, Adam scored -- two connected
+# plays 6.8s apart, not one clean shot. No window size can fix that, since the "shot" itself is
+# really a two-possession scramble; a single parabola fit was never going to describe it. Checking
+# all 10 original samples this way found 3 of 10 had the same issue (00, 02, 05) -- common enough
+# to filter at selection time rather than catch one at a time through hand-labeling.
+CLEAN_SHOT_GAP_SECONDS = 8
+
+
 def main():
     state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
     hosted = load_game_video_files()
@@ -40,7 +50,8 @@ def main():
         video_path = GAME_VIDEOS_DIR / Path(hosted[gid]["file"]).name
         if not video_path.exists():
             continue
-        for ev in game.get("scoringEvents", []):
+        all_events = game.get("scoringEvents", [])
+        for ev in all_events:
             if ev.get("videoTime") is None:
                 continue
             if ev.get("points") not in (2, 3):
@@ -49,6 +60,15 @@ def main():
                 continue
             local_time = ev["videoTime"] - hosted[gid]["videoStart"]
             if local_time < 2:  # need room for the pre-release window
+                continue
+            # Skip anything preceded within CLEAN_SHOT_GAP_SECONDS by another scoring event in
+            # this same game -- a rebound/putback/scramble signature, not an isolated possession.
+            preceded_recently = any(
+                other is not ev and other.get("videoTime") is not None
+                and 0 < ev["videoTime"] - other["videoTime"] <= CLEAN_SHOT_GAP_SECONDS
+                for other in all_events
+            )
+            if preceded_recently:
                 continue
             candidates.append({
                 "game_id": gid,
