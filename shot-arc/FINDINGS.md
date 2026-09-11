@@ -205,6 +205,48 @@ The two stale label files (`00_Adam_make`, `02_Evan_make`) are kept at `shot-arc
 for reference -- both are real, checkable examples of the scramble-play signature this filter now
 catches -- but shouldn't be used for training.
 
+## Real bug #2: a dunk isn't a free-flying shot, and there was no way to flag it
+
+The very next fully-labeled shot (`00_Evan_make`) had a much higher residual than the first
+(51.5px vs. 18.6) and a trajectory that swung x back and forth (423 -> 541 -> 247 -> 530) instead
+of tracing one arc. Ben identified it directly: "it is a dunk." That's a different failure mode
+from the rebound/putback case above -- the ball is carried by hand through most of a dunk, not in
+free flight, so no amount of trimming (or a bigger `CLEAN_SHOT_GAP_SECONDS`) would ever make one
+fit a parabola. Unlike the rebound case, there was no existing field to filter on: Poolean's
+`scoringEvent` schema had no `dunk` flag at all (Adam's own PoolVision `judged.json` does).
+
+**Fixed, at the source**: added a `dunk` boolean to the Stat Entry shot-confirmation flow (a
+toggle next to "Where was it from?", defaults off, resets between shots) so every *new* shot
+carries this going forward. For the backlog of shots logged before the field existed, added a
+"Review Possible Dunks" panel (Export tab) listing every close/midrange 2PT field goal with
+`dunk === undefined` (not yet reviewed), each with a Watch Film link and Dunk / Not a dunk
+buttons -- either answer resolves it and drops it off the list. `select_sample_shots.py` should
+eventually also skip `ev.dunk === true` once enough of the backlog is reviewed to make that
+filter meaningful; not done yet since the backlog is still largely unreviewed.
+
+The two dunk label files (`00_Evan_make`, and the earlier `00_Adam_make`/`02_Evan_make` rebound
+cases) all live under `shot-arc/labels/rejected/` now -- real, checkable examples of why arc
+fitting needs clean single-flight data, not just any make.
+
+## Labeling tool: sparse click + interpolate, and a multi-touch trim
+
+Two follow-on tool improvements, both from real usage:
+
+- **Speed**: clicking every single frame (up to 120 per shot now) was the real time cost. Added a
+  "Step" size (default 3) -- clicking a frame now jumps ahead by that many, and on download,
+  straight-line interpolation fills the skipped frames between any two real clicks (capped at an
+  8-frame gap, beyond which a straight line isn't trustworthy -- left as `unlabeled`/`no-ball`
+  instead). Verified directly: a click at frame 1 (0,0) and frame 5 (40,40) correctly filled
+  frames 2-4 at (10,10)/(20,20)/(30,30).
+- **Multi-touch trim**: `00_Evan_make`'s zigzag trajectory (before "it is a dunk" explained it
+  outright) also exposed a separate real gap -- a labeled window can contain more than the shot
+  itself (a pass, a dribble, before the actual release). Added "Mark Shot Start"/"Mark Shot End"
+  buttons; only that frame range is used on export (interpolation never crosses outside it, and
+  frames outside get `status: "outside-shot"`), defaulting to the whole clip when unset.
+
+Also added "Not a valid shot (dunk, etc.)" -- downloads a small `{shotKey, excluded, reason}`
+marker instead of a full label file, for a clip recognized as unusable before spending time on it.
+
 ## Files (prototype only, not wired into the app)
 
 All local to `shot-arc/`. `frames/`, `*.pt` (model weights), `*.png` (including the debug crops
