@@ -253,3 +253,59 @@ All local to `shot-arc/`. `frames/`, `*.pt` (model weights), `*.png` (including 
 referenced above), and the JSON outputs are gitignored (large, fully regenerable locally by
 re-running the three scripts in order) — only this findings doc and the three pipeline scripts
 themselves are tracked in git.
+
+## Adam delivered his real ball-training dataset — and a much bigger finding underneath it
+
+Adam sent `poolvision-balldata-{1,2}of2.zip` (share.adammirmina.com/poolvision-balldata-80bc71c110).
+Unzipped into `shot-arc/adam-balldata/balldata/` (gitignored, 392 real images + YOLO labels —
+verified the counts match his README exactly: 323 train + 69 val). Spot-checked one image
+directly: a real, clearly-visible ball mid-flight, genuine data, not a placeholder.
+
+**Corrections to what I'd assumed:**
+
+- 323 is the train split only. 392 total (323 train + 69 val), not 323.
+- **None of the boxes are hand-drawn.** Same self-bootstrapping technique guessed at from reading
+  `balldata.py` earlier: for a shot with a good parabola fit through the sightings stock detection
+  *did* make (RMS <= 14px, >= 8 points), the fit predicts the ball's position in the frames stock
+  detection missed — and those missed frames were sampled first, on purpose, specifically because
+  they're the hard cases (blur, skin, inside the net, behind the rim). Labels are "as good as the
+  arc fit, not as good as a human," per his own README.
+- **The 960px crop isn't a fixed frame — it *tracks the ball*.** Each crop is centered on that
+  shot's own predicted ball position, clamped to the source frame. This is the actual answer to
+  the crop question this doc raised earlier: the earlier quick test here (a single hand-picked
+  static crop box on one shot, 0/72 hits) wasn't a fair test of "does cropping help" — it was
+  testing a *static* crop, and the real technique is dynamic. His own validation: rolling the
+  crop up to 240px off the true center still scored 60/60 on held-out hard frames, so there's real
+  tolerance, but "a static box the play walks out of is a different thing" — his own words,
+  matching exactly what this doc's earlier test actually showed.
+- **Fine-tuned weights exist** (`ball-best.pt`, yolo11s from COCO, trained on this same dataset)
+  on the same share link, not yet downloaded here — worth grabbing to fine-tune from those instead
+  of raw COCO, if fine-tuning happens at all (see below).
+
+## The resolution finding matters more than any of the above
+
+Adam's own words: "the part that mattered most for us was native pixels on the ball. Downscaling
+a 4K frame to 1280 missed every shot in one run... If your footage is 1280x720 as recorded, the
+ball is already close to the size that broke ours, so the fine-tune will help less there than a
+camera setting would."
+
+Checked our own footage directly: `ffprobe` on `game-videos/g7ko31w6njargwe.mp4` confirms **1280x720**
+— exactly the resolution class Adam says broke his own detector.
+
+**But this doesn't settle it yet, and is a real open question, not a conclusion:** every local shot
+prototyped against so far (`game-videos/*.mp4`) is a *deliberately re-encoded copy*, per
+`dashboard-viewer/viewer-videos.js`'s own comment — "extracted straight from the real session
+recording and re-encoded down (720p, libx264 CRF 26) to stay well under GitHub's 100MB per-file
+limit." That comment explicitly distinguishes these from "the raw, multi-game session file." The
+*original* session recordings (referenced by `masterVideoId`) live only in Ben's own browser
+IndexedDB, not as plain files this environment can reach, and their actual native resolution is
+genuinely unknown here.
+
+**Real next step, not yet done:** find out what resolution the original session recordings
+actually are (what device/app recorded them, at what setting) before concluding anything about
+whether fine-tuning would help. If the source was already 1280x720 at capture, Adam's warning
+applies directly and a camera setting change for *future* games is the higher-leverage fix. If the
+source was recorded at a higher resolution and only downscaled for GitHub hosting later, there's a
+real, recoverable opportunity: re-export the master videos at native resolution for this pipeline
+specifically (a separate, non-hosted export, since 4K files have no reason to go through the same
+100MB-per-file GitHub Pages constraint the public viewer's clips do).
