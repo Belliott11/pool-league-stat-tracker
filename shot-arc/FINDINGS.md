@@ -316,6 +316,12 @@ hosting copy, not a ceiling on what's actually recoverable. Still hasn't been di
 (no raw master file inspected yet), but the resolution test below no longer needs that answer to
 be useful on its own.
 
+Update: Adam is working on getting 4K/60fps footage going forward. Directly addresses his own
+resolution warning if it lands. Worth being clear that this is a separate fix from the
+window-timing problem below -- higher resolution and frame rate help the ball actually be visible
+and finely sampled, but don't touch the separate question of whether the extraction window is
+even pointed at the right few seconds of video to begin with.
+
 ## Downloaded and tested Adam's fine-tuned weights -- real result, with a real complication caught along the way
 
 Downloaded `poolvision-ball-best.pt` (18.3MB, share link from his email) and validated it properly
