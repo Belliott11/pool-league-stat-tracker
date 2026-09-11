@@ -37,7 +37,11 @@ def load_game_video_files():
 CLEAN_SHOT_GAP_SECONDS = 8
 
 
-def main():
+def find_clean_candidates():
+    """Every real logged field goal that's a clean, isolated possession (see
+    CLEAN_SHOT_GAP_SECONDS) with a locally hosted video to pull frames from. Shared by this
+    script's own small prototype sample and run_pipeline.py's larger real run, so both draw from
+    exactly the same eligibility rules."""
     state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
     hosted = load_game_video_files()
     players = {p["id"]: p["name"] for p in state["players"]}
@@ -80,7 +84,11 @@ def main():
                 "video_time_local": local_time,
                 "shot_location": ev["shotLocation"],
             })
+    return candidates
 
+
+def main():
+    candidates = find_clean_candidates()
     random.seed(11)  # deterministic sample selection
     makes = [c for c in candidates if c["made"]]
     misses = [c for c in candidates if not c["made"]]

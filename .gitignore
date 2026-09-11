@@ -31,3 +31,4 @@ shot-arc/*-labels.json
 shot-arc/__pycache__/
 shot-arc/adam-balldata/
 shot-arc/*-tracked.json
+shot-arc/pipeline_results.json
