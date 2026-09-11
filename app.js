@@ -8113,8 +8113,7 @@ document.getElementById("exportAllJsonBtn").addEventListener("click", () => {
 // frame, since across potentially hundreds of frames a full bounding-box editor would be far
 // slower than it needs to be -- the fine-tuning step this feeds can turn a center point plus a
 // fixed box size into a real training label on its own.
-let labelFrameFiles = [];
-let labelFrameUrls = [];
+let labelFrameNames = []; // e.g. ["frame_0001.png", "frame_0002.png", ...]
 let labelResults = {}; // filename -> {x, y} (labeled) | "no-ball" | absent (not yet visited)
 let labelFrameIndex = 0;
 let labelShotKey = "";
@@ -8124,21 +8123,24 @@ function labelEntryFor(filename) {
   return Object.prototype.hasOwnProperty.call(labelResults, filename) ? labelResults[filename] : undefined;
 }
 
+function labelFrameUrl(filename) {
+  return `shot-arc/frames/${labelShotKey}/${filename}`;
+}
+
 function renderLabelFrame() {
   const wrap = document.getElementById("labelFrameWrap");
   const progressEl = document.getElementById("labelProgress");
-  if (labelFrameFiles.length === 0) {
+  if (labelFrameNames.length === 0) {
     wrap.innerHTML = "";
     progressEl.textContent = "";
     return;
   }
-  const file = labelFrameFiles[labelFrameIndex];
-  const url = labelFrameUrls[labelFrameIndex];
-  const entry = labelEntryFor(file.name);
-  const labeledCount = labelFrameFiles.filter(f => labelEntryFor(f.name) !== undefined).length;
-  progressEl.textContent = `Frame ${labelFrameIndex + 1} of ${labelFrameFiles.length} (${file.name}) -- ${labeledCount} of ${labelFrameFiles.length} labeled so far. Click the ball's center, or use "No ball visible."`;
+  const name = labelFrameNames[labelFrameIndex];
+  const entry = labelEntryFor(name);
+  const labeledCount = labelFrameNames.filter(n => labelEntryFor(n) !== undefined).length;
+  progressEl.textContent = `Frame ${labelFrameIndex + 1} of ${labelFrameNames.length} (${name}) -- ${labeledCount} of ${labelFrameNames.length} labeled so far. Click the ball's center, or use "No ball visible."`;
 
-  wrap.innerHTML = `<img id="labelFrameImg" src="${url}" style="display:block;max-width:100%;cursor:crosshair" draggable="false">`;
+  wrap.innerHTML = `<img id="labelFrameImg" src="${labelFrameUrl(name)}" style="display:block;max-width:100%;cursor:crosshair" draggable="false">`;
   const img = document.getElementById("labelFrameImg");
   img.addEventListener("load", () => {
     if (!labelNaturalSize) labelNaturalSize = { w: img.naturalWidth, h: img.naturalHeight };
@@ -8157,36 +8159,53 @@ function renderLabelFrame() {
     const scaleY = img.naturalHeight / rect.height;
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
-    labelResults[file.name] = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
+    labelResults[name] = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
     advanceLabelFrame(1);
   });
 
   document.getElementById("labelPrevFrameBtn").disabled = labelFrameIndex === 0;
-  document.getElementById("labelNextFrameBtn").disabled = labelFrameIndex === labelFrameFiles.length - 1;
+  document.getElementById("labelNextFrameBtn").disabled = labelFrameIndex === labelFrameNames.length - 1;
 }
 
 function advanceLabelFrame(delta) {
   const next = labelFrameIndex + delta;
-  if (next < 0 || next >= labelFrameFiles.length) return;
+  if (next < 0 || next >= labelFrameNames.length) return;
   labelFrameIndex = next;
   renderLabelFrame();
 }
 
-document.getElementById("labelFramesInput").addEventListener("change", e => {
-  const files = Array.from(e.target.files).filter(f => /\.(png|jpe?g)$/i.test(f.name));
-  if (files.length === 0) return;
-  files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-  labelFrameUrls.forEach(u => URL.revokeObjectURL(u));
-  labelFrameFiles = files;
-  labelFrameUrls = files.map(f => URL.createObjectURL(f));
+// Populated from shot-arc/labeling-manifest.js (a plain <script>-loaded global, not fetch()'d --
+// see index.html's own comment on why: fetch() of a local file hits file:// CORS restrictions
+// in Chrome, a <script src> tag doesn't), which extract_frames.py regenerates from whatever's
+// actually sitting in shot-arc/frames/ every time it runs. Nothing to upload: picking a shot from
+// this list is enough, since the frame images themselves are just loaded by relative path.
+function populateLabelShotSelect() {
+  const select = document.getElementById("labelShotSelect");
+  const manifest = typeof SHOT_ARC_LABEL_MANIFEST !== "undefined" ? SHOT_ARC_LABEL_MANIFEST : null;
+  if (!manifest || manifest.length === 0) {
+    select.innerHTML = '<option value="">No frames available -- run shot-arc/extract_frames.py first</option>';
+    return;
+  }
+  select.innerHTML = '<option value="">Pick a shot to label…</option>' +
+    manifest.map(s => `<option value="${escapeHtml(s.key)}">${escapeHtml(s.key)} (${s.frameCount} frames)</option>`).join("");
+}
+
+document.getElementById("labelShotSelect").addEventListener("change", e => {
+  const manifest = typeof SHOT_ARC_LABEL_MANIFEST !== "undefined" ? SHOT_ARC_LABEL_MANIFEST : [];
+  const entry = manifest.find(s => s.key === e.target.value);
+  if (!entry) {
+    labelFrameNames = [];
+    renderLabelFrame();
+    ["labelPrevFrameBtn", "labelNoballBtn", "labelNextFrameBtn", "labelDownloadBtn"].forEach(id => {
+      document.getElementById(id).disabled = true;
+    });
+    return;
+  }
+  labelShotKey = entry.key;
+  labelFrameNames = Array.from({ length: entry.frameCount }, (_, i) => `frame_${String(i + 1).padStart(4, "0")}.png`);
   labelResults = {};
   labelFrameIndex = 0;
   labelNaturalSize = null;
-  // webkitdirectory gives paths like "00_Adam_make/frame_0001.png" -- the folder name is the
-  // shot's own key (see select_sample_shots.py/extract_frames.py), reused here so the exported
-  // labels file lines back up with the same shot without retyping it.
-  const relPath = files[0].webkitRelativePath || "";
-  labelShotKey = relPath.includes("/") ? relPath.split("/")[0] : "shot";
 
   ["labelPrevFrameBtn", "labelNoballBtn", "labelNextFrameBtn", "labelDownloadBtn"].forEach(id => {
     document.getElementById(id).disabled = false;
@@ -8194,15 +8213,17 @@ document.getElementById("labelFramesInput").addEventListener("change", e => {
   renderLabelFrame();
 });
 
+populateLabelShotSelect();
+
 document.getElementById("labelPrevFrameBtn").addEventListener("click", () => advanceLabelFrame(-1));
 document.getElementById("labelNextFrameBtn").addEventListener("click", () => advanceLabelFrame(1));
 document.getElementById("labelNoballBtn").addEventListener("click", () => {
-  if (labelFrameFiles.length === 0) return;
-  labelResults[labelFrameFiles[labelFrameIndex].name] = "no-ball";
+  if (labelFrameNames.length === 0) return;
+  labelResults[labelFrameNames[labelFrameIndex]] = "no-ball";
   advanceLabelFrame(1);
 });
 document.addEventListener("keydown", e => {
-  if (labelFrameFiles.length === 0) return;
+  if (labelFrameNames.length === 0) return;
   if (e.code !== "Space") return;
   const active = document.activeElement;
   if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT" || active.isContentEditable)) return;
@@ -8212,16 +8233,16 @@ document.addEventListener("keydown", e => {
 });
 
 document.getElementById("labelDownloadBtn").addEventListener("click", () => {
-  if (labelFrameFiles.length === 0) return;
+  if (labelFrameNames.length === 0) return;
   const output = {
     shotKey: labelShotKey,
     frameWidth: labelNaturalSize ? labelNaturalSize.w : null,
     frameHeight: labelNaturalSize ? labelNaturalSize.h : null,
-    frames: labelFrameFiles.map(f => {
-      const entry = labelEntryFor(f.name);
-      if (entry === undefined) return { filename: f.name, status: "unlabeled" };
-      if (entry === "no-ball") return { filename: f.name, status: "no-ball" };
-      return { filename: f.name, status: "labeled", x: entry.x, y: entry.y };
+    frames: labelFrameNames.map(name => {
+      const entry = labelEntryFor(name);
+      if (entry === undefined) return { filename: name, status: "unlabeled" };
+      if (entry === "no-ball") return { filename: name, status: "no-ball" };
+      return { filename: name, status: "labeled", x: entry.x, y: entry.y };
     }),
   };
   download(`${labelShotKey}-labels.json`, JSON.stringify(output, null, 2), "application/json");

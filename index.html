@@ -815,12 +815,9 @@
 
     <div class="panel">
       <h2>Shot Arc Hand-Labeling</h2>
-      <p class="hint">For fine-tuning ball detection on real footage (see <code>shot-arc/FINDINGS.md</code>: stock detection doesn't find the ball on real in-flight shots). Load one shot's frame folder (<code>shot-arc/frames/&lt;shot-key&gt;/</code>, from <code>extract_frames.py</code>) below, then click the ball's center in each frame, or "No ball visible" if it's occluded/off-screen. Space bar repeats "No ball visible"; click anywhere on the frame to mark it and move on. A small dot shows where you last clicked once you've labeled a frame. When you're done with a shot (or want to stop partway), download the labels JSON and hand the whole batch back for fine-tuning.</p>
+      <p class="hint">For fine-tuning ball detection on real footage (see <code>shot-arc/FINDINGS.md</code>: stock detection doesn't find the ball on real in-flight shots). Pick a shot below (whatever's currently in <code>shot-arc/frames/</code>, from <code>extract_frames.py</code>), then click the ball's center in each frame, or "No ball visible" if it's occluded/off-screen. Space bar repeats "No ball visible"; click anywhere on the frame to mark it and move on. A small dot shows where you last clicked once you've labeled a frame. When you're done with a shot (or want to stop partway), download the labels JSON and hand the whole batch back for fine-tuning.</p>
       <div class="button-row">
-        <label class="secondary-btn file-label">
-          Load Frame Folder
-          <input type="file" id="labelFramesInput" webkitdirectory multiple hidden>
-        </label>
+        <select id="labelShotSelect"><option value="">Loading available shots…</option></select>
         <button id="labelPrevFrameBtn" class="secondary-btn" disabled>◀ Prev</button>
         <button id="labelNoballBtn" class="secondary-btn" disabled>No ball visible (space)</button>
         <button id="labelNextFrameBtn" class="secondary-btn" disabled>Next ▶</button>
@@ -846,6 +843,11 @@
 
 </main>
 
+<!-- Optional: only present locally after running shot-arc/extract_frames.py. Absent on the
+     deployed site (shot-arc/ is a local-only tool, not part of the public repo's served pages),
+     where a missing script tag just fails silently -- the labeling panel below checks for
+     SHOT_ARC_LABEL_MANIFEST before using it and shows an explanatory message if it's not there. -->
+<script src="shot-arc/labeling-manifest.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
