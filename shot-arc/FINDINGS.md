@@ -403,6 +403,35 @@ before trusting this as a general result rather than one good outcome. Also unte
 the ball leaves the frame entirely, multiple balls/lookalikes in view, or a genuinely fast release
 where 30fps isn't dense enough for the "can't jump far frame-to-frame" assumption to hold.
 
+## Ran the first 30-shot batch -- caught a real tracker bug the single validated shot never exposed
+
+`run_pipeline.py --limit 30`: 14/30 came back "usable" by its own criteria (enough tracked
+points, fit opens downward). That number turned out not to be trustworthy on its own. Spot-checked
+one usable result's raw trajectory directly (`real_g7ko31w6njargwe_...`) instead of taking the
+"usable" flag at face value, and found long stretches frozen at the *exact same pixel position*
+for 100+ frames straight (e.g. (943.5, 554.x) unchanged for frames 18-42 and 66-108). A real ball
+in flight is never static that long -- the moving crop had locked onto a stationary background
+object and kept re-finding it every frame, which looked identical to successful tracking from the
+outside (a detection every frame, a plausible-looking downward parabola through the noise). Also
+explains the near-universal `flight=3.97s` across nearly every "usable" result: that's just "the
+tracker found *something* for almost the whole 4-second window," not "the real flight lasted 4
+seconds" (a real shot's actual flight is under 2s).
+
+**Fixed in `bootstrap_track.py`:** track how long the reported position holds still
+(`STATIC_EPS`/`STATIC_STREAK_LIMIT`); once a position repeats past the limit, blacklist it for the
+rest of that direction so later frames are forced to either find the real, moving ball elsewhere
+or honestly report lost track, instead of quietly continuing to report the same dead spot.
+Re-ran against the one shot with real ground truth to check for a regression before trusting the
+fix: identical result, 54/120 (45%) within 20px, 71/120 (59%) within 100px -- no accuracy lost,
+and it actively caught and blacklisted the *exact same* static object (same coordinates, same
+game) that had corrupted the batch result, confirming this was a real, real-world bug, not a
+one-off.
+
+**Re-running the 30-shot batch with the fix before trusting any of its numbers.** Combined with
+the still-open window-timing problem above, this is the second reason so far that a shot's
+"usable" flag alone isn't enough to trust its output -- both are real failure modes a small,
+single-shot validation didn't have enough data to expose.
+
 ## Caught a second, different window-timing problem while hand-labeling `03_Alex_make`
 
 Ben's own report: "no shot here." He labeled exactly one real frame (118 of 120) and marked the

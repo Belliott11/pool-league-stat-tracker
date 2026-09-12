@@ -37,6 +37,9 @@ WEIGHTS_PATH = Path(__file__).parent / "adam-balldata" / "poolvision-ball-best.p
 CROP = 960
 CONF_FLOOR = 0.001  # effectively "any detection at all" -- see FINDINGS.md's calibration finding
 LOST_STREAK_LIMIT = 10  # consecutive misses before giving up on a direction
+STATIC_EPS = 4.0  # px -- a real ball in flight is essentially never this still frame-to-frame
+STATIC_STREAK_LIMIT = 4  # consecutive near-identical detections before suspecting a lock-on
+BLACKLIST_RADIUS = 30  # px -- how close counts as "the same spot" once blacklisted
 
 
 def top1_detection(model, image_or_path):
@@ -107,24 +110,59 @@ def track_shot(shot_key, seed_frame=None, seed_xy=None):
     results[seed_idx] = {"x": round(seed[1], 1), "y": round(seed[2], 1), "source": "seed"}
 
     def propagate(direction):
+        # Caught at scale (see FINDINGS.md): a moving crop can lock onto a stationary background
+        # object -- something ball-shaped and confident, just not the ball -- and the original
+        # version of this loop had no way to notice, since "found a detection every frame" looked
+        # exactly like successful tracking. A real ball in flight is essentially never static for
+        # more than a couple frames; once one position repeats past STATIC_STREAK_LIMIT, it gets
+        # blacklisted for the rest of this direction so the tracker is forced to either find the
+        # real, moving ball elsewhere or honestly give up (lost_streak), instead of quietly
+        # continuing to report the same dead spot as a "tracked" position.
         cx, cy = seed[1], seed[2]
+        last_xy = (seed[1], seed[2])
         lost_streak = 0
+        static_streak = 0
+        blacklist_xy = None
+
+        def near_blacklist(hit):
+            if hit is None or blacklist_xy is None:
+                return False
+            x, y, _ = hit
+            return ((x - blacklist_xy[0]) ** 2 + (y - blacklist_xy[1]) ** 2) ** 0.5 < BLACKLIST_RADIUS
+
         i = seed_idx + direction
         while 0 <= i < n:
             img = Image.open(frame_paths[i])
             hit = cropped_detect(model, img, cx, cy)
+            if near_blacklist(hit):
+                hit = None
             if hit is None:
                 # Recovery attempt: try the full frame once before calling this one lost.
                 full_hit = top1_detection(model, img)
-                hit = full_hit
+                hit = None if near_blacklist(full_hit) else full_hit
+
+            if hit is not None:
+                x, y, conf = hit
+                dist = ((x - last_xy[0]) ** 2 + (y - last_xy[1]) ** 2) ** 0.5
+                static_streak = static_streak + 1 if dist < STATIC_EPS else 0
+                if static_streak > STATIC_STREAK_LIMIT and blacklist_xy is None:
+                    blacklist_xy = (x, y)
+                    print(f"  Frame {i}: position ({x:.0f}, {y:.0f}) held static for "
+                          f"{static_streak} frames -- treating as a locked-on background object, "
+                          f"blacklisting it for the rest of this direction.")
+                    hit = None  # this frame's own detection is the stuck one -- don't trust it
+
             if hit is not None:
                 x, y, conf = hit
                 results[i] = {"x": round(x, 1), "y": round(y, 1), "source": "tracked"}
                 cx, cy = x, y
+                last_xy = (x, y)
                 lost_streak = 0
             else:
                 results[i] = None
                 lost_streak += 1
+                # cx, cy intentionally NOT updated here -- a rejected detection shouldn't anchor
+                # the next frame's crop back onto the same dead spot.
                 if lost_streak > LOST_STREAK_LIMIT:
                     print(f"  Lost track {['backward','forward'][direction>0]} at frame {i} "
                           f"({lost_streak} consecutive misses) -- stopping this direction.")
