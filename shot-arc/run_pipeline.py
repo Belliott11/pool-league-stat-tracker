@@ -30,6 +30,16 @@ MIN_POINTS_FOR_FIT = 8  # higher bar than detect_and_fit.py's 4 -- a tracked tra
                          # points available to spend, so ask for more before trusting a fit
 MIN_TRACKED_FRACTION = 0.35  # below this, too much of the flight is guesswork to fit at all
 
+# A real shot's flight (release to landing) takes well under 2 seconds at this range -- caught at
+# scale (see FINDINGS.md's own "flight=3.97s on nearly every 'usable' result" finding): even after
+# fixing the tracker's static-lock-on bug, most fits still spanned almost the entire 4-second
+# window, because the window itself often contains more than just the shot (a pass, a dribble, a
+# second touch) and the tracker correctly follows the real, moving ball through all of it, not
+# only during the actual release-to-landing arc. A fit that spans nearly the whole window is very
+# unlikely to be measuring one clean flight, whatever its tracked_fraction or "opens downward"
+# check say -- reject it explicitly rather than reporting a number nobody should trust.
+MAX_PLAUSIBLE_FLIGHT_S = 2.0
+
 
 def fit_arc(tracked, frame_height):
     points = []
@@ -59,6 +69,15 @@ def fit_arc(tracked, frame_height):
             "usable": False, "reason": "fit did not open downward",
             "points_used": n_tracked, "tracked_fraction": round(tracked_fraction, 2),
         }
+    flight_duration = t.max() - t.min()
+    if flight_duration > MAX_PLAUSIBLE_FLIGHT_S:
+        return {
+            "usable": False,
+            "reason": f"flight spans {flight_duration:.2f}s, longer than a real shot's flight "
+                      f"plausibly takes -- likely tracking real motion that isn't just the shot",
+            "points_used": n_tracked, "tracked_fraction": round(tracked_fraction, 2),
+            "flight_duration_s": round(flight_duration, 3),
+        }
     t_peak = -b / (2 * a)
     peak_height = a * t_peak ** 2 + b * t_peak + c
     return {
@@ -66,7 +85,7 @@ def fit_arc(tracked, frame_height):
         "points_used": n_tracked, "tracked_fraction": round(tracked_fraction, 2),
         "peak_height_px": round(peak_height, 1),
         "time_to_peak_s": round(t_peak - t.min(), 3),
-        "flight_duration_s": round(t.max() - t.min(), 3),
+        "flight_duration_s": round(flight_duration, 3),
     }
 
 
