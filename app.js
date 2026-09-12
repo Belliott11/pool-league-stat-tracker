@@ -4792,7 +4792,7 @@ function renderIndividualGamePerformances() {
   const worst = sorted.slice(-n).reverse();
   const li = r => `
     <li>
-      <span class="award-standings-name">${escapeHtml(r.player.name)} <span class="hint" style="margin:0">(${escapeHtml(formatDateDisplay(r.game.date))})</span></span>
+      <span class="award-standings-name"><button type="button" class="icon-btn indiv-game-player-btn" data-player-id="${r.player.id}" style="padding:0;font-weight:700;color:var(--accent)">${escapeHtml(r.player.name)}</button> <button type="button" class="icon-btn indiv-game-date-btn" data-game-id="${r.game.id}" style="padding:0;font-weight:600;color:var(--accent)">(${escapeHtml(formatDateDisplay(r.game.date))})</button></span>
       <span>${r.twoWay >= 0 ? "+" : ""}${r.twoWay.toFixed(1)} Two-Way <span class="hint" style="margin:0">(${r.pts} pts)</span></span>
     </li>
   `;
@@ -4808,6 +4808,12 @@ function renderIndividualGamePerformances() {
       </div>
     </div>
   `;
+  wrap.querySelectorAll(".indiv-game-player-btn").forEach(btn => {
+    btn.addEventListener("click", () => openPlayerDetail(btn.dataset.playerId));
+  });
+  wrap.querySelectorAll(".indiv-game-date-btn").forEach(btn => {
+    btn.addEventListener("click", () => openGame(btn.dataset.gameId));
+  });
 }
 
 // Summer 2026's voted awards, straight from that season's closed ballot (award_results in the
@@ -8173,7 +8179,7 @@ function renderPlayerGameLog(playerId) {
         ? ' <span class="badge badge-lowlight" title="Worst individual game this season by Two-Way score.">👎</span>'
         : "";
     tr.innerHTML = `
-      <td>${formatDateDisplay(r.game.date)}</td>
+      <td><button type="button" class="icon-btn game-log-date-btn" data-game-id="${r.game.id}" style="padding:0;font-weight:600;color:var(--accent)">${formatDateDisplay(r.game.date)}</button></td>
       <td>${r.result || "—"}</td>
       <td>${r.s.pts}</td>
       <td>${formatShootingSplit(r.sh.fgm, r.sh.fga)}</td>
@@ -8197,6 +8203,9 @@ function renderPlayerGameLog(playerId) {
       <td>${r.twoWay.toFixed(1)}${twoWayBadge}</td>
     `;
     body.appendChild(tr);
+  });
+  body.querySelectorAll(".game-log-date-btn").forEach(btn => {
+    btn.addEventListener("click", () => openGame(btn.dataset.gameId));
   });
 }
 
