@@ -465,3 +465,25 @@ review either way, which the hand-labeling tool's shotStartFrame/shotEndFrame + 
 button already partially covers) or whether there's a real pattern behind it (e.g. does lead time
 vary systematically by shot type, by how it was scored, by something else in the data) worth
 tuning the extraction window against instead of guessing again.
+
+## Re-ran the same 30-shot batch against real 4K60 source instead of the compressed 720p/30fps hosted video -- confirms tracking wasn't the bottleneck, window-timing is
+
+The batch above ran against `dashboard-viewer/game-videos/*.mp4` -- compressed, re-encoded 1280x720/30fps clips, not Adam's real 3840x2160/60fps handoff. Mapped all 10 currently-hosted games to his 5 files by cross-referencing each file's embedded `creation_time` against each game's own date, then confirmed the mapping (and that no separate offset is needed -- a game's own `videoTime` is already absolute against the 4K file's own t=0) by pulling the frame at the same `videoTime` from both the compressed clip and the 4K file for two different games/files and checking they show the identical instant. Both matched exactly.
+
+Running full-frame detection at native 4K on every frame (`find_seed`'s job: find one decent hit anywhere in a 120-frame clip) turned out to be impractically slow -- over 5 minutes on a single shot before being killed, versus the ~1-2 min/shot *total* the low-res pipeline ran at. Not the matmul: `top1_detection` already fixes `imgsz=640` for the actual inference, so the cost is decoding/resizing ~120 full 3840x2160 PNGs (5-6MB each) per shot just for the coarse seed search. Fixed by having `find_seed` detect against a shrunk copy of each frame (`SEED_PASS_MAX_WIDTH`, 1280px) and scaling the hit back up to full-res coordinates -- the seed step only ever needed a rough "where's the ball" answer by design, not final positioning. The `CROP`-based tracking pass that follows the seed still runs against full native-resolution crops, which is where the real detail benefit actually lives (a 960px crop of a 4K frame has real texture on a small object; a 960px crop of a 720p frame is most of the whole frame). That brought a shot back down to ~2 minutes total.
+
+Re-ran the exact same 30 shots (same `--seed 7`, same candidate list) against the 4K source:
+
+| | low-res (720p/30fps) | 4K60 |
+|---|---|---|
+| usable | 0/30 | 0/30 |
+| avg tracked_fraction | 0.69 | **0.87** |
+| low tracked-fraction failures | 7 | **4** |
+| "fit did not open downward" | 11 | 10 |
+| "flight spans too long" (>2s) | 12 | 16 |
+
+Tracking coverage genuinely improved (69% -> 87% of frames tracked on average, matching the resolution-detail relationship this doc already found with the oracle-crop test), and low-tracked-fraction failures dropped by nearly half. But **still 0/30 usable**, and "flight too long" failures went *up*, not down -- the better tracker is now successfully following the ball through more of each noisy window, including whatever isn't the actual shot (a pass, a dribble, the window catching activity beyond one clean release-to-landing arc), so more shots hit the plausibility ceiling instead of failing earlier on lost track.
+
+**What this settles:** resolution/frame-rate was a real, measurable problem (worth keeping the 4K source going forward -- `select_sample_shots.py`'s `GAME_4K_SOURCE` map now prefers it automatically when a game has 4K coverage), but it was never the dominant blocker. The window-timing problem this doc already flagged above -- a fixed PRE_ROLL/POST_ROLL doesn't reliably bracket just the real flight -- is. Better tracking alone can't fix a window that's pointed at the wrong span of video; it just tracks the wrong motion more faithfully.
+
+**Real next step:** stop trying to auto-isolate the flight from a fixed window. The hand-labeling tool (Export tab, "Shot Arc Hand-Labeling") already collects `shotStartFrame`/`shotEndFrame` per shot for exactly this reason -- a human marking the real release-to-landing range. `fit_arc` should use that range when a shot has real hand labels (restrict `points` to frames between `shotStartFrame` and `shotEndFrame` before fitting) instead of fitting across the whole extraction window. That sidesteps the window-timing problem entirely for labeled shots, at the cost of needing a human in the loop per shot rather than a zero-touch pipeline -- which, given a fixed window hasn't generalized after two real attempts at tuning it, looks like the actual shape of this problem rather than a shortcut worth avoiding.

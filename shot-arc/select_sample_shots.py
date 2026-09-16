@@ -19,6 +19,26 @@ VIEWER_VIDEOS_JS = Path(r"C:\Users\breso\dashboard-viewer\viewer-videos.js")
 GAME_VIDEOS_DIR = Path(r"C:\Users\breso\dashboard-viewer\game-videos")
 OUT_PATH = Path(__file__).parent / "sample_shots.json"
 
+# Adam's real 4K60 handoff (see FINDINGS.md): each file is the full, unedited session recording,
+# not trimmed per game the way game-videos/*.mp4 is. Confirmed by pulling the frame at a game's
+# own videoTime from both the compressed per-game .mp4 (at videoTime - videoStart) and the 4K
+# file (at videoTime directly, no offset) for two different games/files and checking they show
+# the exact same instant -- the 4K file's own t=0 is the same reference point as videoTime, no
+# separate offset needed. Games not listed here fall back to the compressed .mp4 as before.
+FOURK_ROOT = Path(r"C:\Users\breso\Videos\pool-league-4k60")
+GAME_4K_SOURCE = {
+    "jmyhhago9gvrteb": FOURK_ROOT / "IMG_2482.MOV",
+    "wurjg3g9xhehuka": FOURK_ROOT / "IMG_2483.MOV",
+    "ctqc73n67cph45y": FOURK_ROOT / "IMG_2769.MOV",
+    "spqwa4x7i5ylpdx": FOURK_ROOT / "IMG_2769.MOV",
+    "5gqbi2wxew52g5p": FOURK_ROOT / "IMG_2769.MOV",
+    "w2gvgk88n6e4had": FOURK_ROOT / "IMG_2770.MOV",
+    "g7ko31w6njargwe": FOURK_ROOT / "IMG_2770.MOV",
+    "cmgf3z9rea2l7rc": FOURK_ROOT / "IMG_2932.MOV",
+    "bl46f6scpfe9ib6": FOURK_ROOT / "IMG_2932.MOV",
+    "yf7wfx0jbtzy468": FOURK_ROOT / "IMG_2932.MOV",
+}
+
 
 def load_game_video_files():
     text = VIEWER_VIDEOS_JS.read_text(encoding="utf-8")
@@ -51,7 +71,13 @@ def find_clean_candidates():
         gid = game["id"]
         if gid not in hosted:
             continue
-        video_path = GAME_VIDEOS_DIR / Path(hosted[gid]["file"]).name
+        fourk_path = GAME_4K_SOURCE.get(gid)
+        if fourk_path is not None and fourk_path.exists():
+            video_path = fourk_path
+            use_4k = True
+        else:
+            video_path = GAME_VIDEOS_DIR / Path(hosted[gid]["file"]).name
+            use_4k = False
         if not video_path.exists():
             continue
         all_events = game.get("scoringEvents", [])
@@ -62,7 +88,9 @@ def find_clean_candidates():
                 continue
             if not ev.get("shotLocation"):
                 continue
-            local_time = ev["videoTime"] - hosted[gid]["videoStart"]
+            # The 4K file is the untrimmed session recording, so its own t=0 is the same
+            # reference point as videoTime already -- no videoStart subtraction needed there.
+            local_time = ev["videoTime"] if use_4k else ev["videoTime"] - hosted[gid]["videoStart"]
             if local_time < 2:  # need room for the pre-release window
                 continue
             # Skip anything preceded within CLEAN_SHOT_GAP_SECONDS by another scoring event in
@@ -77,6 +105,7 @@ def find_clean_candidates():
             candidates.append({
                 "game_id": gid,
                 "video_file": str(video_path),
+                "source": "4k" if use_4k else "compressed",
                 "shooter": players.get(ev.get("scorerId"), "?"),
                 "made": ev.get("made") is not False,
                 "points": ev["points"],

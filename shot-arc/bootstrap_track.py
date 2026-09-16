@@ -41,6 +41,18 @@ STATIC_EPS = 4.0  # px -- a real ball in flight is essentially never this still 
 STATIC_STREAK_LIMIT = 4  # consecutive near-identical detections before suspecting a lock-on
 BLACKLIST_RADIUS = 30  # px -- how close counts as "the same spot" once blacklisted
 
+# The seed pass (find_seed, below) only needs ONE rough hit anywhere in the clip -- a low bar by
+# design (see module docstring) -- so it doesn't need full source resolution to do its job.
+# Detecting against a shrunk copy instead of the native frame (which on Adam's real 4K60 footage
+# is 3840x2160, PNG, ~6MB/frame -- ultralytics still decodes and loads the whole thing before its
+# own internal resize to imgsz=640) turned a single shot's seed pass into a many-minutes-plus CPU
+# job; a small width here keeps it fast while barely affecting seed quality, since the seed step's
+# job is just "find approximately where the ball is," not final positioning -- the CROP-based
+# tracking pass below still runs against full source resolution, which is where the real detail
+# benefit of the 4K footage actually lives (a 960px crop of a 4K frame has real texture on the
+# ball; a 960px crop of a 720p frame is most of the whole frame).
+SEED_PASS_MAX_WIDTH = 1280
+
 
 def top1_detection(model, image_or_path):
     r = model.predict(image_or_path, verbose=False, conf=CONF_FLOOR, imgsz=640)[0]
@@ -69,13 +81,25 @@ def cropped_detect(model, img, cx, cy):
 
 def find_seed(model, frame_paths):
     """Full-frame pass across every frame, looking for the single best detection anywhere in the
-    clip -- accepts a low hit rate (see module docstring) since only one good frame is needed."""
+    clip -- accepts a low hit rate (see module docstring) since only one good frame is needed.
+    Detects against a shrunk copy of each frame (see SEED_PASS_MAX_WIDTH) and scales the hit back
+    up to full-resolution coordinates, so this stays fast even on native 4K source frames."""
+    from PIL import Image
+
     best = None  # (frame_index, x, y, conf)
     for i, path in enumerate(frame_paths):
-        hit = top1_detection(model, str(path))
+        img = Image.open(path)
+        w, h = img.size
+        if w > SEED_PASS_MAX_WIDTH:
+            scale = w / SEED_PASS_MAX_WIDTH
+            img = img.resize((SEED_PASS_MAX_WIDTH, round(h / scale)))
+        else:
+            scale = 1.0
+        hit = top1_detection(model, img)
         if hit is None:
             continue
         x, y, conf = hit
+        x, y = x * scale, y * scale
         if best is None or conf > best[3]:
             best = (i, x, y, conf)
     return best

@@ -32,3 +32,5 @@ shot-arc/__pycache__/
 shot-arc/adam-balldata/
 shot-arc/*-tracked.json
 shot-arc/pipeline_results.json
+shot-arc/pipeline_results_lowres_baseline.json
+shot-arc/*.log
