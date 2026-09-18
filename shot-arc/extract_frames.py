@@ -7,14 +7,14 @@ import subprocess
 import shutil
 from pathlib import Path
 
-PRE_ROLL = 3.0  # widened from 1.8s after real hand-labeling on 02_Evan_make -- see FINDINGS.md.
+PRE_ROLL = 1.0  # was 3.0; real flights sit AFTER videoTime (see FINDINGS.md, 5gqbi2wxew52g5p + 03_Alex)
                  # That specific sample later turned out to be a rebound/putback (a scramble
                  # play, not a clean shot -- see CLEAN_SHOT_GAP_SECONDS in select_sample_shots.py),
                  # so the exact 3.0s/0.4s split this produced was tuned on messy, non-representative
                  # data. Left PRE_ROLL where it landed since a clean shot's release is unlikely to
                  # need MORE lead time than a scramble play's did; POST_ROLL below is walked back up
                  # as a safety margin instead of trusting the 0.4s figure derived from that sample.
-POST_ROLL = 1.0  # walked back up from 0.4s (see above) -- that number came from a scramble play's
+POST_ROLL = 5.0  # was 1.0; window is now 6s (180 frames at 30fps)
                   # own net-settle tail, not a clean shot's landing time, and isn't trustworthy.
                   # 1.0s is a safer margin until real hand-labeling on an actual clean sample
                   # (post CLEAN_SHOT_GAP_SECONDS filtering) says otherwise.

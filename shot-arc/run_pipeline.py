@@ -41,6 +41,79 @@ MIN_TRACKED_FRACTION = 0.35  # below this, too much of the flight is guesswork t
 MAX_PLAUSIBLE_FLIGHT_S = 2.0
 
 
+STATIC_STEP_PX = 6      # frame-to-frame movement below this counts as "not moving"
+STATIC_RUN_FRAMES = 6   # ...and this many in a row means a stuck lock-on, not a ball in flight
+MIN_SEG_FRAMES = 15     # shortest window (in frames) worth fitting an arc to (0.5s)
+MAX_GAP_FRAMES = 3      # longest run of untracked frames allowed inside a candidate segment
+MIN_SEG_COVERAGE = 0.7  # fraction of a segment's frames that must have a tracked position
+MAX_FIT_RMS_PX = 25     # residual allowed on both the vertical parabola and the horizontal line
+MIN_TRAVEL_PX = 300     # a real flight covers real ground; smaller is jitter
+
+
+def find_flight_segment(tracked, frame_height):
+    """Searches the whole tracked trajectory for the stretch that best looks like one ball flight:
+    vertical position a downward parabola, horizontal position roughly a straight line (constant
+    speed), apex inside the segment, duration a plausible flight, and not a stuck lock-on. Returns
+    (start_frame, end_frame, fit_details) 1-indexed inclusive, or None. Replaces guessing where in
+    the extraction window the shot happens."""
+    frames = tracked["frames"]
+    pts = {i: (f["x"], f["y"]) for i, f in enumerate(frames) if "x" in f}
+
+    # Drop stuck stretches: a run of near-identical positions is a background object, not the ball.
+    idx = sorted(pts)
+    static = set()
+    run = [idx[0]] if idx else []
+    for a, b in zip(idx, idx[1:]):
+        step = ((pts[b][0] - pts[a][0]) ** 2 + (pts[b][1] - pts[a][1]) ** 2) ** 0.5
+        if b - a <= MAX_GAP_FRAMES and step < STATIC_STEP_PX:
+            run.append(b)
+        else:
+            if len(run) >= STATIC_RUN_FRAMES:
+                static.update(run)
+            run = [b]
+    if len(run) >= STATIC_RUN_FRAMES:
+        static.update(run)
+    pts = {i: p for i, p in pts.items() if i not in static}
+
+    max_len = int(MAX_PLAUSIBLE_FLIGHT_S * FPS)
+    keys = sorted(pts)
+    best = None
+    for si, s in enumerate(keys):
+        for e in keys[si:]:
+            span = e - s + 1
+            if span > max_len:
+                break
+            if span < MIN_SEG_FRAMES:
+                continue
+            seg = [k for k in keys if s <= k <= e]
+            if len(seg) < MIN_SEG_COVERAGE * span:
+                continue
+            if any(b - a > MAX_GAP_FRAMES + 1 for a, b in zip(seg, seg[1:])):
+                continue
+            t = np.array([k / FPS for k in seg])
+            x = np.array([pts[k][0] for k in seg])
+            y = np.array([frame_height - pts[k][1] for k in seg])
+            if abs(x[-1] - x[0]) + abs(y.max() - y.min()) < MIN_TRAVEL_PX:
+                continue
+            a2, b1, c0 = np.polyfit(t, y, 2)
+            if a2 >= 0:
+                continue
+            t_peak = -b1 / (2 * a2)
+            if not (t[0] <= t_peak <= t[-1]):
+                continue
+            rms_y = float(np.sqrt(np.mean((np.polyval([a2, b1, c0], t) - y) ** 2)))
+            slope, icpt = np.polyfit(t, x, 1)
+            rms_x = float(np.sqrt(np.mean((slope * t + icpt - x) ** 2)))
+            if rms_y > MAX_FIT_RMS_PX or rms_x > MAX_FIT_RMS_PX:
+                continue
+            score = (len(seg), -(rms_x + rms_y))
+            if best is None or score > best[0]:
+                best = (score, s + 1, e + 1, {"rms_y_px": round(rms_y, 1), "rms_x_px": round(rms_x, 1)})
+    if best is None:
+        return None
+    return best[1], best[2], best[3]
+
+
 LABELS_DIR = Path(__file__).parent / "labels"
 
 
@@ -111,6 +184,25 @@ def fit_arc(tracked, frame_height, frame_range=None):
     }
 
 
+def fit_shot(tracked, frame_h, key):
+    """Hand-labeled range if the shot has one, otherwise search the trajectory for the flight."""
+    labeled = load_shot_range(key)
+    if labeled:
+        fit = fit_arc(tracked, frame_h, labeled)
+        fit["range_source"] = "hand-labeled"
+        fit["frame_range"] = list(labeled)
+        return fit
+    found = find_flight_segment(tracked, frame_h)
+    if found is None:
+        return {"usable": False, "reason": "no stretch of the track looks like a single ball flight"}
+    start, end, details = found
+    fit = fit_arc(tracked, frame_h, (start, end))
+    fit["range_source"] = "auto-detected"
+    fit["frame_range"] = [start, end]
+    fit.update(details)
+    return fit
+
+
 def safe_shot_key(candidate):
     # Unique per real shot (game + exact timestamp), filesystem-safe.
     raw = f"real_{candidate['game_id']}_{candidate['video_time_abs']:.3f}"
@@ -146,7 +238,7 @@ def main():
             frame_h = Image.open(frames[0]).size[1]
 
             tracked = track_shot(key)
-            fit = fit_arc(tracked, frame_h, load_shot_range(key))
+            fit = fit_shot(tracked, frame_h, key)
         except SystemExit as e:
             print(f"  tracking failed: {e}")
             fit = {"usable": False, "reason": str(e)}

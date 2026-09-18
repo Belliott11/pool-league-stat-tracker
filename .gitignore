@@ -34,3 +34,5 @@ shot-arc/*-tracked.json
 shot-arc/pipeline_results.json
 shot-arc/pipeline_results_lowres_baseline.json
 shot-arc/*.log
+shot-arc/pipeline_results_4k_window_pre3_post1.json
+shot-arc/pipeline_results_refit.json
