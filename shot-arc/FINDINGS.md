@@ -503,3 +503,19 @@ Fitting the whole 6s window still gives 0/30 usable (it always spans the full wi
 Checked against the one shot with a known real flight (`5gqbi2wxew52g5p_1746_246`, which was not in this batch's 30): auto-detection picked frames 118-136, inside the 112-140 span read by eye from the contact sheet. One shot is a spot check, not validation. The other 13 usable fits are unchecked, and the residual limit (25px) is loose enough that some could be a wrong arc that happens to fit. A few results have the apex at the very end of the stretch (e.g. `ctqc73n67cph45y_431_340`), which is the pattern to be suspicious of.
 
 Next real step is checking a sample of the 14 by eye (or hand-labeling them) and tightening the limits if any are wrong.
+
+## Visual check of the 14 auto-detected arcs: 7 real shots, 7 wrong
+
+`vis_arcs.py` draws each detected flight (tracked points, fitted arc, fitted position) over four frames of its own video. Looked at all 14 by eye.
+
+**Real shot, arc matches the ball (7):** `cmgf3z9rea2l7rc_1808_128`, `jmyhhago9gvrteb_349_941`, `jmyhhago9gvrteb_970_898`, `spqwa4x7i5ylpdx_932_334`, `wurjg3g9xhehuka_258_475`, `wurjg3g9xhehuka_284_634`, `wurjg3g9xhehuka_315_814`. Each starts in a shooter's hands and ends at a hoop.
+
+**Wrong (7), and why:**
+- `ctqc73n67cph45y_431_340`: a dunk. The player carries the ball to the rim, so it isn't a free flight. Its logged shot already has `dunk = True`, so this one can be excluded from the data alone.
+- `g7ko31w6njargwe_1333_427`, `wurjg3g9xhehuka_107_551`, `jmyhhago9gvrteb_483_071`: real ball flights, but passes (an outlet away from the hoop, a cross-pool pass, a long pass), not the logged shot. The shot's own flight was missed and another motion in the window won.
+- `g7ko31w6njargwe_1463_416`, `wurjg3g9xhehuka_392_082`: ball at the rim with hands around it, then dropping out of the net to a player. A near-vertical smear, not a flight.
+- `wurjg3g9xhehuka_582_532`: a player carrying the ball across the water. Nearly flat and wobbly, 2s long.
+
+Precision is 7 of 14. The pattern in the failures: nothing in the fit knows where the hoop is. Every real shot ends at a hoop and starts away from it; every pass, carry and rim scramble breaks that.
+
+Next: anchor to the hoop (needs each session's hoop pixel positions), skip dunk-flagged shots, and reject near-vertical and near-flat shapes.
