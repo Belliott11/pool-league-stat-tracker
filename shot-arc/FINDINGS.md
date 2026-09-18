@@ -495,3 +495,11 @@ The label export had the whole window (1-120) as its range, i.e. nothing marked,
 Checked on that one shot: re-extracted with the window shifted 3s later and re-tracked. The full-window fit still failed ("did not open downward"), because the tracker sat on a static spot at about (3052, 988) for most of the clip. Frames 81-109 held a clean arc, rising to a peak near (1190, 85) and dropping toward the hoop. Fitting just frames 82-110 gave a usable parabola: 0.93s flight, 0.56s to peak, which is physically plausible.
 
 This is the second independent shot (with `03_Alex_make`) where the real flight comes after `videoTime`, not before it. Two cases is not a settled pattern, but it points at PRE_ROLL/POST_ROLL being the wrong way round: something like 1s before and 5s after, not 3s before and 1s after. The static-spot lock-on is also still a problem: the 5-frame blacklist did not stop the tracker re-locking a pixel or two away.
+
+## Re-ran the 30 shots with the window at 1s before / 5s after, then auto-detected the flight inside it
+
+Fitting the whole 6s window still gives 0/30 usable (it always spans the full window, or the stuck-spot lock-on breaks the shape), same as the old window, so the window shift alone does nothing. The fix is `find_flight_segment` in `run_pipeline.py`: instead of fitting the whole track, it searches every 0.5-2s stretch for one that looks like a single flight (downward parabola, roughly steady horizontal speed, apex inside the stretch, stuck lock-ons removed). Refit over the new tracks: **14 of 29 shots usable** (flights 0.7-2.0s long), 15 with no stretch that looks like a flight.
+
+Checked against the one shot with a known real flight (`5gqbi2wxew52g5p_1746_246`, which was not in this batch's 30): auto-detection picked frames 118-136, inside the 112-140 span read by eye from the contact sheet. One shot is a spot check, not validation. The other 13 usable fits are unchecked, and the residual limit (25px) is loose enough that some could be a wrong arc that happens to fit. A few results have the apex at the very end of the stretch (e.g. `ctqc73n67cph45y_431_340`), which is the pattern to be suspicious of.
+
+Next real step is checking a sample of the 14 by eye (or hand-labeling them) and tightening the limits if any are wrong.
