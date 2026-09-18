@@ -41,16 +41,38 @@ MIN_TRACKED_FRACTION = 0.35  # below this, too much of the flight is guesswork t
 MAX_PLAUSIBLE_FLIGHT_S = 2.0
 
 
-def fit_arc(tracked, frame_height):
+LABELS_DIR = Path(__file__).parent / "labels"
+
+
+def load_shot_range(shot_key):
+    """Hand-labeled (shotStartFrame, shotEndFrame), 1-indexed inclusive, from the labeling tool's
+    export for this shot, or None if it hasn't been labeled (or was marked not a valid shot)."""
+    path = LABELS_DIR / f"{shot_key}-labels.json"
+    if not path.exists():
+        return None
+    data = json.loads(path.read_text(encoding="utf-8"))
+    start, end = data.get("shotStartFrame"), data.get("shotEndFrame")
+    if not start or not end or end < start:
+        return None
+    return start, end
+
+
+def fit_arc(tracked, frame_height, frame_range=None):
+    # frame_range restricts the fit to the human-marked release-to-landing span, sidestepping the
+    # fixed extraction window (which usually holds far more than one flight -- see FINDINGS.md).
     points = []
-    for i, f in enumerate(tracked["frames"]):
+    frames = tracked["frames"]
+    if frame_range:
+        lo, hi = frame_range
+        frames = [f if lo <= i + 1 <= hi else {} for i, f in enumerate(frames)]
+    for i, f in enumerate(frames):
         if "x" not in f:
             continue
         t = i / FPS
         y_from_bottom = frame_height - f["y"]
         points.append((t, y_from_bottom))
 
-    n_total = len(tracked["frames"])
+    n_total = (frame_range[1] - frame_range[0] + 1) if frame_range else len(tracked["frames"])
     n_tracked = len(points)
     tracked_fraction = n_tracked / n_total if n_total else 0.0
 
@@ -124,7 +146,7 @@ def main():
             frame_h = Image.open(frames[0]).size[1]
 
             tracked = track_shot(key)
-            fit = fit_arc(tracked, frame_h)
+            fit = fit_arc(tracked, frame_h, load_shot_range(key))
         except SystemExit as e:
             print(f"  tracking failed: {e}")
             fit = {"usable": False, "reason": str(e)}
