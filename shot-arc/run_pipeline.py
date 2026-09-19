@@ -24,6 +24,7 @@ import numpy as np
 from extract_frames import extract_shot_frames, write_labeling_manifest
 from select_sample_shots import find_clean_candidates
 from bootstrap_track import track_shot, FRAMES_ROOT
+from hoops import detect_hoops, rim_centers
 
 FPS = 30
 MIN_POINTS_FOR_FIT = 8  # higher bar than detect_and_fit.py's 4 -- a tracked trajectory has more
@@ -48,9 +49,25 @@ MAX_GAP_FRAMES = 3      # longest run of untracked frames allowed inside a candi
 MIN_SEG_COVERAGE = 0.7  # fraction of a segment's frames that must have a tracked position
 MAX_FIT_RMS_PX = 25     # residual allowed on both the vertical parabola and the horizontal line
 MIN_TRAVEL_PX = 300     # a real flight covers real ground; smaller is jitter
+# A shot ends at a hoop and starts away from it; passes, carries and rim scrambles don't. Chosen
+# from a visual check of 15 detected arcs (see FINDINGS.md): real shots ended 48-306px from the
+# nearest rim and started at least 534px farther away; a pass to a teammate ended 566px away and the
+# others 900+px away or started at the hoop. Small sample, so treat the numbers as a first cut.
+HOOP_END_MAX_PX = 400
+HOOP_START_MARGIN_PX = 400
 
 
-def find_flight_segment(tracked, frame_height):
+def hoop_anchored(start_pt, end_pt, hoops):
+    def nearest(pt):
+        return min(((pt[0] - h[0]) ** 2 + (pt[1] - h[1]) ** 2) ** 0.5 for h in hoops)
+    d_end = nearest(end_pt)
+    # Measure the start against the same hoop the flight ends at.
+    end_hoop = min(hoops, key=lambda h: (end_pt[0] - h[0]) ** 2 + (end_pt[1] - h[1]) ** 2)
+    d_start = ((start_pt[0] - end_hoop[0]) ** 2 + (start_pt[1] - end_hoop[1]) ** 2) ** 0.5
+    return d_end <= HOOP_END_MAX_PX and d_start >= d_end + HOOP_START_MARGIN_PX
+
+
+def find_flight_segment(tracked, frame_height, hoops=None):
     """Searches the whole tracked trajectory for the stretch that best looks like one ball flight:
     vertical position a downward parabola, horizontal position roughly a straight line (constant
     speed), apex inside the segment, duration a plausible flight, and not a stuck lock-on. Returns
@@ -94,6 +111,8 @@ def find_flight_segment(tracked, frame_height):
             x = np.array([pts[k][0] for k in seg])
             y = np.array([frame_height - pts[k][1] for k in seg])
             if abs(x[-1] - x[0]) + abs(y.max() - y.min()) < MIN_TRAVEL_PX:
+                continue
+            if hoops and not hoop_anchored(pts[seg[0]], pts[seg[-1]], hoops):
                 continue
             a2, b1, c0 = np.polyfit(t, y, 2)
             if a2 >= 0:
@@ -184,17 +203,22 @@ def fit_arc(tracked, frame_height, frame_range=None):
     }
 
 
-def fit_shot(tracked, frame_h, key):
-    """Hand-labeled range if the shot has one, otherwise search the trajectory for the flight."""
+def fit_shot(tracked, frame_h, key, hoops=None, dunk=False):
+    """Hand-labeled range if the shot has one, otherwise search the trajectory for a flight that
+    ends at a hoop. Dunks are skipped (the ball is carried by hand, not in free flight)."""
+    if dunk:
+        return {"usable": False, "reason": "dunk: the ball is carried by hand, not in free flight"}
     labeled = load_shot_range(key)
     if labeled:
         fit = fit_arc(tracked, frame_h, labeled)
         fit["range_source"] = "hand-labeled"
         fit["frame_range"] = list(labeled)
         return fit
-    found = find_flight_segment(tracked, frame_h)
+    if not hoops:
+        return {"usable": False, "reason": "no hoop found in the frames, so a flight can't be checked against one"}
+    found = find_flight_segment(tracked, frame_h, hoops)
     if found is None:
-        return {"usable": False, "reason": "no stretch of the track looks like a single ball flight"}
+        return {"usable": False, "reason": "no stretch of the track looks like a shot flying into a hoop"}
     start, end, details = found
     fit = fit_arc(tracked, frame_h, (start, end))
     fit["range_source"] = "auto-detected"
@@ -238,7 +262,7 @@ def main():
             frame_h = Image.open(frames[0]).size[1]
 
             tracked = track_shot(key)
-            fit = fit_shot(tracked, frame_h, key)
+            fit = fit_shot(tracked, frame_h, key, rim_centers(detect_hoops(key)), cand.get("dunk", False))
         except SystemExit as e:
             print(f"  tracking failed: {e}")
             fit = {"usable": False, "reason": str(e)}

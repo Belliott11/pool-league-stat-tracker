@@ -18,6 +18,9 @@ STATE_PATH = Path(r"C:\Users\breso\AppData\Local\Temp\claude\C--Users-breso-dash
 VIEWER_VIDEOS_JS = Path(r"C:\Users\breso\dashboard-viewer\viewer-videos.js")
 GAME_VIDEOS_DIR = Path(r"C:\Users\breso\dashboard-viewer\game-videos")
 OUT_PATH = Path(__file__).parent / "sample_shots.json"
+# The state snapshot above predates the dunk flags being backfilled, so dunk is read from a newer
+# export by event id. Any export that has the flags works; without it every shot counts as not a dunk.
+DUNK_SOURCE = Path(r"C:\Users\breso\Downloads\pool-league-data (8).json")
 
 # Adam's real 4K60 handoff (see FINDINGS.md): each file is the full, unedited session recording,
 # not trimmed per game the way game-videos/*.mp4 is. Confirmed by pulling the frame at a game's
@@ -65,6 +68,10 @@ def find_clean_candidates():
     state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
     hosted = load_game_video_files()
     players = {p["id"]: p["name"] for p in state["players"]}
+    dunk_ids = set()
+    if DUNK_SOURCE.exists():
+        newer = json.loads(DUNK_SOURCE.read_text(encoding="utf-8"))
+        dunk_ids = {e["id"] for g in newer["games"] for e in g.get("scoringEvents", []) if e.get("dunk") is True}
 
     candidates = []
     for game in state["games"]:
@@ -108,6 +115,7 @@ def find_clean_candidates():
                 "source": "4k" if use_4k else "compressed",
                 "shooter": players.get(ev.get("scorerId"), "?"),
                 "made": ev.get("made") is not False,
+                "dunk": ev.get("dunk") is True or ev["id"] in dunk_ids,
                 "points": ev["points"],
                 "video_time_abs": ev["videoTime"],
                 "video_time_local": local_time,

@@ -519,3 +519,13 @@ Next real step is checking a sample of the 14 by eye (or hand-labeling them) and
 Precision is 7 of 14. The pattern in the failures: nothing in the fit knows where the hoop is. Every real shot ends at a hoop and starts away from it; every pass, carry and rim scramble breaks that.
 
 Next: anchor to the hoop (needs each session's hoop pixel positions), skip dunk-flagged shots, and reject near-vertical and near-flat shapes.
+
+## Hoop-anchored detection: 8 of 29 usable, all 8 checked and real, but the rules were tuned on those same shots
+
+The visual check showed nothing in the fit knew where the hoop was. Added `hoops.py`, which finds the rims per shot as stationary orange, ring-shaped blobs across the shot's frames (per shot, because the camera differs between recordings and drifts a little within one). The search now only considers flights that end within 400px of a rim and start at least 400px farther from it than they end. Dunk-flagged shots are skipped, since the ball is carried by hand.
+
+Getting there took two passes. The first version accepted any stationary orange blob as a hoop, which let a pass through (it ended near an orange object on the deck) and a near-vertical smear near the rim. Filtering to ring-shaped blobs (wider than tall, a rim-sized width) removed the tall red backboard pole and the other false hoops. That separated the checked shots cleanly: real shots end 48-306px from a rim, the one pass that still qualified ends 566px away. A dark clip whose rims are too faint for the size test falls back to its two largest blobs.
+
+Result over the 29 shots in the 6-second window: **8 usable, all 8 verified real by eye** (including `582_532`, where the true flight is now found instead of a carry), none of the 6 known-wrong arcs pass, 4 skipped as dunks, 16 with no flight that ends at a hoop, 1 with no hoop found.
+
+Caveats. The 400px limits and the rim shape test were chosen looking at these same 15 arcs, so this is not a held-out result: real shots ended 48-306px away and the nearest wrong arc 566px, a gap that could easily close on other footage. Recall is low, 8 of the 25 non-dunk shots. Next: run a batch of shots that were not used to choose any of these rules and check every accepted arc by eye.
