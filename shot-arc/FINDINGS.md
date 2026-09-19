@@ -529,3 +529,11 @@ Getting there took two passes. The first version accepted any stationary orange 
 Result over the 29 shots in the 6-second window: **8 usable, all 8 verified real by eye** (including `582_532`, where the true flight is now found instead of a carry), none of the 6 known-wrong arcs pass, 4 skipped as dunks, 16 with no flight that ends at a hoop, 1 with no hoop found.
 
 Caveats. The 400px limits and the rim shape test were chosen looking at these same 15 arcs, so this is not a held-out result: real shots ended 48-306px away and the nearest wrong arc 566px, a gap that could easily close on other footage. Recall is low, 8 of the 25 non-dunk shots. Next: run a batch of shots that were not used to choose any of these rules and check every accepted arc by eye.
+
+## Held-out test of the hoop-anchored rules: 8 of 8 accepted arcs are real
+
+Ran the full pipeline (extraction, tracking, hoop detection, arc search) on shots 31-60 of the same shuffled list, none of which were used to choose any rule or threshold. Results: **8 usable of 30**, 5 skipped as dunks, 2 with no ball detected at all, 15 with no flight that ends at a hoop. Every accepted arc was drawn over its frames and checked by eye: all 8 are real shots in flight to a hoop (including 5 misses). Two are looser matches: `cmgf3z9rea2l7rc_1703_022` is a dark-clip miss that sails over the deck and ends about 400px from the rim, and `yf7wfx0jbtzy468_1355_160` is a miss coming down just short of the hoop. Both are real flights of a shot, just not ending exactly at the rim, so 400px is close to the loosest a real shot goes here.
+
+Across both batches that is 16 verified shots and no wrong arcs accepted since the hoop rule went in. What this does and doesn't show: precision looks good (8 of 8 on unseen shots), but recall is about a third of the non-dunk shots, and both samples are small. The failures now are mostly the tracker losing the ball or never seeing one clean flight, not the fit.
+
+Side finding: a stale cached hoop file for a shot re-run under a different frame set made one overlay disagree with the pipeline's own result. `*-hoops.json` caches should be deleted when a shot's frames are re-extracted.

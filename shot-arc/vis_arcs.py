@@ -9,6 +9,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
+import json as _json
+from hoops import detect_hoops, rim_centers
 from run_pipeline import fit_shot, FPS
 
 HERE = Path(__file__).parent
@@ -17,7 +19,13 @@ H = 2160
 
 def render(key, out_dir):
     tracked = json.loads((HERE / f"{key}-tracked.json").read_text(encoding="utf-8"))
-    fit = fit_shot(tracked, H, key)
+    cache = HERE / f"{key}-hoops.json"
+    if cache.exists():
+        blobs = _json.loads(cache.read_text())
+    else:
+        blobs = detect_hoops(key)
+        cache.write_text(_json.dumps(blobs))
+    fit = fit_shot(tracked, H, key, rim_centers(blobs))
     if not fit.get("usable"):
         return None
     lo, hi = fit["frame_range"]

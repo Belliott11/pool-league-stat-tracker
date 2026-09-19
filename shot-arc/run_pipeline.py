@@ -237,6 +237,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit", type=int, default=30, help="max shots to run (default 30)")
     parser.add_argument("--seed", type=int, default=7, help="shuffle seed for which shots get picked")
+    parser.add_argument("--offset", type=int, default=0, help="skip this many shots of the shuffled list first (a held-out slice)")
+    parser.add_argument("--out", default="pipeline_results.json", help="results file name, next to this script")
     args = parser.parse_args()
 
     candidates = find_clean_candidates()
@@ -244,7 +246,7 @@ def main():
 
     random.seed(args.seed)
     random.shuffle(candidates)
-    sample = candidates[: args.limit]
+    sample = candidates[args.offset: args.offset + args.limit]
     print(f"Running the pipeline on {len(sample)} shots.\n")
 
     results = []
@@ -278,7 +280,7 @@ def main():
         status = "usable" if fit.get("usable") else f"not usable ({fit.get('reason', '?')})"
         print(f"  -> {status}\n")
 
-    out_path = Path(__file__).parent / "pipeline_results.json"
+    out_path = Path(__file__).parent / args.out
     out_path.write_text(json.dumps(results, indent=2))
 
     usable = [r for r in results if r["fit"].get("usable")]
