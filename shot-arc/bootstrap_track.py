@@ -32,6 +32,8 @@ from pathlib import Path
 
 from ultralytics import YOLO
 
+from decoys import RADIUS as DECOY_RADIUS, decoys_for
+
 FRAMES_ROOT = Path(__file__).parent / "frames"
 WEIGHTS_PATH = Path(__file__).parent / "adam-balldata" / "poolvision-ball-best.pt"
 CROP = 960
@@ -54,16 +56,19 @@ BLACKLIST_RADIUS = 30  # px -- how close counts as "the same spot" once blacklis
 SEED_PASS_MAX_WIDTH = 1280
 
 
-def top1_detection(model, image_or_path):
+def top1_detection(model, image_or_path, is_decoy=None):
+    """Highest-confidence detection that isn't sitting on a known decoy (see decoys.py). is_decoy
+    takes a center in this image's own coordinates."""
     r = model.predict(image_or_path, verbose=False, conf=CONF_FLOOR, imgsz=640)[0]
-    if len(r.boxes) == 0:
-        return None
-    best = max(r.boxes, key=lambda b: float(b.conf[0]))
-    x1, y1, x2, y2 = best.xyxy[0].tolist()
-    return ((x1 + x2) / 2, (y1 + y2) / 2, float(best.conf[0]))
+    for b in sorted(r.boxes, key=lambda b: -float(b.conf[0])):
+        x1, y1, x2, y2 = b.xyxy[0].tolist()
+        cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+        if is_decoy is None or not is_decoy(cx, cy):
+            return (cx, cy, float(b.conf[0]))
+    return None
 
 
-def cropped_detect(model, img, cx, cy):
+def cropped_detect(model, img, cx, cy, is_decoy=None):
     """Crops CROPxCROP centered on (cx, cy), clamped to the image, and returns a detection
     translated back into full-frame coordinates."""
     w, h = img.size
@@ -72,14 +77,14 @@ def cropped_detect(model, img, cx, cy):
     y1 = int(max(0, min(h - CROP, cy - half))) if h > CROP else 0
     crop_w, crop_h = min(CROP, w), min(CROP, h)
     crop = img.crop((x1, y1, x1 + crop_w, y1 + crop_h))
-    hit = top1_detection(model, crop)
+    hit = top1_detection(model, crop, (lambda x, y: is_decoy(x1 + x, y1 + y)) if is_decoy else None)
     if hit is None:
         return None
     px, py, conf = hit
     return (x1 + px, y1 + py, conf)
 
 
-def find_seed(model, frame_paths):
+def find_seed(model, frame_paths, is_decoy=None):
     """Full-frame pass across every frame, looking for the single best detection anywhere in the
     clip -- accepts a low hit rate (see module docstring) since only one good frame is needed.
     Detects against a shrunk copy of each frame (see SEED_PASS_MAX_WIDTH) and scales the hit back
@@ -95,7 +100,7 @@ def find_seed(model, frame_paths):
             img = img.resize((SEED_PASS_MAX_WIDTH, round(h / scale)))
         else:
             scale = 1.0
-        hit = top1_detection(model, img)
+        hit = top1_detection(model, img, (lambda x, y, s=scale: is_decoy(x * s, y * s)) if is_decoy else None)
         if hit is None:
             continue
         x, y, conf = hit
@@ -113,13 +118,15 @@ def track_shot(shot_key, seed_frame=None, seed_xy=None):
         raise SystemExit(f"no frames found for {shot_key} in {FRAMES_ROOT}")
 
     model = YOLO(str(WEIGHTS_PATH))
+    decoy_points = decoys_for(shot_key)
+    is_decoy = (lambda x, y: any(((x - dx) ** 2 + (y - dy) ** 2) ** 0.5 < DECOY_RADIUS for dx, dy in decoy_points)) if decoy_points else None
 
     if seed_frame is not None and seed_xy is not None:
         seed = (seed_frame, seed_xy[0], seed_xy[1], 1.0)
         print(f"Using manual seed: frame {seed_frame}, ({seed_xy[0]:.0f}, {seed_xy[1]:.0f})")
     else:
         print(f"Seeding: full-frame detection across {len(frame_paths)} frames...")
-        seed = find_seed(model, frame_paths)
+        seed = find_seed(model, frame_paths, is_decoy)
         if seed is None:
             raise SystemExit(
                 f"No detection anywhere in {shot_key}'s {len(frame_paths)} frames -- "
@@ -157,12 +164,12 @@ def track_shot(shot_key, seed_frame=None, seed_xy=None):
         i = seed_idx + direction
         while 0 <= i < n:
             img = Image.open(frame_paths[i])
-            hit = cropped_detect(model, img, cx, cy)
+            hit = cropped_detect(model, img, cx, cy, is_decoy)
             if near_blacklist(hit):
                 hit = None
             if hit is None:
                 # Recovery attempt: try the full frame once before calling this one lost.
-                full_hit = top1_detection(model, img)
+                full_hit = top1_detection(model, img, is_decoy)
                 hit = None if near_blacklist(full_hit) else full_hit
 
             if hit is not None:

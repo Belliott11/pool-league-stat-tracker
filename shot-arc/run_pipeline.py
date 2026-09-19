@@ -55,9 +55,32 @@ MIN_TRAVEL_PX = 300     # a real flight covers real ground; smaller is jitter
 # others 900+px away or started at the hoop. Small sample, so treat the numbers as a first cut.
 HOOP_END_MAX_PX = 400
 HOOP_START_MARGIN_PX = 400
+# A hoop can be out of view (behind the umbrella, past the frame edge). A shot at it then ends by
+# leaving the picture: the flight finishes near a frame border and is still moving toward it.
+FRAME_W, FRAME_H = 3840, 2160
+EDGE_END_PX = 350
+EDGE_START_PX = 1000
+# The tracker often loses the ball a few frames before the rim (fast, blurry). If the fitted arc,
+# carried forward a short way, lands on a rim, the flight still counts as a shot at that rim.
+EXTRAP_FRAMES = 15
+EXTRAP_END_MAX_PX = 250   # ...and starts well away from that border, so a ball resting at the edge doesn't count
 
 
-def hoop_anchored(start_pt, end_pt, hoops):
+def leaves_frame(start_pt, end_pt, prev_pt):
+    vx, vy = end_pt[0] - prev_pt[0], end_pt[1] - prev_pt[1]
+    borders = (
+        (end_pt[0], -vx, start_pt[0]),                 # left
+        (FRAME_W - end_pt[0], vx, FRAME_W - start_pt[0]),  # right
+        (end_pt[1], -vy, start_pt[1]),                 # top
+        (FRAME_H - end_pt[1], vy, FRAME_H - start_pt[1]),  # bottom
+    )
+    return any(dist <= EDGE_END_PX and toward > 0 and start_dist >= EDGE_START_PX for dist, toward, start_dist in borders)
+
+
+def hoop_anchored(start_pt, end_pt, hoops, prev_pt=None):
+    if prev_pt is not None and leaves_frame(start_pt, end_pt, prev_pt):
+        return True
+
     def nearest(pt):
         return min(((pt[0] - h[0]) ** 2 + (pt[1] - h[1]) ** 2) ** 0.5 for h in hoops)
     d_end = nearest(end_pt)
@@ -65,6 +88,20 @@ def hoop_anchored(start_pt, end_pt, hoops):
     end_hoop = min(hoops, key=lambda h: (end_pt[0] - h[0]) ** 2 + (end_pt[1] - h[1]) ** 2)
     d_start = ((start_pt[0] - end_hoop[0]) ** 2 + (start_pt[1] - end_hoop[1]) ** 2) ** 0.5
     return d_end <= HOOP_END_MAX_PX and d_start >= d_end + HOOP_START_MARGIN_PX
+
+
+def extrapolates_to_rim(start_pt, t_end, x_fit, y_fit, frame_height, hoops):
+    slope, icpt = x_fit
+    for step in range(1, EXTRAP_FRAMES + 1):
+        u = t_end + step / FPS
+        px = slope * u + icpt
+        py = frame_height - float(np.polyval(y_fit, u))
+        for hx, hy in hoops:
+            d = ((px - hx) ** 2 + (py - hy) ** 2) ** 0.5
+            d_start = ((start_pt[0] - hx) ** 2 + (start_pt[1] - hy) ** 2) ** 0.5
+            if d <= EXTRAP_END_MAX_PX and d_start >= d + HOOP_START_MARGIN_PX:
+                return True
+    return False
 
 
 def find_flight_segment(tracked, frame_height, hoops=None):
@@ -112,8 +149,6 @@ def find_flight_segment(tracked, frame_height, hoops=None):
             y = np.array([frame_height - pts[k][1] for k in seg])
             if abs(x[-1] - x[0]) + abs(y.max() - y.min()) < MIN_TRAVEL_PX:
                 continue
-            if hoops and not hoop_anchored(pts[seg[0]], pts[seg[-1]], hoops):
-                continue
             a2, b1, c0 = np.polyfit(t, y, 2)
             if a2 >= 0:
                 continue
@@ -124,6 +159,11 @@ def find_flight_segment(tracked, frame_height, hoops=None):
             slope, icpt = np.polyfit(t, x, 1)
             rms_x = float(np.sqrt(np.mean((slope * t + icpt - x) ** 2)))
             if rms_y > MAX_FIT_RMS_PX or rms_x > MAX_FIT_RMS_PX:
+                continue
+            if hoops and not (
+                hoop_anchored(pts[seg[0]], pts[seg[-1]], hoops, pts[seg[-4]] if len(seg) >= 4 else None)
+                or extrapolates_to_rim(pts[seg[0]], t[-1], (slope, icpt), (a2, b1, c0), frame_height, hoops)
+            ):
                 continue
             score = (len(seg), -(rms_x + rms_y))
             if best is None or score > best[0]:
@@ -227,6 +267,17 @@ def fit_shot(tracked, frame_h, key, hoops=None, dunk=False):
     return fit
 
 
+def cached_hoops(key):
+    """Hoop blobs for a shot, detected once from its frames and cached next to the tracked file.
+    Re-extracting a shot's frames writes a new cache, so a stale one never outlives its frames."""
+    path = Path(__file__).parent / f"{key}-hoops.json"
+    if path.exists():
+        return json.loads(path.read_text())
+    blobs = detect_hoops(key)
+    path.write_text(json.dumps(blobs))
+    return blobs
+
+
 def safe_shot_key(candidate):
     # Unique per real shot (game + exact timestamp), filesystem-safe.
     raw = f"real_{candidate['game_id']}_{candidate['video_time_abs']:.3f}"
@@ -256,6 +307,7 @@ def main():
                 f"game={cand['game_id']} t={cand['video_time_local']:.1f}s"
         print(label)
         try:
+            (Path(__file__).parent / f"{key}-hoops.json").unlink(missing_ok=True)
             _, _, frames = extract_shot_frames(cand["video_file"], cand["video_time_local"], key)
             if not frames:
                 print("  no frames extracted, skipping")
@@ -264,7 +316,7 @@ def main():
             frame_h = Image.open(frames[0]).size[1]
 
             tracked = track_shot(key)
-            fit = fit_shot(tracked, frame_h, key, rim_centers(detect_hoops(key)), cand.get("dunk", False))
+            fit = fit_shot(tracked, frame_h, key, rim_centers(cached_hoops(key)), cand.get("dunk", False))
         except SystemExit as e:
             print(f"  tracking failed: {e}")
             fit = {"usable": False, "reason": str(e)}

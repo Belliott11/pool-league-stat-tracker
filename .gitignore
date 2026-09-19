@@ -38,3 +38,5 @@ shot-arc/pipeline_results_4k_window_pre3_post1.json
 shot-arc/pipeline_results_refit.json
 shot-arc/*-hoops.json
 shot-arc/pipeline_results_heldout.json
+shot-arc/pipeline_results_rest.json
+shot-arc/decoys.json

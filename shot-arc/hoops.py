@@ -42,7 +42,7 @@ def rim_centers(blobs):
     Drops the tall red backboard pole, cones, towels and other stationary orange things. In a dark
     clip the rims are faint and small, so when nothing passes the shape test the two biggest blobs
     are used instead."""
-    strict = [(b["x"], b["y"]) for b in blobs if b["w"] >= 1.15 * b["h"] and 90 <= b["w"] <= 280 and b["area"] >= 300]
+    strict = [(b["x"], b["y"]) for b in blobs if b["w"] >= 1.15 * b["h"] and 90 <= b["w"] <= 280 and b["area"] >= 150]
     if strict:
         return strict
     return [(b["x"], b["y"]) for b in blobs[:2]]

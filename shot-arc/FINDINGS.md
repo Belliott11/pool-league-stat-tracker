@@ -537,3 +537,22 @@ Ran the full pipeline (extraction, tracking, hoop detection, arc search) on shot
 Across both batches that is 16 verified shots and no wrong arcs accepted since the hoop rule went in. What this does and doesn't show: precision looks good (8 of 8 on unseen shots), but recall is about a third of the non-dunk shots, and both samples are small. The failures now are mostly the tracker losing the ball or never seeing one clean flight, not the fit.
 
 Side finding: a stale cached hoop file for a shot re-run under a different frame set made one overlay disagree with the pipeline's own result. `*-hoops.json` caches should be deleted when a shot's frames are re-extracted.
+
+## Why most shots get no arc, and what recovered a few more
+
+`diagnose.py` sorts every failing shot (48 non-dunk shots from the first two batches: 16 accepted, 32 failing). Findings:
+
+- **The tracker isn't losing the ball, it's following something else.** In nearly every failing clip it reports a position in 178-180 of 180 frames, but contact sheets (`sheet.py`) show the red marker sitting on fixed objects: the white and blue posts of the pool volleyball stands, the ladder foot, a drain cap, a spare ball on the deck. For 25 of the 32 there is no flight-shaped stretch at all in the tracked path, hoop rule or not. Often the ball is simply held by a player, underwater or behind someone, so there is nothing to find.
+- **Framing matters (the "only one hoop in view" idea).** Acceptance by source recording: IMG_2482 3 of 4, IMG_2483 5 of 11, IMG_2769 2 of 13, IMG_2770 3 of 9, IMG_2932 (the dark one) 3 of 12. In the umbrella sessions the left hoop is partly hidden and the right one sits at the top edge, and a shot at a hoop that isn't visible can't end at a visible rim.
+- **Decoy suppression** (`decoys.py`, used by `bootstrap_track.py`): pixels where the tracker repeatedly parks across several different shots of one recording are treated as decoys and skipped, except near a rim. The decoy circles land on the post tops, ladder and drain cap. It did not rescue the two shots I re-tracked with it (the tracker just parks on the next fixed object), so it is a modest cleanup, not a fix. The batch that was already running started before this and doesn't use it.
+
+Three rules were loosened, each checked against every shot verified by eye so far:
+1. Rim blobs count from 150px² (was 300) when they are ring-shaped: a dusky clip's real rims were 228-238px² and a red backboard pole was being used as a rim instead.
+2. A flight can end by leaving the frame toward a border (a hoop out of view).
+3. A flight whose fitted arc, carried forward up to half a second, lands within 250px of a rim counts as a shot at that rim: the tracker often loses a fast, blurry ball just before the hoop.
+
+Result: 19 accepted of the 60 non-dunk shots tracked so far. All 16 previously verified real shots are still accepted, and none of the wrong arcs I had identified are accepted, apart from a different stretch of `wurjg3g9xhehuka_205_826`. New accepted, all checked by eye: `bl46f6scpfe9ib6_923_832` and `jmyhhago9gvrteb_397_613` are real shots, and `wurjg3g9xhehuka_205_826` is a real flight into a hoop (the earlier stretch of that clip is the ball leaving the rim).
+
+Attribution caveat: flights happen from about 1s before to 4s after the logged time, so when another logged shot is within a second of a flight, the flight may belong to that one. `refit_all.py` now marks those `ambiguous` (4 of 19: 349_941, 205_826, 582_532, 1355_160) so they can be handled separately.
+
+Still open: the tracker parking on fixed objects, which caps recall well below the 19 of 60 seen here. The realistic fixes are a better ball detector for this footage (Adam's weights are weak on it; confidences are around 0.1) or hand-labeling shots to seed and validate tracking.
