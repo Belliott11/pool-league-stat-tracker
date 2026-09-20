@@ -566,3 +566,17 @@ Every accepted arc was drawn over its frames and checked by eye (19 earlier, 43 
 The dataset is `shot_arcs.csv` (game, video time, shooter, points, make, flight length, time to peak, peak height in 4K pixels, attribution). Peak height is in image pixels, not feet: there is no camera calibration, and the camera differs between recordings, so heights are only comparable within one recording.
 
 First look at what it contains: median flight 0.77s (range 0.50-1.10s), identical for makes and misses (n=16 and 45), so flight time alone doesn't separate them. 27% of shots yielding an arc is what this footage and detector allow; more would need a better ball detector or hand-labeled shots.
+
+## First analysis of the 61 arcs joined to the shot log (`analyze_arcs.py`, `shot_arcs_features.csv`)
+
+**The two datasets agree.** How far the ball travels on screen tracks the logged shot distance (Spearman rho +0.62, n=61, p<0.001, using each recording's own average since the camera differs). That validates the arcs and the logged shot locations against each other.
+
+**Arcs are not skewed toward one outcome.** An arc is found for 27% of makes (16/60) and 30% of misses (45/151); the make rate among arcs (26%) matches the make rate across all candidate non-dunk shots (28%).
+
+**Makes and misses do not separate on any arc feature at this sample size.** Flight time, arc steepness, speed and distance covered all have confidence intervals that include zero. The closest is when the ball peaks (makes peak a little later; p=0.08, one of six comparisons, so a lead at best). Makes were logged closer than misses (median 58 vs 71 units, p=0.06), as expected.
+
+**Limits on what this can say.**
+- With 16 makes vs 45 misses the smallest difference reliably detectable is about 0.8 standard deviations; a medium effect (0.5) would need roughly 250 arcs, about four times the current set.
+- "Flight time" is the length of the stretch the tracker followed, often cut short where it lost a fast, blurry ball, so it is not a true flight time (it barely tracks distance, rho +0.15). Distance covered is the trustworthy size measure.
+- Pixel features are only comparable within one recording, so they are standardized per recording.
+- Per-shooter arc shapes rest on 4-14 arcs each; treat them as descriptions, not findings.
