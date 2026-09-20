@@ -1,0 +1,62 @@
+game_id,video_time,shooter,points,made,flight_start_frame,flight_end_frame,flight_s,time_to_peak_s,peak_height_px,attribution
+5gqbi2wxew52g5p,1746.246,Alex,2,False,118,136,0.6,0.328,2073.3,clear
+bl46f6scpfe9ib6,554.442,Adam,3,False,116,135,0.633,0.106,1794.8,clear
+bl46f6scpfe9ib6,773.407,Zach,3,True,150,170,0.667,0.641,1629.8,clear
+bl46f6scpfe9ib6,923.832,Adam,3,True,97,115,0.6,0.505,1571.6,clear
+cmgf3z9rea2l7rc,1619.729,Adam,3,False,62,93,1.033,0.439,1789.5,ambiguous
+cmgf3z9rea2l7rc,1686.892,Ben,3,False,119,138,0.633,0.333,1764.4,ambiguous
+cmgf3z9rea2l7rc,1703.022,Zach,3,False,135,153,0.6,0.19,1866.2,clear
+cmgf3z9rea2l7rc,1808.128,Zach,2,False,115,138,0.767,0.207,1645.2,clear
+cmgf3z9rea2l7rc,1835.653,Alex,3,False,143,158,0.5,0.002,1441.9,clear
+cmgf3z9rea2l7rc,1868.638,Zach,2,True,119,144,0.833,0.378,1693.5,clear
+ctqc73n67cph45y,475.592,Reilly,2,True,122,140,0.6,0.458,1533.3,clear
+g7ko31w6njargwe,1110.369,Ben,2,True,129,147,0.6,0.396,1349.0,clear
+g7ko31w6njargwe,1324.849,Evan,2,False,59,79,0.667,0.139,1581.3,clear
+g7ko31w6njargwe,1482.64,Adam,2,False,106,129,0.767,0.617,1675.9,clear
+jmyhhago9gvrteb,349.941,Zach,3,False,80,111,1.033,0.444,1624.8,ambiguous
+jmyhhago9gvrteb,372.143,Zach,2,False,94,117,0.767,0.261,1465.9,clear
+jmyhhago9gvrteb,397.613,Michael T,2,False,120,143,0.767,0.672,1675.6,clear
+jmyhhago9gvrteb,407.44,Adam,2,False,127,149,0.733,0.712,1540.9,ambiguous
+jmyhhago9gvrteb,427.365,Michael T,2,False,103,132,0.967,0.494,1688.9,ambiguous
+jmyhhago9gvrteb,464.985,Zach,2,True,130,152,0.733,0.384,1414.6,clear
+jmyhhago9gvrteb,628.785,Ben,3,False,90,120,1.0,0.44,1751.5,ambiguous
+jmyhhago9gvrteb,771.883,Adam,2,False,119,140,0.7,0.472,1589.1,ambiguous
+jmyhhago9gvrteb,788.802,Ian,2,True,90,120,1.0,0.504,1887.7,clear
+jmyhhago9gvrteb,798.81,Ben,3,False,83,105,0.733,0.574,1879.8,clear
+jmyhhago9gvrteb,881.473,Zach,2,False,103,131,0.933,0.52,1432.4,clear
+jmyhhago9gvrteb,970.898,Michael T,2,False,121,144,0.767,0.552,1720.6,clear
+jmyhhago9gvrteb,996.631,Zach,3,False,105,136,1.033,0.568,1526.6,clear
+jmyhhago9gvrteb,1012.077,Michael T,2,False,103,130,0.9,0.503,1717.9,clear
+jmyhhago9gvrteb,1051.505,Michael T,2,True,103,132,0.967,0.511,1778.7,clear
+spqwa4x7i5ylpdx,932.334,Alex,2,True,54,79,0.833,0.722,2134.6,clear
+spqwa4x7i5ylpdx,986.56,Ian,2,False,118,137,0.633,0.179,1670.6,clear
+spqwa4x7i5ylpdx,1012.541,Adam,3,False,123,147,0.8,0.321,2161.0,clear
+w2gvgk88n6e4had,275.308,Zach,2,True,131,151,0.667,0.534,1382.8,clear
+w2gvgk88n6e4had,308.839,Zach,3,False,110,140,1.0,0.443,1740.4,clear
+w2gvgk88n6e4had,336.422,Alex,2,False,111,127,0.533,0.505,1564.0,ambiguous
+w2gvgk88n6e4had,685.906,Alex,3,False,107,130,0.767,0.684,1761.2,clear
+w2gvgk88n6e4had,703.329,Alex,2,True,106,121,0.5,0.495,1626.5,clear
+w2gvgk88n6e4had,907.321,Reilly,3,False,83,106,0.767,0.487,1753.4,clear
+wurjg3g9xhehuka,122.553,Michael T,3,False,111,143,1.067,0.307,1871.9,clear
+wurjg3g9xhehuka,205.826,Michael T,2,False,146,162,0.533,0.532,1227.9,ambiguous
+wurjg3g9xhehuka,258.475,Zach,3,False,61,87,0.867,0.506,1772.2,clear
+wurjg3g9xhehuka,284.634,Ben,3,False,111,132,0.7,0.665,1557.9,clear
+wurjg3g9xhehuka,315.814,Michael T,2,False,104,128,0.8,0.578,1378.5,clear
+wurjg3g9xhehuka,327.647,Adam,2,False,118,151,1.1,0.493,1644.8,clear
+wurjg3g9xhehuka,336.178,Michael T,2,False,79,106,0.9,0.537,1511.7,ambiguous
+wurjg3g9xhehuka,352.715,Ian,3,False,119,152,1.1,0.39,1866.6,clear
+wurjg3g9xhehuka,403.255,Ben,3,True,117,134,0.567,0.424,1739.2,clear
+wurjg3g9xhehuka,422.177,Zach,3,False,131,158,0.9,0.582,1773.5,clear
+wurjg3g9xhehuka,432.628,Michael T,2,False,108,134,0.867,0.416,1501.1,clear
+wurjg3g9xhehuka,451.184,Zach,3,False,78,103,0.833,0.532,1705.1,clear
+wurjg3g9xhehuka,466.006,Adam,2,False,108,133,0.833,0.33,1288.6,clear
+wurjg3g9xhehuka,519.926,Ben,3,False,100,128,0.933,0.762,1864.8,clear
+wurjg3g9xhehuka,539.661,Adam,2,False,105,134,0.967,0.43,1573.2,clear
+wurjg3g9xhehuka,561.354,Ian,2,True,105,129,0.8,0.418,1391.8,clear
+wurjg3g9xhehuka,582.532,Adam,2,False,123,146,0.767,0.345,1431.8,ambiguous
+wurjg3g9xhehuka,617.974,Adam,3,False,1,23,0.733,0.181,1715.1,clear
+wurjg3g9xhehuka,629.333,Adam,3,True,111,139,0.933,0.405,1693.7,clear
+wurjg3g9xhehuka,667.521,Ian,2,True,97,122,0.833,0.49,1368.6,clear
+wurjg3g9xhehuka,733.18,Ian,2,False,119,140,0.7,0.226,1427.3,clear
+wurjg3g9xhehuka,850.522,Adam,2,True,96,125,0.967,0.473,1482.9,clear
+yf7wfx0jbtzy468,1355.16,Ben,3,False,75,105,1.0,0.656,2080.4,ambiguous

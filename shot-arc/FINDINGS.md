@@ -556,3 +556,13 @@ Result: 19 accepted of the 60 non-dunk shots tracked so far. All 16 previously v
 Attribution caveat: flights happen from about 1s before to 4s after the logged time, so when another logged shot is within a second of a flight, the flight may belong to that one. `refit_all.py` now marks those `ambiguous` (4 of 19: 349_941, 205_826, 582_532, 1355_160) so they can be handled separately.
 
 Still open: the tracker parking on fixed objects, which caps recall well below the 19 of 60 seen here. The realistic fixes are a better ball detector for this footage (Adam's weights are weak on it; confidences are around 0.1) or hand-labeling shots to seed and validate tracking.
+
+## Full run over all 243 eligible shots: 61 accepted arcs, all checked by eye, 60 real
+
+Ran the pipeline over the remaining 183 shots (after the 60 in the first two batches) and re-fit everything with the current rules. Of 228 tracked shots: **61 accepted arcs**, 16 skipped as dunks, 1 with no hoop found, the rest with no flight-shaped path ending at a hoop. Of the 61: 49 clear on attribution, 12 ambiguous (another logged shot within a second of the flight); 16 makes and 45 misses.
+
+Every accepted arc was drawn over its frames and checked by eye (19 earlier, 43 in the last pass via `montage.py`). One was wrong (`bl46f6scpfe9ib6_411_725`, a lob out of the bottom of the frame away from the hoop, accepted only by the "flight leaves the frame" rule). That rule had accepted nothing else, so it is removed; everything else is a real flight to a hoop. Two caveats on that count: `jmyhhago9gvrteb_798_810` is the least certain (the hoop it flies toward is outside the crop shown), and "real flight" is a claim about the arc, not about which logged shot it belongs to, hence the ambiguous flag. 53 of the 61 are anchored directly by a visible rim; 8 by extrapolating the fitted arc onto one.
+
+The dataset is `shot_arcs.csv` (game, video time, shooter, points, make, flight length, time to peak, peak height in 4K pixels, attribution). Peak height is in image pixels, not feet: there is no camera calibration, and the camera differs between recordings, so heights are only comparable within one recording.
+
+First look at what it contains: median flight 0.77s (range 0.50-1.10s), identical for makes and misses (n=16 and 45), so flight time alone doesn't separate them. 27% of shots yielding an arc is what this footage and detector allow; more would need a better ball detector or hand-labeled shots.

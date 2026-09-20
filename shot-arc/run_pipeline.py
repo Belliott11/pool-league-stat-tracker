@@ -55,32 +55,13 @@ MIN_TRAVEL_PX = 300     # a real flight covers real ground; smaller is jitter
 # others 900+px away or started at the hoop. Small sample, so treat the numbers as a first cut.
 HOOP_END_MAX_PX = 400
 HOOP_START_MARGIN_PX = 400
-# A hoop can be out of view (behind the umbrella, past the frame edge). A shot at it then ends by
-# leaving the picture: the flight finishes near a frame border and is still moving toward it.
-FRAME_W, FRAME_H = 3840, 2160
-EDGE_END_PX = 350
-EDGE_START_PX = 1000
 # The tracker often loses the ball a few frames before the rim (fast, blurry). If the fitted arc,
 # carried forward a short way, lands on a rim, the flight still counts as a shot at that rim.
 EXTRAP_FRAMES = 15
 EXTRAP_END_MAX_PX = 250   # ...and starts well away from that border, so a ball resting at the edge doesn't count
 
 
-def leaves_frame(start_pt, end_pt, prev_pt):
-    vx, vy = end_pt[0] - prev_pt[0], end_pt[1] - prev_pt[1]
-    borders = (
-        (end_pt[0], -vx, start_pt[0]),                 # left
-        (FRAME_W - end_pt[0], vx, FRAME_W - start_pt[0]),  # right
-        (end_pt[1], -vy, start_pt[1]),                 # top
-        (FRAME_H - end_pt[1], vy, FRAME_H - start_pt[1]),  # bottom
-    )
-    return any(dist <= EDGE_END_PX and toward > 0 and start_dist >= EDGE_START_PX for dist, toward, start_dist in borders)
-
-
-def hoop_anchored(start_pt, end_pt, hoops, prev_pt=None):
-    if prev_pt is not None and leaves_frame(start_pt, end_pt, prev_pt):
-        return True
-
+def hoop_anchored(start_pt, end_pt, hoops):
     def nearest(pt):
         return min(((pt[0] - h[0]) ** 2 + (pt[1] - h[1]) ** 2) ** 0.5 for h in hoops)
     d_end = nearest(end_pt)
@@ -161,7 +142,7 @@ def find_flight_segment(tracked, frame_height, hoops=None):
             if rms_y > MAX_FIT_RMS_PX or rms_x > MAX_FIT_RMS_PX:
                 continue
             if hoops and not (
-                hoop_anchored(pts[seg[0]], pts[seg[-1]], hoops, pts[seg[-4]] if len(seg) >= 4 else None)
+                hoop_anchored(pts[seg[0]], pts[seg[-1]], hoops)
                 or extrapolates_to_rim(pts[seg[0]], t[-1], (slope, icpt), (a2, b1, c0), frame_height, hoops)
             ):
                 continue
