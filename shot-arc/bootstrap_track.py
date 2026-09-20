@@ -28,6 +28,7 @@ already knows a good starting point (e.g. from the hand-labeling tool).
 """
 import argparse
 import json
+import os
 from pathlib import Path
 
 from ultralytics import YOLO
@@ -35,7 +36,12 @@ from ultralytics import YOLO
 from decoys import RADIUS as DECOY_RADIUS, decoys_for
 
 FRAMES_ROOT = Path(__file__).parent / "frames"
-WEIGHTS_PATH = Path(__file__).parent / "adam-balldata" / "poolvision-ball-best.pt"
+# BALL_WEIGHTS swaps in another detector (e.g. the fine-tuned one); BALL_MIN_CONF rejects detections
+# below that confidence, so a frame with no convincing ball counts as lost instead of the tracker
+# parking on whatever scored highest. The default 0 is the original accept-anything behavior, which
+# the original detector needs (it scores the real ball around 0.1).
+WEIGHTS_PATH = Path(os.environ.get("BALL_WEIGHTS", Path(__file__).parent / "adam-balldata" / "poolvision-ball-best.pt"))
+MIN_CONF = float(os.environ.get("BALL_MIN_CONF", "0"))
 CROP = 960
 CONF_FLOOR = 0.001  # effectively "any detection at all" -- see FINDINGS.md's calibration finding
 LOST_STREAK_LIMIT = 10  # consecutive misses before giving up on a direction
@@ -61,6 +67,8 @@ def top1_detection(model, image_or_path, is_decoy=None):
     takes a center in this image's own coordinates."""
     r = model.predict(image_or_path, verbose=False, conf=CONF_FLOOR, imgsz=640)[0]
     for b in sorted(r.boxes, key=lambda b: -float(b.conf[0])):
+        if float(b.conf[0]) < MIN_CONF:
+            break
         x1, y1, x2, y2 = b.xyxy[0].tolist()
         cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
         if is_decoy is None or not is_decoy(cx, cy):
