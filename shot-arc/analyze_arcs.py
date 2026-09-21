@@ -41,11 +41,16 @@ def load_rows():
                 seen[t] = seen.get(t, 0) + 1
         same_time |= {f"{g['id']}_{t}" for t, n in seen.items() if n > 1}
     sources = [(HERE, r, cands.get(r["shot_key"])) for r in json.loads((HERE / "pipeline_results_refit.json").read_text())]
-    accepted = set(review["accepted_new"])
-    if accepted:
-        for r in json.loads((ft / "pipeline_results_refit.json").read_text()):
-            if r["shot_key"][5:] in accepted:
-                sources.append((ft, r, cands.get(r["shot_key"])))
+    seen_keys = {r["shot_key"] for _, r, _ in sources if r["fit"].get("usable")}
+    for folder in (ft, HERE / "ft_full_v3"):
+        rev = json.loads((folder / "review.json").read_text()) if (folder / "review.json").exists() else {"accepted_new": []}
+        accepted = set(rev["accepted_new"])
+        if not accepted:
+            continue
+        for r in json.loads((folder / "pipeline_results_refit.json").read_text()):
+            if r["shot_key"][5:] in accepted and r["shot_key"] not in seen_keys:
+                sources.append((folder, r, cands.get(r["shot_key"])))
+                seen_keys.add(r["shot_key"])
     # Arcs traced by hand with arc-trace.html (three clicks per shot: release, highest point, hoop).
     # The parabola through the three points gives the same measurements the tracker's fit does.
     hand_file = HERE / "hand_traces.json"
@@ -105,7 +110,7 @@ def load_rows():
             "span_px": span, "arch_px": arch, "arch_ratio": arch / span if span else float("nan"),
             "speed_px_s": span / dur if dur else float("nan"),
             "attribution": f.get("attribution", "clear").split(":")[0],
-            "source": "hand" if src == "hand" else ("pc" if src is ft else "laptop"),
+            "source": "hand" if src == "hand" else ("pc" if src != HERE else "laptop"),
         })
     return rows
 

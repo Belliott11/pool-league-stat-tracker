@@ -662,3 +662,20 @@ drops a key only if the current log still has two shots at that exact time (it u
   ambiguous by the attribution check and are left out of the player-page table, leaving 80 rows.
 - Shot types at n=101 (58 catch-and-shoot, 21 deep heave, 15 drive, 2 move, 5 untagged): still nothing
   separates types by arc shape once distance is removed (every p above 0.23).
+
+## PC run v3: brightening dark frames helps (`ft_full_v3/`)
+
+The PC re-ran the dusk game plain and with `BALL_BRIGHTEN=1`, plus two more games with it:
+- Game `cmgf3z9rea2l7rc`: 5/26 usable plain, 10/26 with the lift (6 gained, 1 lost).
+- `g7ko31w6njargwe`: 2/21 originally, 6/21 with the lift. `spqwa4x7i5ylpdx`: 2/26 to 3/26.
+- New arcs not already in the set: 7. Checked by eye on contact sheets: 5 accepted (four in `cmgf3z9rea2l7rc`,
+  one in `g7ko31w6njargwe`), 2 rejected (a ball held in a player's hands; a near-vertical line to a player,
+  the same one rejected before). `ft_full_v3/review.json` holds the decisions.
+- The lift is worth using on the darker games. It does not recover them all: most of the dusk game still has no arc.
+
+Correction: the earlier arc counts of 95 and 101 each included 4 arcs listed twice (once from the laptop's
+tracks and once from the PC's), so the true unique counts were 91 and 97. The count is now de-duplicated by
+shot: 102 arcs, 82 of them attributed clearly enough for the player page.
+Shot type vs arc shape at n=102 (61 catch-and-shoot, 22 deep heave, 16 drive): still nothing reaches
+significance; the closest is deep heaves covering more horizontal distance than catch-and-shoots after
+adjusting for distance, p=0.058.

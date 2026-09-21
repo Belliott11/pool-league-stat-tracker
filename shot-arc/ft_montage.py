@@ -5,6 +5,7 @@ Same drawing as montage.py: fitted arc (yellow), tracked points (green), start (
 red ring at the fitted ball position on the shown frame.
 Usage: python ft_montage.py OUT_DIR [keys.json]   (default keys: ft_full/pc_only_keys.json)"""
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +18,7 @@ from run_pipeline import FPS, fit_shot
 from select_sample_shots import GAME_4K_SOURCE
 
 HERE = Path(__file__).parent
-FT = HERE / "ft_full"
+FT = HERE / os.environ.get("SHOTARC_FT", "ft_full")   # which PC results folder (ft_full, ft_full_v3)
 H = 2160
 TILE_W = 640
 PRE_ROLL = 1.0
@@ -79,7 +80,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     keys = json.loads(Path(sys.argv[2] if len(sys.argv) > 2 else FT / "pc_only_keys.json").read_text())
     rows = {}
-    for name in ("pipeline_results_ft.json", "pipeline_results_ft_retry.json"):
+    for name in sorted(p.name for p in FT.glob("pipeline_results_ft*.json")):
         for r in json.loads((FT / name).read_text(encoding="utf-8")):
             rows[key_of(r)] = r
     tiles = [(k, tile(k, rows[k])) for k in keys]
