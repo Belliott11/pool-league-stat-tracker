@@ -16,7 +16,7 @@ for r in rows:
     if e is None:
         near=[v for (g2,t),v in tags.items() if g2==gid and abs(t-vt)<0.01]
         e=near[0] if near else None
-    r['type']=(e or {}).get('shotType'); r['matched']=e is not None
+    r['type']=('dunk' if (e or {}).get('dunk') else (e or {}).get('shotType')); r['matched']=e is not None
     joined.append(r)
 print('arc rows',len(rows),'matched to a logged shot',sum(r['matched'] for r in joined))
 by=defaultdict(list)
@@ -32,7 +32,7 @@ for k,v in sorted(by.items(), key=lambda kv:-len(kv[1])):
 for k,v in by.items():
     if k!='untagged': print(k,[ (r['shooter'],r['points'],r['made']) for r in v])
 
-print('\n--- distance-adjusted (residual after regressing each z-feature on distance, all 61 arcs) ---')
+print('\n--- distance-adjusted (residual after regressing each z-feature on distance, all arcs) ---')
 import numpy as np
 from scipy.stats import mannwhitneyu
 D=np.array([float(r['dist']) for r in joined])

@@ -598,3 +598,31 @@ span track distance (correlation about 0.57). After removing the distance trend 
 Read: with this many tagged arcs, shot type is not detectable from arc shape once distance is accounted
 for. Nothing here supports (or contradicts) using arcs to auto-tag types. Revisit when the PC run adds
 arcs and more of the shots are tagged (heaves and drives are the groups that need it).
+
+## PC run with the fine-tuned detector (243 shots) vs the laptop's arcs
+
+Files: `ft_full/` (the PC's results and per-shot tracks), `compare_ft.py`, `ft_montage.py`,
+`refit_all.py ft_full` (re-fits the PC tracks with the current fit logic), `ft_full/review.json`
+(what was accepted or rejected by eye).
+
+- **Counts.** PC main run at confidence 0.3: 71/243 usable. Retry of 37 no-detection shots at 0.1: 11 more.
+  On unique video times, 79 shots are usable (the PC's 243 rows hold only 233 distinct video times, see
+  below). Laptop set before this: 61/228.
+- **Agreement.** 40 arcs found by both; flight durations agree (median difference 0.00 s, max 0.47 s).
+  The PC found 39 the laptop did not; the laptop found 21 the PC did not (14 of those the PC could see
+  no flight in, 1 no detection, 6 not in the PC's shot list because its export was older).
+- **Checked by eye** (contact sheets of the middle frame of each of the 39 PC-only arcs): 38 sit on the
+  ball across the flight. 1 rejected (`w2gvgk88n6e4had_896_504`: a near-vertical line to a player's hands,
+  not a shot). 1 more dropped for attribution (below). 37 accepted.
+- **Same-time shots.** 10 pairs of logged shots share an exact video time in the export, with different
+  shooters (e.g. Alex and Reilly at `w2gvgk88n6e4had_703_329`). An arc there cannot be tied to one of them,
+  so those keys are dropped from the arc set. That removed 3 of the laptop's earlier arcs and 1 PC-only arc.
+  The log entries themselves are worth fixing: at least one of each pair has the wrong video time.
+- **Result.** Arc set is now 95 arcs (was 61): 22 makes, 73 misses; 44 threes, 51 twos. Rebuilt in
+  `shot_arcs_features.csv`. Selection caution: makes are only 23% of arcs, so the arc set is not
+  representative of all shots (many makes are dunks or close shots, which the flight detector skips).
+- **Shot type vs arc shape again, at n=95** (44 catch-and-shoot, 12 deep heave, 10 drive, 2 move, 27 untagged).
+  The earlier hint that deep heaves cover more horizontal distance disappeared (p 0.058 at n=61 became 0.42
+  after distance adjustment). Nothing distinguishes types by arc shape. Treat that earlier hint as noise.
+- **Not explained.** Game `cmgf3z9rea2l7rc`: 0 of 11 retried shots recovered even at 0.1; still needs visual
+  checks of those shots before saying why.

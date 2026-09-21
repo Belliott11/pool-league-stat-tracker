@@ -1,0 +1,4428 @@
+[
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1808.127757,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 26.19047437395368,
+      "y": 53.25892857142857
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 1648.8,
+      "time_to_peak_s": 0.346,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        137
+      ],
+      "rms_y_px": 6.9,
+      "rms_x_px": 24.7
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1290.845939,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 63.33333151681083,
+      "y": 45.401785714285715
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 284.633598,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 17.619045802525115,
+      "y": 71.3541739327567
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1553.9,
+      "time_to_peak_s": 0.653,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        133
+      ],
+      "rms_y_px": 13.5,
+      "rms_x_px": 24.6
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1197.751184,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 66.19047437395368,
+      "y": 18.64584786551339
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 258.475331,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 81.90476008823939,
+      "y": 82.0684596470424
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1834.028549,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 36.190474373953684,
+      "y": 14.166673932756709
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 392.082366,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 19.047617231096538,
+      "y": 14.211316789899556
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 107.55055,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 10.476188659667969,
+      "y": 46.83035714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1333.427236,
+    "shooter": "Evan",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 41.90476008823939,
+      "y": 12.93156215122768
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1773.354463,
+    "shooter": "Reilly",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 94.76190294538226,
+      "y": 17.738102504185278
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 736.720418,
+    "shooter": "Adam",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 13.333331516810826,
+      "y": 78.21428571428572
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1606.406558,
+    "shooter": "Sean",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 37.619045802525115,
+      "y": 10.401785714285722
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_1606_407's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1224.927543,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 91.9047600882394,
+      "y": 48.25892857142857
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_spqwa4x7i5ylpdx_1224_928's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2058.858128,
+    "shooter": "Alex",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 27.61904580252511,
+      "y": 15.401785714285708
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no hoop found in the frames, so a flight can't be checked against one"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 582.531672,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 37.619045802525115,
+      "y": 53.49703107561384
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_582_532's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2058.858128,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 77.61904580252511,
+      "y": 36.83035714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no hoop found in the frames, so a flight can't be checked against one"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 932.333785,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 34.76190294538225,
+      "y": 36.354173932756694
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2133.8,
+      "time_to_peak_s": 0.722,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        54,
+        79
+      ],
+      "rms_y_px": 20.4,
+      "rms_x_px": 22.7
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 996.166896,
+    "shooter": "Viraj",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 81.90476008823939,
+      "y": 7.782745361328125
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1463.416185,
+    "shooter": "Evan",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 83.33333151681083,
+      "y": 10.788705008370542
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 47,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1404.8,
+      "time_to_peak_s": 1.146,
+      "flight_duration_s": 1.533,
+      "range_source": "auto-detected",
+      "frame_range": [
+        83,
+        129
+      ],
+      "rms_y_px": 24.4,
+      "rms_x_px": 10.0
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 771.909575,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 17.619045802525115,
+      "y": 82.54464285714286
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1965.661497,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 9.04761723109654,
+      "y": 54.1666739327567
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 679.481233,
+    "shooter": "Evan",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 83.33333151681083,
+      "y": 45.35714285714286
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 483.071261,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 94.76190294538226,
+      "y": 23.02084786551339
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 970.897727,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 91.9047600882394,
+      "y": 30.639888218470972
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 431.340262,
+    "shooter": "Lukas",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 63.33333151681083,
+      "y": 10.357142857142847
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 189.594842,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 6.190474373953683,
+      "y": 45.63988821847098
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_189_595's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 839.037644,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 26.19047437395368,
+      "y": 91.84524536132812
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 22,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 1994.3,
+      "time_to_peak_s": 0.552,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        28,
+        50
+      ],
+      "rms_y_px": 1.2,
+      "rms_x_px": 22.6
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 315.813662,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 87.61904580252511,
+      "y": 54.925602504185264
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1378.0,
+      "time_to_peak_s": 0.572,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        104,
+        134
+      ],
+      "rms_y_px": 6.9,
+      "rms_x_px": 22.3
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 349.941461,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 51.9047600882394,
+      "y": 83.02084786551339
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 32,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1627.1,
+      "time_to_peak_s": 0.476,
+      "flight_duration_s": 1.033,
+      "range_source": "auto-detected",
+      "frame_range": [
+        79,
+        110
+      ],
+      "rms_y_px": 4.4,
+      "rms_x_px": 24.7
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 722.079313,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 16.190474373953684,
+      "y": 35.35714285714285
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1110.368994,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 87.61904580252511,
+      "y": 45.07441929408482
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1346.7,
+      "time_to_peak_s": 0.466,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        127,
+        147
+      ],
+      "rms_y_px": 6.1,
+      "rms_x_px": 21.6
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 704.233169,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 39.04761723109654,
+      "y": 12.068459647042403
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 873.772637,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 31.9047600882394,
+      "y": 50.416673932756694
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1640.3,
+      "time_to_peak_s": 0.658,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        68,
+        91
+      ],
+      "rms_y_px": 18.3,
+      "rms_x_px": 24.4
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1524.542454,
+    "shooter": "Ian",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 49.04761723109654,
+      "y": 13.28125
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2183.312611,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 19.047617231096538,
+      "y": 26.11607142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_2183_313's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 533.275038,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 84.76190294538225,
+      "y": 77.55953107561383
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 878.382497,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 96.83035714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 536.841941,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 90.47618865966797,
+      "y": 56.07142857142857
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1294.847871,
+    "shooter": "Lukas",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 60.476188659667976,
+      "y": 12.217276436941958
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2039.392187,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 39.04761723109654,
+      "y": 45.401785714285715
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 821.591697,
+    "shooter": "Ian",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 33.33333151681083,
+      "y": 14.947923932756709
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1644.468443,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 20.47618865966797,
+      "y": 44.6875
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1253.83766,
+    "shooter": "Evan",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 33.33333151681083,
+      "y": 10.07441929408482
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 617.973629,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 3.333331516810826,
+      "y": 89.21131678989956
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_617_974's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1463.416185,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 23.333331516810826,
+      "y": 15.788705008370542
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1012.541218,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 31.9047600882394,
+      "y": 70.16370500837053
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_spqwa4x7i5ylpdx_1012_541's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 205.82607,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 71.9047600882394,
+      "y": 12.782745361328125
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_205_826's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 631.528672,
+    "shooter": "Reilly",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 14.761902945382255,
+      "y": 29.6875
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 308.83936,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 63.33333151681083,
+      "y": 69.6875
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1740.5,
+      "time_to_peak_s": 0.442,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        110,
+        140
+      ],
+      "rms_y_px": 16.8,
+      "rms_x_px": 23.8
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2047.8346029999998,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 46.190474373953684,
+      "y": 71.11607142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 792.476344,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 36.190474373953684,
+      "y": 94.70238821847099
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_bl46f6scpfe9ib6_792_476's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "yf7wfx0jbtzy468",
+    "video_time_abs": 1355.160232,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 47.619045802525115,
+      "y": 95.11906215122768
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 32,
+      "tracked_fraction": 0.97,
+      "peak_height_px": 2079.8,
+      "time_to_peak_s": 0.69,
+      "flight_duration_s": 1.067,
+      "range_source": "auto-detected",
+      "frame_range": [
+        74,
+        106
+      ],
+      "rms_y_px": 7.3,
+      "rms_x_px": 23.2
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 652.680065,
+    "shooter": "Evan",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 27.61904580252511,
+      "y": 48.92857142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1703.022135,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 17.619045802525115,
+      "y": 93.97321428571429
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 372.142611,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 10.476188659667969,
+      "y": 47.30656215122768
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1466.2,
+      "time_to_peak_s": 0.259,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        94,
+        117
+      ],
+      "rms_y_px": 12.2,
+      "rms_x_px": 21.5
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 703.329386,
+    "shooter": "Alex",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 60.476188659667976,
+      "y": 9.6875
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 17,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1627.6,
+      "time_to_peak_s": 0.497,
+      "flight_duration_s": 0.533,
+      "range_source": "auto-detected",
+      "frame_range": [
+        106,
+        122
+      ],
+      "rms_y_px": 1.9,
+      "rms_x_px": 24.6
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1361.498774,
+    "shooter": "Zach",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 74.76190294538225,
+      "y": 96.50299072265625
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1477.522917,
+    "shooter": "Ian",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 17.619045802525115,
+      "y": 55.424107142857146
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 923.831801,
+    "shooter": "Adam",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 77.61904580252511,
+      "y": 76.1309596470424
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 33,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1567.3,
+      "time_to_peak_s": 0.571,
+      "flight_duration_s": 1.067,
+      "range_source": "auto-detected",
+      "frame_range": [
+        95,
+        127
+      ],
+      "rms_y_px": 10.7,
+      "rms_x_px": 22.8
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 1024.798424,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 61.9047600882394,
+      "y": 10.639888218470986
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 753.897941,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 96.19047437395368,
+      "y": 46.354173932756694
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 397.612635,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 6.190474373953683,
+      "y": 33.02084786551339
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_jmyhhago9gvrteb_397_613's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2148.237087,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 76.19047437395369,
+      "y": 26.83035714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_2148_237's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1380.99726,
+    "shooter": "Evan",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 43.33333151681082,
+      "y": 36.50299072265625
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1858.071584,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 39.04761723109654,
+      "y": 19.880959647042403
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 658.245961,
+    "shooter": "Adam",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 44.76190294538225,
+      "y": 53.273816789899556
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 27,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1508.0,
+      "time_to_peak_s": 0.445,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        138,
+        164
+      ],
+      "rms_y_px": 9.5,
+      "rms_x_px": 24.2
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 628.785089,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 61.9047600882394,
+      "y": 82.0684596470424
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1751.7,
+      "time_to_peak_s": 0.44,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        90,
+        120
+      ],
+      "rms_y_px": 8.4,
+      "rms_x_px": 23.9
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 1019.2262479999999,
+    "shooter": "Alex",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 10.476188659667969,
+      "y": 49.702388218470986
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_bl46f6scpfe9ib6_1019_226's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1780.256076,
+    "shooter": "Sean",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 31.9047600882394,
+      "y": 9.6875
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_1780_256's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1193.503985,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 73.97321428571428
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1486.665357,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 96.11607142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 561.354272,
+    "shooter": "Ian",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 69.04761723109654,
+      "y": 54.211316789899556
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 25,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1392.1,
+      "time_to_peak_s": 0.418,
+      "flight_duration_s": 0.8,
+      "range_source": "auto-detected",
+      "frame_range": [
+        105,
+        129
+      ],
+      "rms_y_px": 4.4,
+      "rms_x_px": 21.8
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 427.365477,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 84.76190294538225,
+      "y": 33.7351335797991
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1691.6,
+      "time_to_peak_s": 0.489,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        131
+      ],
+      "rms_y_px": 10.2,
+      "rms_x_px": 22.6
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 733.180267,
+    "shooter": "Ian",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 89.04761723109654,
+      "y": 53.51935250418527
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1426.8,
+      "time_to_peak_s": 0.468,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        112,
+        140
+      ],
+      "rms_y_px": 10.7,
+      "rms_x_px": 23.3
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1732.771452,
+    "shooter": "Alex",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 20.47618865966797,
+      "y": 7.738102504185264
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_5gqbi2wxew52g5p_1732_771's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 228.261638,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 23.333331516810826,
+      "y": 42.06845964704241
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_228_262's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 803.248922,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 69.04761723109654,
+      "y": 49.68749999999999
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 352.71477,
+    "shooter": "Ian",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 49.04761723109654,
+      "y": 82.80506678989956
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 34,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1866.9,
+      "time_to_peak_s": 0.39,
+      "flight_duration_s": 1.1,
+      "range_source": "auto-detected",
+      "frame_range": [
+        119,
+        152
+      ],
+      "rms_y_px": 5.9,
+      "rms_x_px": 24.0
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 837.56576,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 89.04761723109654,
+      "y": 68.49703107561385
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 25,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1674.7,
+      "time_to_peak_s": 0.571,
+      "flight_duration_s": 0.8,
+      "range_source": "auto-detected",
+      "frame_range": [
+        99,
+        123
+      ],
+      "rms_y_px": 5.0,
+      "rms_x_px": 22.3
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1102.04669,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 83.33333151681083,
+      "y": 95.40178571428571
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 859.441742,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 59.04761723109654,
+      "y": 11.11607142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 285.914676,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 54.76190294538226,
+      "y": 18.973214285714292
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 554.442379,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 41.90476008823939,
+      "y": 90.4166739327567
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 1791.8,
+      "time_to_peak_s": 0.223,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        137
+      ],
+      "rms_y_px": 15.3,
+      "rms_x_px": 22.5
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 122.552804,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 84.92560250418526
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_122_553's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1916.844248,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 66.19047437395368,
+      "y": 12.544642857142861
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 493.660127,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 34.76190294538225,
+      "y": 55.357142857142854
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 20,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2063.3,
+      "time_to_peak_s": 0.627,
+      "flight_duration_s": 0.633,
+      "range_source": "auto-detected",
+      "frame_range": [
+        61,
+        80
+      ],
+      "rms_y_px": 6.0,
+      "rms_x_px": 23.0
+    }
+  },
+  {
+    "game_id": "yf7wfx0jbtzy468",
+    "video_time_abs": 1161.55204,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 43.33333151681082,
+      "y": 16.547633579799097
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_yf7wfx0jbtzy468_1161_552's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 315.690473,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 87.61904580252511,
+      "y": 46.59227643694196
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1725.4,
+      "time_to_peak_s": 0.516,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        131
+      ],
+      "rms_y_px": 13.0,
+      "rms_x_px": 23.3
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1131.57546,
+    "shooter": "Ian",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 31.9047600882394,
+      "y": 49.68749999999999
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 707.520405,
+    "shooter": "Reilly",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 89.04761723109654,
+      "y": 29.64285714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1656.345313,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 80.47618865966797,
+      "y": 43.25892857142857
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 19,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1289.8,
+      "time_to_peak_s": 0.554,
+      "flight_duration_s": 0.6,
+      "range_source": "auto-detected",
+      "frame_range": [
+        97,
+        115
+      ],
+      "rms_y_px": 8.9,
+      "rms_x_px": 16.5
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1619.729461,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 49.04761723109654,
+      "y": 81.11607142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 773.407049,
+    "shooter": "Zach",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 14.761902945382255,
+      "y": 77.55953107561383
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1629.4,
+      "time_to_peak_s": 0.641,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        150,
+        170
+      ],
+      "rms_y_px": 6.4,
+      "rms_x_px": 21.6
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1453.997886,
+    "shooter": "Ian",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 23.333331516810826,
+      "y": 21.85267857142857
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1736.14712,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 23.333331516810826,
+      "y": 51.11607142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 1051.505498,
+    "shooter": "Michael T",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 94.76190294538226,
+      "y": 38.49703107561384
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1686.891585,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 94.76190294538226,
+      "y": 66.11607142857142
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1859.771513,
+    "shooter": "Sean",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 73.33333151681083,
+      "y": 23.973214285714278
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_1859_772's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 411.724598,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 69.04761723109654,
+      "y": 49.702388218470986
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 451.183733,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 69.04761723109654,
+      "y": 76.3541739327567
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1705.0,
+      "time_to_peak_s": 0.531,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        78,
+        103
+      ],
+      "rms_y_px": 4.6,
+      "rms_x_px": 21.8
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 910.360676,
+    "shooter": "Evan",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 27.61904580252511,
+      "y": 10.639888218470986
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1312.96691,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 50.47618865966796,
+      "y": 96.83035714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1329.824929,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 87.61904580252511,
+      "y": 88.97321428571429
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 510.958217,
+    "shooter": "Adam",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 20.47618865966797,
+      "y": 55.639888218470986
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_510_958's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 511.45030399999996,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 23.333331516810826,
+      "y": 66.83035714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 163.173847,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 57.619045802525115,
+      "y": 49.21131678989955
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_163_174's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 385.417757,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 10.476188659667969,
+      "y": 50.357142857142854
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 422.176732,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 66.19047437395368,
+      "y": 70.63988821847099
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_422_177's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 459.598429,
+    "shooter": "Alex",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 17.559531075613847
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1324.849066,
+    "shooter": "Evan",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 11.904760088239396,
+      "y": 33.64584786551339
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1184.793283,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 70.47618865966797,
+      "y": 55.788705008370535
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 25,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1396.1,
+      "time_to_peak_s": 0.49,
+      "flight_duration_s": 0.8,
+      "range_source": "auto-detected",
+      "frame_range": [
+        102,
+        126
+      ],
+      "rms_y_px": 4.9,
+      "rms_x_px": 17.1
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1810.597327,
+    "shooter": "Alex",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 69.04761723109654,
+      "y": 47.023816789899556
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 753.923858,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 14.761902945382255,
+      "y": 32.55953107561383
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 275.308044,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 71.9047600882394,
+      "y": 21.11607142857143
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1381.9,
+      "time_to_peak_s": 0.526,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        131,
+        156
+      ],
+      "rms_y_px": 6.6,
+      "rms_x_px": 21.0
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 403.254833,
+    "shooter": "Ben",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 33.33333151681083,
+      "y": 73.49703107561385
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1739.9,
+      "time_to_peak_s": 0.702,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        109,
+        132
+      ],
+      "rms_y_px": 9.0,
+      "rms_x_px": 24.0
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 476.787361,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 33.33333151681083,
+      "y": 23.27381678989954
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 20,
+      "tracked_fraction": 0.95,
+      "peak_height_px": 1580.1,
+      "time_to_peak_s": 0.638,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        49,
+        69
+      ],
+      "rms_y_px": 16.6,
+      "rms_x_px": 21.9
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 970.172495,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 63.33333151681083,
+      "y": 71.3541739327567
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 346.691155,
+    "shooter": "Reilly",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 43.33333151681082,
+      "y": 64.6875
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1964.152724,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 60.476188659667976,
+      "y": 11.830357142857139
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 2040.893297,
+    "shooter": "Zach",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 49.04761723109654,
+      "y": 99.1666739327567
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 1012.076545,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 93.33333151681083,
+      "y": 25.639888218470986
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 28,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1718.3,
+      "time_to_peak_s": 0.503,
+      "flight_duration_s": 0.9,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        130
+      ],
+      "rms_y_px": 8.2,
+      "rms_x_px": 22.2
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 464.985497,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 93.33333151681083,
+      "y": 51.592276436941965
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1270.245822,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 7.619045802525111,
+      "y": 88.64584786551339
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 889.466635,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 47.619045802525115,
+      "y": 96.84524536132812
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 0.92,
+      "peak_height_px": 1766.7,
+      "time_to_peak_s": 0.663,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        97,
+        122
+      ],
+      "rms_y_px": 8.5,
+      "rms_x_px": 24.2
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1868.637895,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 23.333331516810826,
+      "y": 48.25892857142857
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_1868_638's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 881.472993,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 89.04761723109654,
+      "y": 54.925602504185264
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1433.1,
+      "time_to_peak_s": 0.52,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        131
+      ],
+      "rms_y_px": 6.7,
+      "rms_x_px": 22.6
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 327.647018,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 26.19047437395368,
+      "y": 52.06845964704241
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_327_647's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1746.245787,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 60.476188659667976,
+      "y": 37.023816789899556
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2072.1,
+      "time_to_peak_s": 0.461,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        114,
+        136
+      ],
+      "rms_y_px": 3.0,
+      "rms_x_px": 23.3
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 407.439896,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 26.19047437395368,
+      "y": 39.44941929408482
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 787.830311,
+    "shooter": "Evan",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 74.76190294538225,
+      "y": 74.64285714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1081.146839,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 76.19047437395369,
+      "y": 27.544642857142847
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 449.285925,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 11.904760088239396,
+      "y": 77.5
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1962.3,
+      "time_to_peak_s": 0.653,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        52,
+        75
+      ],
+      "rms_y_px": 4.9,
+      "rms_x_px": 24.6
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 907.321222,
+    "shooter": "Reilly",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 63.33333151681083,
+      "y": 78.25892857142857
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_w2gvgk88n6e4had_907_321's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 593.458782,
+    "shooter": "Reilly",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 34.76190294538225,
+      "y": 55.357142857142854
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1482.640235,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 58.645847865513396
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1559.87537,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 77.30656215122768
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 17,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2001.4,
+      "time_to_peak_s": 0.263,
+      "flight_duration_s": 0.533,
+      "range_source": "auto-detected",
+      "frame_range": [
+        77,
+        93
+      ],
+      "rms_y_px": 2.8,
+      "rms_x_px": 24.6
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1795.408014,
+    "shooter": "Reilly",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 68.45238821847099
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 850.521867,
+    "shooter": "Adam",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 17.619045802525115,
+      "y": 23.497031075613833
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_850_522's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 579.137554,
+    "shooter": "Adam",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 49.04761723109654,
+      "y": 58.98810250418527
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 0.91,
+      "peak_height_px": 1806.0,
+      "time_to_peak_s": 0.387,
+      "flight_duration_s": 1.033,
+      "range_source": "auto-detected",
+      "frame_range": [
+        35,
+        66
+      ],
+      "rms_y_px": 4.6,
+      "rms_x_px": 23.4
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 684.334058,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 20.47618865966797,
+      "y": 12.559531075613833
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1315.212961,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 30.47618865966797,
+      "y": 97.21727643694196
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1407.916049,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 26.19047437395368,
+      "y": 51.50299072265625
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 814.958412,
+    "shooter": "Adam",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 11.904760088239396,
+      "y": 73.21428571428572
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 716.940753,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 27.61904580252511,
+      "y": 96.83035714285714
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 34,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2013.5,
+      "time_to_peak_s": 0.203,
+      "flight_duration_s": 1.1,
+      "range_source": "auto-detected",
+      "frame_range": [
+        109,
+        142
+      ],
+      "rms_y_px": 17.1,
+      "rms_x_px": 24.1
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1389.963671,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 66.19047437395368,
+      "y": 94.36013357979911
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2047.8346029999998,
+    "shooter": "Sean",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 36.190474373953684,
+      "y": 27.544642857142847
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 810.714478,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 4.761902945382254,
+      "y": 85.63988821847099
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1752.4,
+      "time_to_peak_s": 0.643,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        35,
+        55
+      ],
+      "rms_y_px": 1.4,
+      "rms_x_px": 23.9
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 560.094885,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 7.619045802525111,
+      "y": 32.30656215122768
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_jmyhhago9gvrteb_560_095's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 780.541528,
+    "shooter": "Reilly",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 49.04761723109654,
+      "y": 86.11607142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1899.877145,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 19.047617231096538,
+      "y": 32.023816789899556
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "yf7wfx0jbtzy468",
+    "video_time_abs": 1213.120884,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 43.33333151681082,
+      "y": 14.404776436941972
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 390.740269,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 40.47618865966797,
+      "y": 66.1309596470424
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 269.20221,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 20.47618865966797,
+      "y": 23.497031075613833
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1988.171932,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 3.333331516810826,
+      "y": 57.54464285714286
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 2060.603881,
+    "shooter": "Lukas",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 47.619045802525115,
+      "y": 10.595245361328125
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1916.844248,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 31.9047600882394,
+      "y": 49.68749999999999
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 0.97,
+      "peak_height_px": 1735.2,
+      "time_to_peak_s": 0.411,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        102,
+        131
+      ],
+      "rms_y_px": 12.7,
+      "rms_x_px": 24.3
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 1038.781442,
+    "shooter": "Adam",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 80.47618865966797,
+      "y": 86.84524536132812
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 843.308215,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 34.76190294538225,
+      "y": 68.25892857142857
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 0.91,
+      "peak_height_px": 1744.6,
+      "time_to_peak_s": 0.69,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        116,
+        138
+      ],
+      "rms_y_px": 14.8,
+      "rms_x_px": 22.2
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 475.592286,
+    "shooter": "Reilly",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 81.90476008823939,
+      "y": 38.21428571428571
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 28,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1985.8,
+      "time_to_peak_s": 0.267,
+      "flight_duration_s": 0.9,
+      "range_source": "auto-detected",
+      "frame_range": [
+        74,
+        101
+      ],
+      "rms_y_px": 13.3,
+      "rms_x_px": 15.8
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1497.635818,
+    "shooter": "Evan",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 91.9047600882394,
+      "y": 27.544642857142847
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 764.058935,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 66.19047437395368,
+      "y": 14.642857142857153
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1920.66346,
+    "shooter": "Lukas",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 61.9047600882394,
+      "y": 10.595245361328125
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 336.421512,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 4.761902945382254,
+      "y": 57.54464285714286
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 17,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1563.9,
+      "time_to_peak_s": 0.507,
+      "flight_duration_s": 0.533,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        127
+      ],
+      "rms_y_px": 1.4,
+      "rms_x_px": 24.0
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1294.847871,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 57.619045802525115,
+      "y": 46.50299072265624
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 1038.781442,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 34.76190294538225,
+      "y": 83.98810250418526
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 849.017795,
+    "shooter": "Ian",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 90.47618865966797,
+      "y": 75.6622096470424
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_jmyhhago9gvrteb_849_018's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 639.508247,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 21.904760088239396,
+      "y": 81.3541739327567
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1760.7,
+      "time_to_peak_s": 0.702,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        102,
+        124
+      ],
+      "rms_y_px": 11.8,
+      "rms_x_px": 22.7
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1816.32799,
+    "shooter": "Sean",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 86.19047437395369,
+      "y": 26.11607142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_1816_328's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 667.52066,
+    "shooter": "Ian",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 66.19047437395368,
+      "y": 46.354173932756694
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1367.8,
+      "time_to_peak_s": 0.492,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        97,
+        122
+      ],
+      "rms_y_px": 5.8,
+      "rms_x_px": 20.3
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 526.881411,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 34.76190294538225,
+      "y": 53.92857142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 932.333785,
+    "shooter": "Alex",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 30.47618865966797,
+      "y": 7.068459647042417
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2133.8,
+      "time_to_peak_s": 0.722,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        54,
+        79
+      ],
+      "rms_y_px": 20.4,
+      "rms_x_px": 22.7
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1551.038819,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 94.76190294538226,
+      "y": 58.25892857142857
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2191.719157,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 60.476188659667976,
+      "y": 9.6875
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_2191_719's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1761.25014,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 70.47618865966797,
+      "y": 74.8809596470424
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 644.55056,
+    "shooter": "Evan",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 74.76190294538225,
+      "y": 53.92857142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1437.237431,
+    "shooter": "Ian",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 36.190474373953684,
+      "y": 67.56696428571428
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 427.451967,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 26.19047437395368,
+      "y": 87.54464285714286
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1835.653116,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 67.61904580252511,
+      "y": 75.40178571428572
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 1933.267436,
+    "shooter": "Reilly",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 40.47618865966797,
+      "y": 69.88095964704242
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 432.628183,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 17.619045802525115,
+      "y": 44.211316789899556
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1501.9,
+      "time_to_peak_s": 0.358,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        110,
+        135
+      ],
+      "rms_y_px": 6.4,
+      "rms_x_px": 22.1
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 896.503705,
+    "shooter": "Reilly",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 67.61904580252511,
+      "y": 89.6875
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 30,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1189.7,
+      "time_to_peak_s": 0.659,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        1,
+        30
+      ],
+      "rms_y_px": 23.6,
+      "rms_x_px": 11.2
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 497.582581,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 3.333331516810826,
+      "y": 67.55953107561385
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 489.066952,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 66.19047437395368,
+      "y": 25.416673932756694
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1243.2,
+      "time_to_peak_s": 0.566,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        108,
+        128
+      ],
+      "rms_y_px": 17.0,
+      "rms_x_px": 24.8
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 771.883401,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 7.619045802525111,
+      "y": 52.782745361328125
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_jmyhhago9gvrteb_771_883's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1491.787369,
+    "shooter": "Ben",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 34.76190294538225,
+      "y": 13.645847865513389
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 537.432621,
+    "shooter": "Viraj",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 4.761902945382254,
+      "y": 87.54464285714286
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 16,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1636.6,
+      "time_to_peak_s": 0.483,
+      "flight_duration_s": 0.5,
+      "range_source": "auto-detected",
+      "frame_range": [
+        138,
+        153
+      ],
+      "rms_y_px": 2.2,
+      "rms_x_px": 24.3
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 981.684044,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 54.76190294538226,
+      "y": 51.16816929408482
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 986.56025,
+    "shooter": "Ian",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 77.61904580252511,
+      "y": 53.51935250418527
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 22,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1670.7,
+      "time_to_peak_s": 0.258,
+      "flight_duration_s": 0.7,
+      "range_source": "auto-detected",
+      "frame_range": [
+        116,
+        137
+      ],
+      "rms_y_px": 6.7,
+      "rms_x_px": 20.8
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 366.673199,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 14.761902945382255,
+      "y": 14.925602504185264
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1167.646874,
+    "shooter": "Adam",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 44.76190294538225,
+      "y": 17.217276436941958
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 1901.573755,
+    "shooter": "Sean",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 61.9047600882394,
+      "y": 16.11607142857143
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_1901_574's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 695.106718,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 13.333331516810826,
+      "y": 52.54464285714286
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 1688.3,
+      "time_to_peak_s": 0.263,
+      "flight_duration_s": 0.8,
+      "range_source": "auto-detected",
+      "frame_range": [
+        112,
+        136
+      ],
+      "rms_y_px": 5.9,
+      "rms_x_px": 20.1
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 996.630894,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 93.33333151681083,
+      "y": 70.63988821847099
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 32,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1527.2,
+      "time_to_peak_s": 0.568,
+      "flight_duration_s": 1.033,
+      "range_source": "auto-detected",
+      "frame_range": [
+        105,
+        136
+      ],
+      "rms_y_px": 3.7,
+      "rms_x_px": 23.3
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 336.178229,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 54.76190294538226,
+      "y": 52.06845964704241
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1347.950764,
+    "shooter": "Evan",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 67.61904580252511,
+      "y": 13.645847865513389
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 603.030544,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 24.761902945382257,
+      "y": 56.83035714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 553.797932,
+    "shooter": "Ian",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 81.90476008823939,
+      "y": 53.214285714285715
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 673.993412,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 39.04761723109654,
+      "y": 9.6875
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 1112.256894,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 34.76190294538225,
+      "y": 49.21131678989955
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1619.8,
+      "time_to_peak_s": 0.453,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        29,
+        59
+      ],
+      "rms_y_px": 5.2,
+      "rms_x_px": 16.8
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 490.699658,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 94.76190294538226,
+      "y": 66.11607142857142
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 27,
+      "tracked_fraction": 0.9,
+      "peak_height_px": 1876.7,
+      "time_to_peak_s": 0.515,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        114,
+        143
+      ],
+      "rms_y_px": 10.8,
+      "rms_x_px": 21.5
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 180.241683,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 73.33333151681083,
+      "y": 16.354173932756694
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 740.326374,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 69.04761723109654,
+      "y": 8.988102504185264
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 485.587614,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 9.04761723109654,
+      "y": 56.785714285714285
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 2022.6,
+      "time_to_peak_s": 0.729,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        98,
+        121
+      ],
+      "rms_y_px": 18.1,
+      "rms_x_px": 25.0
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 130.783007,
+    "shooter": "Ben",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 46.190474373953684,
+      "y": 77.78274536132812
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 27,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1730.4,
+      "time_to_peak_s": 0.635,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        113,
+        139
+      ],
+      "rms_y_px": 6.2,
+      "rms_x_px": 24.3
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 586.257623,
+    "shooter": "Alex",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 24.761902945382257,
+      "y": 91.11607142857143
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 19,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1819.1,
+      "time_to_peak_s": 0.493,
+      "flight_duration_s": 0.6,
+      "range_source": "auto-detected",
+      "frame_range": [
+        112,
+        130
+      ],
+      "rms_y_px": 3.3,
+      "rms_x_px": 23.3
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 580.535623,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 50.47618865966796,
+      "y": 13.735133579799111
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_jmyhhago9gvrteb_580_536's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 519.926095,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 31.9047600882394,
+      "y": 88.49703107561385
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1864.9,
+      "time_to_peak_s": 0.761,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        100,
+        128
+      ],
+      "rms_y_px": 11.9,
+      "rms_x_px": 23.8
+    }
+  },
+  {
+    "game_id": "yf7wfx0jbtzy468",
+    "video_time_abs": 1133.738138,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 6.190474373953683,
+      "y": 55.833347865513396
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "yf7wfx0jbtzy468",
+    "video_time_abs": 1192.653781,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 24.761902945382257,
+      "y": 56.547633579799104
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 336.885035,
+    "shooter": "Zach",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 14.761902945382255,
+      "y": 76.84524536132812
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 685.905973,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 76.83035714285714
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1761.2,
+      "time_to_peak_s": 0.684,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        107,
+        130
+      ],
+      "rms_y_px": 14.7,
+      "rms_x_px": 24.4
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 497.582581,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 40.47618865966797,
+      "y": 100
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "bl46f6scpfe9ib6",
+    "video_time_abs": 908.772575,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 63.33333151681083,
+      "y": 83.27381678989956
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 30,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1646.0,
+      "time_to_peak_s": 0.404,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        132
+      ],
+      "rms_y_px": 13.0,
+      "rms_x_px": 23.7
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1010.892771,
+    "shooter": "Ian",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 44.76190294538225,
+      "y": 12.455357142857139
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1098.430453,
+    "shooter": "Zach",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 99.04761723109654,
+      "y": 24.360133579799097
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_g7ko31w6njargwe_1098_430's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 539.661274,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 41.90476008823939,
+      "y": 56.354173932756694
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 30,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1573.2,
+      "time_to_peak_s": 0.43,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        105,
+        134
+      ],
+      "rms_y_px": 7.0,
+      "rms_x_px": 20.6
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 1123.738891,
+    "shooter": "Michael T",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 66.19047437395368,
+      "y": 12.068459647042403
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 619.180637,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 83.33333151681083,
+      "y": 23.973214285714278
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2223.015396,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 37.619045802525115,
+      "y": 56.83035714285714
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_2223_015's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 693.060508,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 63.33333151681083,
+      "y": 9.925602504185278
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_jmyhhago9gvrteb_693_061's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1376.66294,
+    "shooter": "Viraj",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 30.47618865966797,
+      "y": 11.830357142857139
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 577.166279,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 31.9047600882394,
+      "y": 88.25892857142857
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 28,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1865.5,
+      "time_to_peak_s": 0.21,
+      "flight_duration_s": 0.9,
+      "range_source": "auto-detected",
+      "frame_range": [
+        124,
+        151
+      ],
+      "rms_y_px": 4.8,
+      "rms_x_px": 23.2
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 929.254287,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 36.190474373953684,
+      "y": 47.782745361328125
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 629.333031,
+    "shooter": "Adam",
+    "made": true,
+    "points": 3,
+    "shot_location": {
+      "x": 30.47618865966797,
+      "y": 86.3541739327567
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1694.9,
+      "time_to_peak_s": 0.405,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        139
+      ],
+      "rms_y_px": 5.1,
+      "rms_x_px": 21.5
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 788.802059,
+    "shooter": "Ian",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 91.9047600882394,
+      "y": 56.354173932756694
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1885.3,
+      "time_to_peak_s": 0.509,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        90,
+        120
+      ],
+      "rms_y_px": 4.4,
+      "rms_x_px": 20.9
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1363.431995,
+    "shooter": "Ian",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 26.19047437395368,
+      "y": 51.85267857142858
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1468.900832,
+    "shooter": "Viraj",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 37.619045802525115,
+      "y": 18.25892857142857
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 902.369615,
+    "shooter": "Adam",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 13.333331516810826,
+      "y": 27.068459647042403
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 17,
+      "tracked_fraction": 0.94,
+      "peak_height_px": 1531.2,
+      "time_to_peak_s": 0.556,
+      "flight_duration_s": 0.567,
+      "range_source": "auto-detected",
+      "frame_range": [
+        100,
+        117
+      ],
+      "rms_y_px": 5.8,
+      "rms_x_px": 19.9
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 498.514571,
+    "shooter": "Ian",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 49.04761723109654,
+      "y": 85.90031215122768
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 466.005809,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 66.19047437395368,
+      "y": 52.782745361328125
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 27,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1287.3,
+      "time_to_peak_s": 0.33,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        108,
+        134
+      ],
+      "rms_y_px": 12.4,
+      "rms_x_px": 24.8
+    }
+  },
+  {
+    "game_id": "5gqbi2wxew52g5p",
+    "video_time_abs": 2019.382359,
+    "shooter": "Alex",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 13.333331516810826,
+      "y": 44.166673932756694
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 659.962848,
+    "shooter": "Ben",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 40.47618865966797,
+      "y": 13.497031075613847
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 703.329386,
+    "shooter": "Reilly",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 4.761902945382254,
+      "y": 56.11607142857143
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 17,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1627.6,
+      "time_to_peak_s": 0.497,
+      "flight_duration_s": 0.533,
+      "range_source": "auto-detected",
+      "frame_range": [
+        106,
+        122
+      ],
+      "rms_y_px": 1.9,
+      "rms_x_px": 24.6
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 948.922389,
+    "shooter": "Evan",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 37.619045802525115,
+      "y": 20.639888218470986
+    },
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 952.757029,
+    "shooter": "Ian",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 6.190474373953683,
+      "y": 52.09078107561384
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "w2gvgk88n6e4had",
+    "video_time_abs": 455.636337,
+    "shooter": "Reilly",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 33.33333151681083,
+      "y": 57.782745361328125
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 20,
+      "tracked_fraction": 0.95,
+      "peak_height_px": 1549.1,
+      "time_to_peak_s": 0.534,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        137,
+        157
+      ],
+      "rms_y_px": 10.0,
+      "rms_x_px": 24.2
+    }
+  },
+  {
+    "game_id": "cmgf3z9rea2l7rc",
+    "video_time_abs": 2202.396729,
+    "shooter": "Zach",
+    "made": true,
+    "points": 2,
+    "shot_location": {
+      "x": 43.33333151681082,
+      "y": 14.6875
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_cmgf3z9rea2l7rc_2202_397's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 798.810197,
+    "shooter": "Ben",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 36.190474373953684,
+      "y": 86.3541739327567
+    },
+    "fit": {
+      "usable": true,
+      "points_used": 37,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1879.9,
+      "time_to_peak_s": 0.516,
+      "flight_duration_s": 1.2,
+      "range_source": "auto-detected",
+      "frame_range": [
+        84,
+        120
+      ],
+      "rms_y_px": 12.8,
+      "rms_x_px": 23.6
+    }
+  },
+  {
+    "game_id": "jmyhhago9gvrteb",
+    "video_time_abs": 595.974117,
+    "shooter": "Michael T",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 6.190474373953683,
+      "y": 38.020847865513396
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "g7ko31w6njargwe",
+    "video_time_abs": 1238.168126,
+    "shooter": "Evan",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 77.61904580252511,
+      "y": 10.788705008370542
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "spqwa4x7i5ylpdx",
+    "video_time_abs": 1149.378572,
+    "shooter": "Alex",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 29.047617231096538,
+      "y": 89.6875
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "game_id": "wurjg3g9xhehuka",
+    "video_time_abs": 205.82607,
+    "shooter": "Adam",
+    "made": false,
+    "points": 2,
+    "shot_location": {
+      "x": 16.190474373953684,
+      "y": 37.78274536132813
+    },
+    "fit": {
+      "usable": false,
+      "reason": "No detection anywhere in real_wurjg3g9xhehuka_205_826's 180 frames -- can't auto-seed. Try --seed-frame/--seed-x/--seed-y with a hand-picked point."
+    }
+  },
+  {
+    "game_id": "ctqc73n67cph45y",
+    "video_time_abs": 665.337852,
+    "shooter": "Adam",
+    "made": false,
+    "points": 3,
+    "shot_location": {
+      "x": 44.76190294538225,
+      "y": 86.78571428571428
+    },
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  }
+]

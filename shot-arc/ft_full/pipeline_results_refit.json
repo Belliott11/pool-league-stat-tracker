@@ -1,0 +1,2786 @@
+[
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1732_771",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1746_246",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2072.1,
+      "time_to_peak_s": 0.461,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        114,
+        136
+      ],
+      "rms_y_px": 3.0,
+      "rms_x_px": 23.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1761_250",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1773_354",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1795_408",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1810_597",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1834_029",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1858_072",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1899_877",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1920_663",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1933_267",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_1965_661",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_2019_382",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_2040_893",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_5gqbi2wxew52g5p_2060_604",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_1019_226",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_1038_781",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_336_885",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_390_740",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_411_725",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_459_598",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_476_787",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 20,
+      "tracked_fraction": 0.95,
+      "peak_height_px": 1580.1,
+      "time_to_peak_s": 0.638,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        49,
+        69
+      ],
+      "rms_y_px": 16.6,
+      "rms_x_px": 21.9,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_489_067",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1243.2,
+      "time_to_peak_s": 0.566,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        108,
+        128
+      ],
+      "rms_y_px": 17.0,
+      "rms_x_px": 24.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_497_583",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_533_275",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_554_442",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 1791.8,
+      "time_to_peak_s": 0.223,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        137
+      ],
+      "rms_y_px": 15.3,
+      "rms_x_px": 22.5,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_579_138",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 0.91,
+      "peak_height_px": 1806.0,
+      "time_to_peak_s": 0.387,
+      "flight_duration_s": 1.033,
+      "range_source": "auto-detected",
+      "frame_range": [
+        35,
+        66
+      ],
+      "rms_y_px": 4.6,
+      "rms_x_px": 23.4,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_658_246",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 27,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1508.0,
+      "time_to_peak_s": 0.445,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        138,
+        164
+      ],
+      "rms_y_px": 9.5,
+      "rms_x_px": 24.2,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_684_334",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_740_326",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_753_924",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_773_407",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1629.4,
+      "time_to_peak_s": 0.641,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        150,
+        170
+      ],
+      "rms_y_px": 6.4,
+      "rms_x_px": 21.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_792_476",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 34,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1836.8,
+      "time_to_peak_s": 0.381,
+      "flight_duration_s": 1.1,
+      "range_source": "auto-detected",
+      "frame_range": [
+        121,
+        154
+      ],
+      "rms_y_px": 4.4,
+      "rms_x_px": 24.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_839_038",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 22,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 1994.3,
+      "time_to_peak_s": 0.552,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        28,
+        50
+      ],
+      "rms_y_px": 1.2,
+      "rms_x_px": 22.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_873_773",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1640.3,
+      "time_to_peak_s": 0.658,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        68,
+        91
+      ],
+      "rms_y_px": 18.3,
+      "rms_x_px": 24.4,
+      "attribution": "ambiguous: another logged shot 0.8s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_889_467",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 0.92,
+      "peak_height_px": 1766.7,
+      "time_to_peak_s": 0.663,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        97,
+        122
+      ],
+      "rms_y_px": 8.5,
+      "rms_x_px": 24.2,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_908_773",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 30,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1646.0,
+      "time_to_peak_s": 0.404,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        132
+      ],
+      "rms_y_px": 13.0,
+      "rms_x_px": 23.7,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_923_832",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 33,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1567.3,
+      "time_to_peak_s": 0.571,
+      "flight_duration_s": 1.067,
+      "range_source": "auto-detected",
+      "frame_range": [
+        95,
+        127
+      ],
+      "rms_y_px": 10.7,
+      "rms_x_px": 22.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_bl46f6scpfe9ib6_981_684",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1559_875",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 17,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2001.4,
+      "time_to_peak_s": 0.263,
+      "flight_duration_s": 0.533,
+      "range_source": "auto-detected",
+      "frame_range": [
+        77,
+        93
+      ],
+      "rms_y_px": 2.8,
+      "rms_x_px": 24.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1619_729",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1644_468",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1656_345",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 19,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1289.8,
+      "time_to_peak_s": 0.554,
+      "flight_duration_s": 0.6,
+      "range_source": "auto-detected",
+      "frame_range": [
+        97,
+        115
+      ],
+      "rms_y_px": 8.9,
+      "rms_x_px": 16.5,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1686_892",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1703_022",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1736_147",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1780_256",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1808_128",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 1648.8,
+      "time_to_peak_s": 0.346,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        137
+      ],
+      "rms_y_px": 6.9,
+      "rms_x_px": 24.7,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1816_328",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1835_653",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1859_772",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1901_574",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1916_844",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1964_153",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_1988_172",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_2039_392",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_2047_835",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_2058_858",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no hoop found in the frames, so a flight can't be checked against one"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_2148_237",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_2183_313",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no hoop found in the frames, so a flight can't be checked against one"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_2191_719",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no hoop found in the frames, so a flight can't be checked against one"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_2202_397",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_cmgf3z9rea2l7rc_2223_015",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no hoop found in the frames, so a flight can't be checked against one"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_385_418",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_431_340",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_449_286",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1962.3,
+      "time_to_peak_s": 0.653,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        52,
+        75
+      ],
+      "rms_y_px": 4.9,
+      "rms_x_px": 24.6,
+      "attribution": "ambiguous: another logged shot 1.0s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_475_592",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 28,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1985.8,
+      "time_to_peak_s": 0.267,
+      "flight_duration_s": 0.9,
+      "range_source": "auto-detected",
+      "frame_range": [
+        74,
+        101
+      ],
+      "rms_y_px": 13.3,
+      "rms_x_px": 15.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_485_588",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 2022.6,
+      "time_to_peak_s": 0.729,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        98,
+        121
+      ],
+      "rms_y_px": 18.1,
+      "rms_x_px": 25.0,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_493_660",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 20,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2063.3,
+      "time_to_peak_s": 0.627,
+      "flight_duration_s": 0.633,
+      "range_source": "auto-detected",
+      "frame_range": [
+        61,
+        80
+      ],
+      "rms_y_px": 6.0,
+      "rms_x_px": 23.0,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_526_881",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_536_842",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_553_798",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_593_459",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_644_551",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_652_680",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_665_338",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_679_481",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_707_520",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_722_079",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_736_720",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_764_059",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_787_830",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_ctqc73n67cph45y_814_958",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1010_893",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1098_430",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1110_369",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1346.7,
+      "time_to_peak_s": 0.466,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        127,
+        147
+      ],
+      "rms_y_px": 6.1,
+      "rms_x_px": 21.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1167_647",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1184_793",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 25,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1396.1,
+      "time_to_peak_s": 0.49,
+      "flight_duration_s": 0.8,
+      "range_source": "auto-detected",
+      "frame_range": [
+        102,
+        126
+      ],
+      "rms_y_px": 4.9,
+      "rms_x_px": 17.1,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1197_751",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1238_168",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1253_838",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1270_246",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1294_848",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1315_213",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1324_849",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1333_427",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1347_951",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1361_499",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1380_997",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1389_964",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1407_916",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1463_416",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1482_640",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_g7ko31w6njargwe_1491_787",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_1012_077",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 28,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1718.3,
+      "time_to_peak_s": 0.503,
+      "flight_duration_s": 0.9,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        130
+      ],
+      "rms_y_px": 8.2,
+      "rms_x_px": 22.2,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_1024_798",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_1051_505",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_1112_257",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1619.8,
+      "time_to_peak_s": 0.453,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        29,
+        59
+      ],
+      "rms_y_px": 5.2,
+      "rms_x_px": 16.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_1123_739",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_285_915",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_315_690",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1725.4,
+      "time_to_peak_s": 0.516,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        131
+      ],
+      "rms_y_px": 13.0,
+      "rms_x_px": 23.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_349_941",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 32,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1627.1,
+      "time_to_peak_s": 0.476,
+      "flight_duration_s": 1.033,
+      "range_source": "auto-detected",
+      "frame_range": [
+        79,
+        110
+      ],
+      "rms_y_px": 4.4,
+      "rms_x_px": 24.7,
+      "attribution": "ambiguous: another logged shot 0.3s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_372_143",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1466.2,
+      "time_to_peak_s": 0.259,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        94,
+        117
+      ],
+      "rms_y_px": 12.2,
+      "rms_x_px": 21.5,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_397_613",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_407_440",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_427_365",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1691.6,
+      "time_to_peak_s": 0.489,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        131
+      ],
+      "rms_y_px": 10.2,
+      "rms_x_px": 22.6,
+      "attribution": "ambiguous: another logged shot 0.3s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_464_985",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_483_071",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_498_515",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_560_095",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 1633.8,
+      "time_to_peak_s": 0.682,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        102,
+        125
+      ],
+      "rms_y_px": 14.5,
+      "rms_x_px": 22.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_580_536",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 37,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1687.0,
+      "time_to_peak_s": 0.416,
+      "flight_duration_s": 1.2,
+      "range_source": "auto-detected",
+      "frame_range": [
+        58,
+        94
+      ],
+      "rms_y_px": 9.1,
+      "rms_x_px": 22.9,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_595_974",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_628_785",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1751.7,
+      "time_to_peak_s": 0.44,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        90,
+        120
+      ],
+      "rms_y_px": 8.4,
+      "rms_x_px": 23.9,
+      "attribution": "ambiguous: another logged shot 0.4s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_659_963",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_693_061",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_771_883",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1607.8,
+      "time_to_peak_s": 0.715,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        114,
+        136
+      ],
+      "rms_y_px": 13.5,
+      "rms_x_px": 24.3,
+      "attribution": "ambiguous: another logged shot 0.4s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_788_802",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1885.3,
+      "time_to_peak_s": 0.509,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        90,
+        120
+      ],
+      "rms_y_px": 4.4,
+      "rms_x_px": 20.9,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_798_810",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 37,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1879.9,
+      "time_to_peak_s": 0.516,
+      "flight_duration_s": 1.2,
+      "range_source": "auto-detected",
+      "frame_range": [
+        84,
+        120
+      ],
+      "rms_y_px": 12.8,
+      "rms_x_px": 23.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_810_714",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1752.4,
+      "time_to_peak_s": 0.643,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        35,
+        55
+      ],
+      "rms_y_px": 1.4,
+      "rms_x_px": 23.9,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_849_018",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_881_473",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1433.1,
+      "time_to_peak_s": 0.52,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        103,
+        131
+      ],
+      "rms_y_px": 6.7,
+      "rms_x_px": 22.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_902_370",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 17,
+      "tracked_fraction": 0.94,
+      "peak_height_px": 1531.2,
+      "time_to_peak_s": 0.556,
+      "flight_duration_s": 0.567,
+      "range_source": "auto-detected",
+      "frame_range": [
+        100,
+        117
+      ],
+      "rms_y_px": 5.8,
+      "rms_x_px": 19.9,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_929_254",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_952_757",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_970_898",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_jmyhhago9gvrteb_996_631",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 32,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1527.2,
+      "time_to_peak_s": 0.568,
+      "flight_duration_s": 1.033,
+      "range_source": "auto-detected",
+      "frame_range": [
+        105,
+        136
+      ],
+      "rms_y_px": 3.7,
+      "rms_x_px": 23.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1012_541",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 28,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2158.1,
+      "time_to_peak_s": 0.352,
+      "flight_duration_s": 0.9,
+      "range_source": "auto-detected",
+      "frame_range": [
+        122,
+        149
+      ],
+      "rms_y_px": 8.2,
+      "rms_x_px": 20.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1081_147",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1102_047",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1131_575",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1149_379",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1193_504",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1224_928",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1290_846",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1312_967",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1329_825",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1363_432",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1376_663",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1437_237",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1453_998",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1468_901",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1477_523",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1486_665",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1497_636",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1524_542",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_1551_039",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_910_361",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_932_334",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2133.8,
+      "time_to_peak_s": 0.722,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        54,
+        79
+      ],
+      "rms_y_px": 20.4,
+      "rms_x_px": 22.7,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_948_922",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_970_172",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_986_560",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 22,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1670.7,
+      "time_to_peak_s": 0.258,
+      "flight_duration_s": 0.7,
+      "range_source": "auto-detected",
+      "frame_range": [
+        116,
+        137
+      ],
+      "rms_y_px": 6.7,
+      "rms_x_px": 20.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_spqwa4x7i5ylpdx_996_167",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_275_308",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1381.9,
+      "time_to_peak_s": 0.526,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        131,
+        156
+      ],
+      "rms_y_px": 6.6,
+      "rms_x_px": 21.0,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_308_839",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1740.5,
+      "time_to_peak_s": 0.442,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        110,
+        140
+      ],
+      "rms_y_px": 16.8,
+      "rms_x_px": 23.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_336_422",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 17,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1563.9,
+      "time_to_peak_s": 0.507,
+      "flight_duration_s": 0.533,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        127
+      ],
+      "rms_y_px": 1.4,
+      "rms_x_px": 24.0,
+      "attribution": "ambiguous: another logged shot 0.5s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_346_691",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_427_452",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_455_636",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 20,
+      "tracked_fraction": 0.95,
+      "peak_height_px": 1549.1,
+      "time_to_peak_s": 0.534,
+      "flight_duration_s": 0.667,
+      "range_source": "auto-detected",
+      "frame_range": [
+        137,
+        157
+      ],
+      "rms_y_px": 10.0,
+      "rms_x_px": 24.2,
+      "attribution": "ambiguous: another logged shot 0.2s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_490_700",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 27,
+      "tracked_fraction": 0.9,
+      "peak_height_px": 1876.7,
+      "time_to_peak_s": 0.515,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        114,
+        143
+      ],
+      "rms_y_px": 10.8,
+      "rms_x_px": 21.5,
+      "attribution": "ambiguous: another logged shot 0.7s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_511_450",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_537_433",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 16,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1636.6,
+      "time_to_peak_s": 0.483,
+      "flight_duration_s": 0.5,
+      "range_source": "auto-detected",
+      "frame_range": [
+        138,
+        153
+      ],
+      "rms_y_px": 2.2,
+      "rms_x_px": 24.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_577_166",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 28,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1865.5,
+      "time_to_peak_s": 0.21,
+      "flight_duration_s": 0.9,
+      "range_source": "auto-detected",
+      "frame_range": [
+        124,
+        151
+      ],
+      "rms_y_px": 4.8,
+      "rms_x_px": 23.2,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_586_258",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 19,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1819.1,
+      "time_to_peak_s": 0.493,
+      "flight_duration_s": 0.6,
+      "range_source": "auto-detected",
+      "frame_range": [
+        112,
+        130
+      ],
+      "rms_y_px": 3.3,
+      "rms_x_px": 23.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_603_031",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_619_181",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_631_529",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_673_993",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_685_906",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1761.2,
+      "time_to_peak_s": 0.684,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        107,
+        130
+      ],
+      "rms_y_px": 14.7,
+      "rms_x_px": 24.4,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_695_107",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 0.96,
+      "peak_height_px": 1688.3,
+      "time_to_peak_s": 0.263,
+      "flight_duration_s": 0.8,
+      "range_source": "auto-detected",
+      "frame_range": [
+        112,
+        136
+      ],
+      "rms_y_px": 5.9,
+      "rms_x_px": 20.1,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_703_329",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 17,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1627.6,
+      "time_to_peak_s": 0.497,
+      "flight_duration_s": 0.533,
+      "range_source": "auto-detected",
+      "frame_range": [
+        106,
+        122
+      ],
+      "rms_y_px": 1.9,
+      "rms_x_px": 24.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_716_941",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 34,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 2013.5,
+      "time_to_peak_s": 0.203,
+      "flight_duration_s": 1.1,
+      "range_source": "auto-detected",
+      "frame_range": [
+        109,
+        142
+      ],
+      "rms_y_px": 17.1,
+      "rms_x_px": 24.1,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_771_910",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_780_542",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_803_249",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_843_308",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 21,
+      "tracked_fraction": 0.91,
+      "peak_height_px": 1744.6,
+      "time_to_peak_s": 0.69,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        116,
+        138
+      ],
+      "rms_y_px": 14.8,
+      "rms_x_px": 22.2,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_859_442",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_878_382",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_896_504",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 30,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1189.7,
+      "time_to_peak_s": 0.659,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        1,
+        30
+      ],
+      "rms_y_px": 23.6,
+      "rms_x_px": 11.2,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_w2gvgk88n6e4had_907_321",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_107_551",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_122_553",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 34,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1872.2,
+      "time_to_peak_s": 0.34,
+      "flight_duration_s": 1.1,
+      "range_source": "auto-detected",
+      "frame_range": [
+        110,
+        143
+      ],
+      "rms_y_px": 6.6,
+      "rms_x_px": 24.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_130_783",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 27,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1730.4,
+      "time_to_peak_s": 0.635,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        113,
+        139
+      ],
+      "rms_y_px": 6.2,
+      "rms_x_px": 24.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_163_174",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 20,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1588.5,
+      "time_to_peak_s": 0.543,
+      "flight_duration_s": 0.633,
+      "range_source": "auto-detected",
+      "frame_range": [
+        149,
+        168
+      ],
+      "rms_y_px": 7.4,
+      "rms_x_px": 24.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_180_242",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_189_595",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_205_826",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_228_262",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_258_475",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_269_202",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_284_634",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1553.9,
+      "time_to_peak_s": 0.653,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        133
+      ],
+      "rms_y_px": 13.5,
+      "rms_x_px": 24.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_315_814",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 31,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1378.0,
+      "time_to_peak_s": 0.572,
+      "flight_duration_s": 1.0,
+      "range_source": "auto-detected",
+      "frame_range": [
+        104,
+        134
+      ],
+      "rms_y_px": 6.9,
+      "rms_x_px": 22.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_327_647",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_336_178",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_352_715",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 34,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1866.9,
+      "time_to_peak_s": 0.39,
+      "flight_duration_s": 1.1,
+      "range_source": "auto-detected",
+      "frame_range": [
+        119,
+        152
+      ],
+      "rms_y_px": 5.9,
+      "rms_x_px": 24.0,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_366_673",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_392_082",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_403_255",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 24,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1739.9,
+      "time_to_peak_s": 0.702,
+      "flight_duration_s": 0.767,
+      "range_source": "auto-detected",
+      "frame_range": [
+        109,
+        132
+      ],
+      "rms_y_px": 9.0,
+      "rms_x_px": 24.0,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_422_177",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 28,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1773.8,
+      "time_to_peak_s": 0.581,
+      "flight_duration_s": 0.9,
+      "range_source": "auto-detected",
+      "frame_range": [
+        131,
+        158
+      ],
+      "rms_y_px": 9.1,
+      "rms_x_px": 23.1,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_432_628",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1501.9,
+      "time_to_peak_s": 0.358,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        110,
+        135
+      ],
+      "rms_y_px": 6.4,
+      "rms_x_px": 22.1,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_451_184",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1705.0,
+      "time_to_peak_s": 0.531,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        78,
+        103
+      ],
+      "rms_y_px": 4.6,
+      "rms_x_px": 21.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_466_006",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 27,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1287.3,
+      "time_to_peak_s": 0.33,
+      "flight_duration_s": 0.867,
+      "range_source": "auto-detected",
+      "frame_range": [
+        108,
+        134
+      ],
+      "rms_y_px": 12.4,
+      "rms_x_px": 24.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_510_958",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_519_926",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1864.9,
+      "time_to_peak_s": 0.761,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        100,
+        128
+      ],
+      "rms_y_px": 11.9,
+      "rms_x_px": 23.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_539_661",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 30,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1573.2,
+      "time_to_peak_s": 0.43,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        105,
+        134
+      ],
+      "rms_y_px": 7.0,
+      "rms_x_px": 20.6,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_561_354",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 25,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1392.1,
+      "time_to_peak_s": 0.418,
+      "flight_duration_s": 0.8,
+      "range_source": "auto-detected",
+      "frame_range": [
+        105,
+        129
+      ],
+      "rms_y_px": 4.4,
+      "rms_x_px": 21.8,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_582_532",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 25,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1430.5,
+      "time_to_peak_s": 0.345,
+      "flight_duration_s": 0.8,
+      "range_source": "auto-detected",
+      "frame_range": [
+        123,
+        147
+      ],
+      "rms_y_px": 6.4,
+      "rms_x_px": 20.7,
+      "attribution": "ambiguous: another logged shot 0.6s from the flight"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_617_974",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1715.3,
+      "time_to_peak_s": 0.18,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        1,
+        23
+      ],
+      "rms_y_px": 2.0,
+      "rms_x_px": 8.7,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_629_333",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1694.9,
+      "time_to_peak_s": 0.405,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        111,
+        139
+      ],
+      "rms_y_px": 5.1,
+      "rms_x_px": 21.5,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_639_508",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 23,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1760.7,
+      "time_to_peak_s": 0.702,
+      "flight_duration_s": 0.733,
+      "range_source": "auto-detected",
+      "frame_range": [
+        102,
+        124
+      ],
+      "rms_y_px": 11.8,
+      "rms_x_px": 22.7,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_667_521",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 26,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1367.8,
+      "time_to_peak_s": 0.492,
+      "flight_duration_s": 0.833,
+      "range_source": "auto-detected",
+      "frame_range": [
+        97,
+        122
+      ],
+      "rms_y_px": 5.8,
+      "rms_x_px": 20.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_704_233",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "dunk: the ball is carried by hand, not in free flight"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_733_180",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1426.8,
+      "time_to_peak_s": 0.468,
+      "flight_duration_s": 0.933,
+      "range_source": "auto-detected",
+      "frame_range": [
+        112,
+        140
+      ],
+      "rms_y_px": 10.7,
+      "rms_x_px": 23.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_753_898",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_821_592",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_837_566",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 25,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1674.7,
+      "time_to_peak_s": 0.571,
+      "flight_duration_s": 0.8,
+      "range_source": "auto-detected",
+      "frame_range": [
+        99,
+        123
+      ],
+      "rms_y_px": 5.0,
+      "rms_x_px": 22.3,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_wurjg3g9xhehuka_850_522",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 34,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1481.5,
+      "time_to_peak_s": 0.473,
+      "flight_duration_s": 1.1,
+      "range_source": "auto-detected",
+      "frame_range": [
+        96,
+        129
+      ],
+      "rms_y_px": 24.3,
+      "rms_x_px": 19.5,
+      "attribution": "clear"
+    }
+  },
+  {
+    "shot_key": "real_yf7wfx0jbtzy468_1133_738",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_yf7wfx0jbtzy468_1161_552",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_yf7wfx0jbtzy468_1192_654",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_yf7wfx0jbtzy468_1213_121",
+    "n_frames": 180,
+    "fit": {
+      "usable": false,
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
+    }
+  },
+  {
+    "shot_key": "real_yf7wfx0jbtzy468_1355_160",
+    "n_frames": 180,
+    "fit": {
+      "usable": true,
+      "points_used": 32,
+      "tracked_fraction": 0.97,
+      "peak_height_px": 2079.8,
+      "time_to_peak_s": 0.69,
+      "flight_duration_s": 1.067,
+      "range_source": "auto-detected",
+      "frame_range": [
+        74,
+        106
+      ],
+      "rms_y_px": 7.3,
+      "rms_x_px": 23.2,
+      "attribution": "ambiguous: another logged shot 0.3s from the flight"
+    }
+  }
+]

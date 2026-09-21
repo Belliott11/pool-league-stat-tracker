@@ -43,3 +43,5 @@ shot-arc/decoys.json
 shot-arc/balldata_local/
 shot-arc/runs/
 shot-arc/ft_tracked/
+shot-arc/ft_full/mid_frames/
+shot-arc/ft_full/montages/

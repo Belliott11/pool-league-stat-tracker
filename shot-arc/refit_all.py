@@ -3,6 +3,7 @@ otherwise an auto-detected flight that ends at a hoop) without re-running extrac
 Hoop positions are cached per shot in <key>-hoops.json since detecting them decodes many 4K frames.
 Writes pipeline_results_refit.json."""
 import json
+import sys
 from pathlib import Path
 
 from hoops import detect_hoops, rim_centers
@@ -14,7 +15,8 @@ FPS = 30
 WINDOW_PRE_S = 1.0     # the extraction window starts this long before the logged time
 
 FRAME_H = 2160  # 4K source
-here = Path(__file__).parent
+# Optional first argument: a folder of *-tracked.json / *-hoops.json to refit instead (e.g. ft_full).
+here = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).parent
 cands = {safe_shot_key(c): c for c in find_clean_candidates()}
 dunks = {k: c["dunk"] for k, c in cands.items()}
 _state = json.loads(DUNK_SOURCE.read_text(encoding="utf-8"))

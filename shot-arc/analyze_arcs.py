@@ -27,14 +27,32 @@ def load_rows():
             if e.get("videoTime") is not None:
                 events[(g["id"], round(e["videoTime"], 3))] = e
     cands = {rp.safe_shot_key(c): c for c in find_clean_candidates()}
+    # Arcs the PC's fine-tuned detector added, accepted after checking each by eye (ft_full/review.json),
+    # and the logged shots that share an exact video time with another shot: an arc there can't be
+    # tied to one of them, so those keys are dropped from both sources.
+    ft = HERE / "ft_full"
+    review = json.loads((ft / "review.json").read_text()) if (ft / "review.json").exists() else {"accepted_new": [], "same_time_pairs": []}
+    same_time = set(review["same_time_pairs"])
+    sources = [(HERE, r, cands.get(r["shot_key"])) for r in json.loads((HERE / "pipeline_results_refit.json").read_text())]
+    if review["accepted_new"]:
+        pc_meta = {}
+        for name in ("pipeline_results_ft.json", "pipeline_results_ft_retry.json"):
+            for m in json.loads((ft / name).read_text(encoding="utf-8")):
+                w, fr = f"{m['video_time_abs']:.3f}".split(".")
+                pc_meta[f"{m['game_id']}_{w}_{fr}"] = m
+        accepted = set(review["accepted_new"])
+        for r in json.loads((ft / "pipeline_results_refit.json").read_text()):
+            if r["shot_key"][5:] in accepted:
+                m = pc_meta[r["shot_key"][5:]]
+                sources.append((ft, r, {"game_id": m["game_id"], "video_time_abs": m["video_time_abs"], "shooter": m["shooter"],
+                                        "points": m["points"], "made": m["made"], "shot_location": m["shot_location"]}))
     rows = []
-    for r in json.loads((HERE / "pipeline_results_refit.json").read_text()):
+    for src, r, c in sources:
         f = r["fit"]
-        if not f.get("usable"):
+        if not f.get("usable") or c is None or r["shot_key"][5:] in same_time:
             continue
         key = r["shot_key"]
-        c = cands[key]
-        tracked = json.loads((HERE / f"{key}-tracked.json").read_text(encoding="utf-8"))["frames"]
+        tracked = json.loads((src / f"{key}-tracked.json").read_text(encoding="utf-8"))["frames"]
         lo, hi = f["frame_range"]
         pts = [(i / FPS, x["x"], H - x["y"]) for i, x in enumerate(tracked) if "x" in x and lo <= i + 1 <= hi]
         t = np.array([p[0] for p in pts]); xs = np.array([p[1] for p in pts]); ys = np.array([p[2] for p in pts])
@@ -58,6 +76,7 @@ def load_rows():
             "span_px": span, "arch_px": arch, "arch_ratio": arch / span if span else float("nan"),
             "speed_px_s": span / dur if dur else float("nan"),
             "attribution": f.get("attribution", "clear").split(":")[0],
+            "source": "pc" if src is ft else "laptop",
         })
     return rows
 
