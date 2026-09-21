@@ -1,7 +1,7 @@
 import csv, json, statistics as st
 from collections import defaultdict
 import os
-d=json.load(open(os.environ.get('SHOTARC_EXPORT', r'C:\Users\breso\Downloads\pool-league-data (11).json'))); d=d.get('state',d)
+d=json.load(open(os.environ.get('SHOTARC_EXPORT', r'C:\Users\breso\Downloads\pool-league-data (12).json'))); d=d.get('state',d)
 tags={}
 for g in d['games']:
     for e in g['scoringEvents']:
