@@ -580,3 +580,21 @@ First look at what it contains: median flight 0.77s (range 0.50-1.10s), identica
 - "Flight time" is the length of the stretch the tracker followed, often cut short where it lost a fast, blurry ball, so it is not a true flight time (it barely tracks distance, rho +0.15). Distance covered is the trustworthy size measure.
 - Pixel features are only comparable within one recording, so they are standardized per recording.
 - Per-shooter arc shapes rest on 4-14 arcs each; treat them as descriptions, not findings.
+
+## Shot type tags vs. arc shape (61 verified arcs joined to the 190 tags in export 9)
+
+Script: `analyze_types.py` (set SHOTARC_EXPORT to the export to use). All 61 arcs matched a logged shot;
+47 have a shot type: 33 catch-and-shoot, 6 deep heave, 6 drive, 2 move, 14 untagged.
+
+Raw within-recording z-scores by type looked different for heaves (longer flight, faster ball, longer
+span), but heaves are also the farthest shots (median 85 units vs 59 for catch-and-shoot), and speed and
+span track distance (correlation about 0.57). After removing the distance trend from each feature:
+- Deep heave vs catch-and-shoot: only horizontal span stays higher (rank-biserial +0.49, p=0.058, n=6 vs 33).
+  Flight time, speed, arch and apex position are not distinguishable (all p>0.18).
+- Drive vs catch-and-shoot: nothing distinguishable (all p>0.2). Drives trend slightly flatter and shorter
+  in the air (arch -0.44 SD, flight -0.45 SD) but with n=6 this is noise-level.
+- Move: n=2, nothing to say.
+
+Read: with this many tagged arcs, shot type is not detectable from arc shape once distance is accounted
+for. Nothing here supports (or contradicts) using arcs to auto-tag types. Revisit when the PC run adds
+arcs and more of the shots are tagged (heaves and drives are the groups that need it).
