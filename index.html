@@ -788,6 +788,12 @@
     </div>
 
     <div class="panel">
+      <h2>Shot Arc</h2>
+      <p class="hint">The shape of this player's shots, from the ones followed on film from release to the hoop. It describes how the player shoots and does not predict whether a shot goes in. Needs 8 followed shots before it shows.</p>
+      <div id="playerShotArc"></div>
+    </div>
+
+    <div class="panel">
       <h2>Game Log</h2>
       <p class="hint">Every game this player was in, most recent first.</p>
       <div class="table-scroll">
@@ -1035,6 +1041,7 @@
      deployed site (shot-arc/ is a local-only tool, not part of the public repo's served pages),
      where a missing script tag just fails silently -- the labeling panel below checks for
      SHOT_ARC_LABEL_MANIFEST before using it and shows an explanatory message if it's not there. -->
+<script src="shot-arcs-data.js"></script>
 <script src="shot-arc/labeling-manifest.js"></script>
 <script src="app.js"></script>
 </body>
