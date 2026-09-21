@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arc Trace</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #14181d; color: #e8edf2; font: 14px/1.4 system-ui, sans-serif; }
+  #top { padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: #1c222a; }
+  #hint { font-size: 16px; font-weight: 600; }
+  #hint small { font-weight: 400; color: #9fb0c0; }
+  #bar { padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  button { background: #2b3542; color: #e8edf2; border: 1px solid #3a4756; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  button:hover { background: #354253; }
+  button.primary { background: #2f6fd6; border-color: #2f6fd6; }
+  input[type=range] { width: min(560px, 90vw); }
+  #wrap { position: relative; display: inline-block; max-width: 100%; }
+  canvas { display: block; max-width: 100%; height: auto; cursor: crosshair; }
+  .pill { background: #26303c; border-radius: 999px; padding: 3px 10px; }
+  #done { padding: 14px; }
+</style>
+</head>
+<body>
+<div id="top">
+  <div id="hint"></div>
+  <span class="pill" id="progress"></span>
+  <span class="pill" id="who"></span>
+</div>
+<div id="bar">
+  <label>Frame <input type="range" id="frame" min="0" max="179" value="30"> <span id="fnum"></span></label>
+  <label>Brightness <input type="range" id="bright" min="1" max="4" step="0.1" value="2.2"></label>
+  <button id="undo">Undo last point</button>
+  <button id="skip">Can't tell / skip shot</button>
+  <button id="next" class="primary" disabled>Save and next shot</button>
+  <button id="export">Download traces</button>
+</div>
+<div id="wrap"><canvas id="c"></canvas></div>
+<div id="done"></div>
+<script>
+const STAGES = [
+  "1. Find the frame the ball leaves the shooter's hand and click the ball",
+  "2. Find the highest point of the flight and click the ball",
+  "3. Find the frame the ball reaches the hoop and click the ball"
+];
+const HINT_EXTRA = "Arrow keys step one frame (hold Shift for five). The logged shot time is about frame 30.";
+let shots = [], idx = 0, pts = [], traces = [];
+const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
+const img = new Image();
+const $ = id => document.getElementById(id);
+
+try { traces = JSON.parse(localStorage.getItem("arcTraces") || "[]"); } catch (e) { traces = []; }
+
+async function init() {
+  shots = await (await fetch("trace/shots.json", { cache: "no-store" })).json();
+  const doneKeys = new Set(traces.map(t => t.key));
+  idx = shots.findIndex(s => !doneKeys.has(s.key));
+  if (idx < 0) { finish(); return; }
+  loadShot();
+}
+
+function loadShot() {
+  pts = [];
+  const s = shots[idx];
+  $("progress").textContent = `Shot ${idx + 1} of ${shots.length}`;
+  $("who").textContent = `${s.shooter}, ${s.points}pt ${s.made ? "make" : "miss"}`;
+  $("frame").max = s.frames - 1;
+  $("frame").value = 30;
+  draw();
+}
+
+function frameNo() { return parseInt($("frame").value, 10); }
+
+function draw() {
+  const s = shots[idx], f = frameNo();
+  $("fnum").textContent = f + " of " + (s.frames - 1);
+  $("hint").innerHTML = pts.length < 3 ? STAGES[pts.length] + `<br><small>${HINT_EXTRA}</small>` : "All three points placed. Check the curve, then save.";
+  $("next").disabled = pts.length < 3;
+  img.onload = () => {
+    canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+    canvas.style.filter = `brightness(${$("bright").value}) contrast(1.1)`;
+    ctx.drawImage(img, 0, 0);
+    overlay(f);
+  };
+  img.src = `trace/${s.key}/f_${String(f + 1).padStart(3, "0")}.jpg`;
+}
+
+function overlay(f) {
+  const s = shots[idx];
+  pts.forEach((p, i) => {
+    const x = p.x / s.scale, y = p.y / s.scale;
+    ctx.beginPath(); ctx.arc(x, y, p.f === f ? 12 : 8, 0, Math.PI * 2);
+    ctx.lineWidth = 3; ctx.strokeStyle = ["#4aa3ff", "#ffd23f", "#ff4ad8"][i]; ctx.stroke();
+  });
+  if (pts.length === 3) {
+    const t = pts.map(p => p.f / 30), ys = pts.map(p => p.y), xs = pts.map(p => p.x);
+    const q = fitQuad(t, ys), lin = fitLine(t, xs);
+    ctx.beginPath();
+    for (let i = 0; i <= 60; i++) {
+      const tt = t[0] + (t[2] - t[0]) * i / 60;
+      const x = (lin.a * tt + lin.b) / s.scale, y = (q.a * tt * tt + q.b * tt + q.c) / s.scale;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.lineWidth = 3; ctx.strokeStyle = "#5dff8a"; ctx.stroke();
+  }
+}
+
+function fitQuad(t, y) {
+  // exact parabola through three points
+  const [t0, t1, t2] = t, [y0, y1, y2] = y;
+  const d01 = (y1 - y0) / (t1 - t0), d12 = (y2 - y1) / (t2 - t1);
+  const a = (d12 - d01) / (t2 - t0), b = d01 - a * (t0 + t1);
+  return { a, b, c: y0 - a * t0 * t0 - b * t0 };
+}
+function fitLine(t, x) {
+  const n = t.length, mt = t.reduce((s, v) => s + v, 0) / n, mx = x.reduce((s, v) => s + v, 0) / n;
+  let num = 0, den = 0;
+  t.forEach((v, i) => { num += (v - mt) * (x[i] - mx); den += (v - mt) * (v - mt); });
+  const a = den ? num / den : 0;
+  return { a, b: mx - a * mt };
+}
+
+canvas.addEventListener("click", e => {
+  if (pts.length >= 3) return;
+  const r = canvas.getBoundingClientRect(), s = shots[idx];
+  const x = (e.clientX - r.left) * canvas.width / r.width * s.scale;
+  const y = (e.clientY - r.top) * canvas.height / r.height * s.scale;
+  const f = frameNo();
+  if (pts.length && f <= pts[pts.length - 1].f) { alert("Each point has to be on a later frame than the one before."); return; }
+  pts.push({ f, x: Math.round(x), y: Math.round(y) });
+  draw();
+});
+
+$("frame").addEventListener("input", draw);
+$("bright").addEventListener("input", draw);
+$("undo").addEventListener("click", () => { pts.pop(); draw(); });
+document.addEventListener("keydown", e => {
+  const step = e.shiftKey ? 5 : 1, el = $("frame");
+  if (e.key === "ArrowRight") { el.value = Math.min(+el.max, frameNo() + step); draw(); e.preventDefault(); }
+  if (e.key === "ArrowLeft") { el.value = Math.max(0, frameNo() - step); draw(); e.preventDefault(); }
+});
+
+function save(entry) {
+  traces = traces.filter(t => t.key !== entry.key).concat(entry);
+  localStorage.setItem("arcTraces", JSON.stringify(traces));
+  idx = shots.findIndex((s, i) => i > idx && !traces.some(t => t.key === s.key));
+  if (idx < 0) finish(); else loadShot();
+}
+$("next").addEventListener("click", () => save({ key: shots[idx].key, points: pts.slice() }));
+$("skip").addEventListener("click", () => save({ key: shots[idx].key, skipped: true }));
+
+function download() {
+  const blob = new Blob([JSON.stringify(traces, null, 1)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "hand_traces.json"; a.click();
+}
+$("export").addEventListener("click", download);
+
+function finish() {
+  $("hint").textContent = "All shots done.";
+  $("done").innerHTML = `<p>${traces.filter(t => !t.skipped).length} traced, ${traces.filter(t => t.skipped).length} skipped. Download the file and put it in the shot-arc folder as hand_traces.json.</p>`;
+  canvas.style.display = "none";
+}
+init();
+</script>
+</body>
+</html>

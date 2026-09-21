@@ -46,15 +46,44 @@ def load_rows():
         for r in json.loads((ft / "pipeline_results_refit.json").read_text()):
             if r["shot_key"][5:] in accepted:
                 sources.append((ft, r, cands.get(r["shot_key"])))
+    # Arcs traced by hand with arc-trace.html (three clicks per shot: release, highest point, hoop).
+    # The parabola through the three points gives the same measurements the tracker's fit does.
+    hand_file = HERE / "hand_traces.json"
+    if hand_file.exists():
+        by_game = defaultdict(list)
+        for g in json.loads(DUNK_SOURCE.read_text(encoding="utf-8"))["games"]:
+            by_game[g["id"]] = sorted(e["videoTime"] for e in g["scoringEvents"] if e.get("videoTime") is not None and e.get("points") in (1, 2, 3))
+        have = {r["shot_key"] for _, r, _ in sources if r["fit"].get("usable")}
+        for tr in json.loads(hand_file.read_text(encoding="utf-8")):
+            key = "real_" + tr["key"]
+            c = cands.get(key)
+            if tr.get("skipped") or len(tr.get("points", [])) != 3 or c is None or key in have:
+                continue
+            t = [p["f"] / FPS for p in tr["points"]]
+            py = np.polyfit(t, [H - p["y"] for p in tr["points"]], 2)
+            if py[0] >= 0 or not 0.3 <= t[2] - t[0] <= 2.5:
+                continue
+            tp = min(max(-py[1] / (2 * py[0]) - t[0], 0.0), t[2] - t[0])
+            start = c["video_time_abs"] - 1.0 + t[0]
+            end = c["video_time_abs"] - 1.0 + t[2]
+            gaps = [min(abs(o - start), abs(o - end)) for o in by_game[c["game_id"]]
+                    if abs(o - c["video_time_abs"]) > 0.01 and start - 1 <= o <= end + 1]
+            near = min(gaps) if gaps else None
+            fit = {"usable": True, "time_to_peak_s": tp, "frame_range": None,
+                   "attribution": f"ambiguous: {near:.1f}s" if near is not None and near < 1.0 else "clear"}
+            sources.append(("hand", {"shot_key": key, "fit": fit, "pts": [(t[i], tr["points"][i]["x"], H - tr["points"][i]["y"]) for i in range(3)]}, c))
     rows = []
     for src, r, c in sources:
         f = r["fit"]
         if not f.get("usable") or c is None or r["shot_key"][5:] in same_time:
             continue
         key = r["shot_key"]
-        tracked = json.loads((src / f"{key}-tracked.json").read_text(encoding="utf-8"))["frames"]
-        lo, hi = f["frame_range"]
-        pts = [(i / FPS, x["x"], H - x["y"]) for i, x in enumerate(tracked) if "x" in x and lo <= i + 1 <= hi]
+        if src == "hand":
+            pts = r["pts"]
+        else:
+            tracked = json.loads((src / f"{key}-tracked.json").read_text(encoding="utf-8"))["frames"]
+            lo, hi = f["frame_range"]
+            pts = [(i / FPS, x["x"], H - x["y"]) for i, x in enumerate(tracked) if "x" in x and lo <= i + 1 <= hi]
         t = np.array([p[0] for p in pts]); xs = np.array([p[1] for p in pts]); ys = np.array([p[2] for p in pts])
         py, px = np.polyfit(t, ys, 2), np.polyfit(t, xs, 1)
         tt = np.linspace(t.min(), t.max(), 100)
@@ -76,7 +105,7 @@ def load_rows():
             "span_px": span, "arch_px": arch, "arch_ratio": arch / span if span else float("nan"),
             "speed_px_s": span / dur if dur else float("nan"),
             "attribution": f.get("attribution", "clear").split(":")[0],
-            "source": "pc" if src is ft else "laptop",
+            "source": "hand" if src == "hand" else ("pc" if src is ft else "laptop"),
         })
     return rows
 
