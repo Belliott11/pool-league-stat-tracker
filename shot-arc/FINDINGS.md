@@ -652,3 +652,13 @@ found different detections with the lift, but not the ball, so this shows the sw
 detector sees, not that it helps. Compare usable counts on `cmgf3z9rea2l7rc` with and without it, then check
 new arcs by eye like the others. If the lift does not help, the fix is to add dusk frames with ball labels to
 the training set and fine-tune again.
+
+## Re-run on export 11 (same-time pairs fixed, 129 more shots tagged)
+
+Export 11 has no two shots at the same video time (13 times were corrected) and only 36 untagged field
+goals left, all Alex's. Shot list defaults in `select_sample_shots.py` now point at export 11; `analyze_arcs.py`
+drops a key only if the current log still has two shots at that exact time (it used to read a fixed list).
+- Arcs: 101 (was 95). The arcs that had been dropped as unattributable are back; 21 of the 101 are flagged
+  ambiguous by the attribution check and are left out of the player-page table, leaving 80 rows.
+- Shot types at n=101 (58 catch-and-shoot, 21 deep heave, 15 drive, 2 move, 5 untagged): still nothing
+  separates types by arc shape once distance is removed (every p above 0.23).

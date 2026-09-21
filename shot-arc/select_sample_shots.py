@@ -18,13 +18,13 @@ from pathlib import Path
 # Every machine-specific location can be overridden with an environment variable, so the same code
 # runs on another computer (see pc_run/README.txt). The defaults are this laptop's own paths.
 
-STATE_PATH = Path(os.environ.get("SHOTARC_STATE", r"C:\Users\breso\AppData\Local\Temp\claude\C--Users-breso-dashboard\be6cd57e-4d45-44a6-b05b-76c385e5c878\scratchpad\full_state.json"))
+STATE_PATH = Path(os.environ.get("SHOTARC_STATE", r"C:\Users\breso\Downloads\pool-league-data (11).json"))
 VIEWER_VIDEOS_JS = Path(os.environ.get("SHOTARC_VIEWER_VIDEOS_JS", r"C:\Users\breso\dashboard-viewer\viewer-videos.js"))
 GAME_VIDEOS_DIR = Path(os.environ.get("SHOTARC_GAME_VIDEOS_DIR", r"C:\Users\breso\dashboard-viewer\game-videos"))
 OUT_PATH = Path(__file__).parent / "sample_shots.json"
 # The state snapshot above predates the dunk flags being backfilled, so dunk is read from a newer
 # export by event id. Any export that has the flags works; without it every shot counts as not a dunk.
-DUNK_SOURCE = Path(os.environ.get("SHOTARC_EXPORT", r"C:\Users\breso\Downloads\pool-league-data (8).json"))
+DUNK_SOURCE = Path(os.environ.get("SHOTARC_EXPORT", r"C:\Users\breso\Downloads\pool-league-data (11).json"))
 
 # Adam's real 4K60 handoff (see FINDINGS.md): each file is the full, unedited session recording,
 # not trimmed per game the way game-videos/*.mp4 is. Confirmed by pulling the frame at a game's

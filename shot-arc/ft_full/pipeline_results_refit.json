@@ -611,8 +611,20 @@
     "shot_key": "real_cmgf3z9rea2l7rc_1916_844",
     "n_frames": 180,
     "fit": {
-      "usable": false,
-      "reason": "dunk: the ball is carried by hand, not in free flight"
+      "usable": true,
+      "points_used": 29,
+      "tracked_fraction": 0.97,
+      "peak_height_px": 1735.2,
+      "time_to_peak_s": 0.411,
+      "flight_duration_s": 0.967,
+      "range_source": "auto-detected",
+      "frame_range": [
+        102,
+        131
+      ],
+      "rms_y_px": 12.7,
+      "rms_x_px": 24.3,
+      "attribution": "ambiguous: another logged shot 0.2s from the flight"
     }
   },
   {
@@ -1004,7 +1016,7 @@
     "n_frames": 180,
     "fit": {
       "usable": false,
-      "reason": "dunk: the ball is carried by hand, not in free flight"
+      "reason": "no stretch of the track looks like a shot flying into a hoop"
     }
   },
   {
@@ -1075,8 +1087,20 @@
     "shot_key": "real_g7ko31w6njargwe_1463_416",
     "n_frames": 180,
     "fit": {
-      "usable": false,
-      "reason": "dunk: the ball is carried by hand, not in free flight"
+      "usable": true,
+      "points_used": 47,
+      "tracked_fraction": 1.0,
+      "peak_height_px": 1404.8,
+      "time_to_peak_s": 1.146,
+      "flight_duration_s": 1.533,
+      "range_source": "auto-detected",
+      "frame_range": [
+        83,
+        129
+      ],
+      "rms_y_px": 24.4,
+      "rms_x_px": 10.0,
+      "attribution": "ambiguous: another logged shot 0.7s from the flight"
     }
   },
   {
@@ -2060,7 +2084,7 @@
       ],
       "rms_y_px": 1.9,
       "rms_x_px": 24.6,
-      "attribution": "clear"
+      "attribution": "ambiguous: another logged shot 0.6s from the flight"
     }
   },
   {

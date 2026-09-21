@@ -27,25 +27,25 @@ def load_rows():
             if e.get("videoTime") is not None:
                 events[(g["id"], round(e["videoTime"], 3))] = e
     cands = {rp.safe_shot_key(c): c for c in find_clean_candidates()}
-    # Arcs the PC's fine-tuned detector added, accepted after checking each by eye (ft_full/review.json),
-    # and the logged shots that share an exact video time with another shot: an arc there can't be
-    # tied to one of them, so those keys are dropped from both sources.
+    # Arcs the PC's fine-tuned detector added, accepted after checking each by eye (ft_full/review.json).
+    # Shot details always come from the current shot list. A key is left out if the log still has two
+    # shots at that exact video time: an arc there cannot be tied to one of them.
     ft = HERE / "ft_full"
-    review = json.loads((ft / "review.json").read_text()) if (ft / "review.json").exists() else {"accepted_new": [], "same_time_pairs": []}
-    same_time = set(review["same_time_pairs"])
+    review = json.loads((ft / "review.json").read_text()) if (ft / "review.json").exists() else {"accepted_new": []}
+    same_time = set()
+    for g in json.loads(DUNK_SOURCE.read_text(encoding="utf-8"))["games"]:
+        seen = {}
+        for e in g["scoringEvents"]:
+            if e.get("points") in (2, 3) and e.get("videoTime") is not None:
+                t = f"{e['videoTime']:.3f}".replace(".", "_")
+                seen[t] = seen.get(t, 0) + 1
+        same_time |= {f"{g['id']}_{t}" for t, n in seen.items() if n > 1}
     sources = [(HERE, r, cands.get(r["shot_key"])) for r in json.loads((HERE / "pipeline_results_refit.json").read_text())]
-    if review["accepted_new"]:
-        pc_meta = {}
-        for name in ("pipeline_results_ft.json", "pipeline_results_ft_retry.json"):
-            for m in json.loads((ft / name).read_text(encoding="utf-8")):
-                w, fr = f"{m['video_time_abs']:.3f}".split(".")
-                pc_meta[f"{m['game_id']}_{w}_{fr}"] = m
-        accepted = set(review["accepted_new"])
+    accepted = set(review["accepted_new"])
+    if accepted:
         for r in json.loads((ft / "pipeline_results_refit.json").read_text()):
             if r["shot_key"][5:] in accepted:
-                m = pc_meta[r["shot_key"][5:]]
-                sources.append((ft, r, {"game_id": m["game_id"], "video_time_abs": m["video_time_abs"], "shooter": m["shooter"],
-                                        "points": m["points"], "made": m["made"], "shot_location": m["shot_location"]}))
+                sources.append((ft, r, cands.get(r["shot_key"])))
     rows = []
     for src, r, c in sources:
         f = r["fit"]
