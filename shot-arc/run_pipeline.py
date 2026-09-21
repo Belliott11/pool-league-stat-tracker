@@ -277,6 +277,7 @@ def main():
     parser.add_argument("--offset", type=int, default=0, help="skip this many shots of the shuffled list first (a held-out slice)")
     parser.add_argument("--out", default="pipeline_results.json", help="results file name, next to this script")
     parser.add_argument("--retry-no-detection", metavar="RESULTS_JSON", help="run only the shots that RESULTS_JSON records as 'No detection anywhere' (retry them with a lower BALL_MIN_CONF)")
+    parser.add_argument("--game", metavar="GAME_ID[,GAME_ID]", help="run only the shots of these games (e.g. the dusk game the detector struggles with)")
     parser.add_argument("--delete-frames", action="store_true", help="remove each shot's ~1GB of extracted 4K frames once it is tracked (hoops are cached first); needed on a machine without hundreds of GB free")
     args = parser.parse_args()
 
@@ -293,6 +294,10 @@ def main():
         redo = {safe_shot_key(r) for r in previous if str(r["fit"].get("reason", "")).startswith("No detection anywhere")}
         sample = [c for c in candidates if safe_shot_key(c) in redo]
         print(f"Retrying {len(sample)} shots that had no detection above the earlier confidence gate.")
+    if args.game:
+        wanted = set(args.game.split(","))
+        sample = [c for c in candidates if c["game_id"] in wanted]
+        print(f"Limited to game(s) {args.game}: {len(sample)} shots.")
     print(f"Running the pipeline on {len(sample)} shots.\n")
 
     results = []

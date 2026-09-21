@@ -42,6 +42,12 @@ FRAMES_ROOT = Path(__file__).parent / "frames"
 # the original detector needs (it scores the real ball around 0.1).
 WEIGHTS_PATH = Path(os.environ.get("BALL_WEIGHTS", Path(__file__).parent / "adam-balldata" / "poolvision-ball-best.pt"))
 MIN_CONF = float(os.environ.get("BALL_MIN_CONF", "0"))
+# BALL_BRIGHTEN=1 lifts dark frames before detection only (coordinates are unchanged): a dusk game
+# is much darker than the rest of its recording, and the detector loses the ball in it (see
+# FINDINGS.md). Frames already bright enough are left alone.
+BRIGHTEN = os.environ.get("BALL_BRIGHTEN", "") == "1"
+BRIGHTEN_TARGET = 125.0
+BRIGHTEN_MAX_GAIN = 2.6
 CROP = 960
 CONF_FLOOR = 0.001  # effectively "any detection at all" -- see FINDINGS.md's calibration finding
 LOST_STREAK_LIMIT = 10  # consecutive misses before giving up on a direction
@@ -62,9 +68,25 @@ BLACKLIST_RADIUS = 30  # px -- how close counts as "the same spot" once blacklis
 SEED_PASS_MAX_WIDTH = 1280
 
 
+def _brighten(img):
+    """Scales a dark PIL image toward BRIGHTEN_TARGET average brightness (gain capped at
+    BRIGHTEN_MAX_GAIN); returns it unchanged if it is already bright enough."""
+    import numpy as np
+    from PIL import Image
+
+    arr = np.asarray(img.convert("RGB"), dtype=np.float32)
+    mean = float(arr.mean())
+    if mean >= BRIGHTEN_TARGET - 5 or mean <= 1:
+        return img
+    gain = min(BRIGHTEN_MAX_GAIN, BRIGHTEN_TARGET / mean)
+    return Image.fromarray(np.clip(arr * gain, 0, 255).astype(np.uint8))
+
+
 def top1_detection(model, image_or_path, is_decoy=None):
     """Highest-confidence detection that isn't sitting on a known decoy (see decoys.py). is_decoy
     takes a center in this image's own coordinates."""
+    if BRIGHTEN and not isinstance(image_or_path, (str, Path)):
+        image_or_path = _brighten(image_or_path)
     r = model.predict(image_or_path, verbose=False, conf=CONF_FLOOR, imgsz=640)[0]
     for b in sorted(r.boxes, key=lambda b: -float(b.conf[0])):
         if float(b.conf[0]) < MIN_CONF:

@@ -626,3 +626,29 @@ Files: `ft_full/` (the PC's results and per-shot tracks), `compare_ft.py`, `ft_m
   after distance adjustment). Nothing distinguishes types by arc shape. Treat that earlier hint as noise.
 - **Not explained.** Game `cmgf3z9rea2l7rc`: 0 of 11 retried shots recovered even at 0.1; still needs visual
   checks of those shots before saying why.
+
+### Why game `cmgf3z9rea2l7rc` fails: it was filmed at dusk
+
+Same recording (IMG_2932) holds three games. Average frame brightness (0-255) of frames sampled from it
+falls from about 129 at 8 to 15 minutes in (game `bl46f6scpfe9ib6`), to 102 at about 22 minutes
+(`yf7wfx0jbtzy468`), to 94-81 at 26 to 32 minutes, to 55 at 36 minutes (`cmgf3z9rea2l7rc`). The share of
+shots with a usable arc in that recording follows it down: 7/14 and 5/11 in the first two 400 s blocks,
+3/17 from 1600 s and 0/8 after 2000 s.
+
+What the tracks show on the dusk shots (`ft_tracks.py`):
+- Some are real arcs that the detector loses in the last stretch before the hoop (`_2183_313` follows a
+  clean arc and stops about 440 px short of the rim, which is over the 400 px anchoring limit).
+- Some are noise: a static point that never moves (`_2223_015`), a ball falling straight down (`_1988_172`),
+  a pass rather than a shot (`_1835_653`), tracks that follow a player's head or hands (`_1644_468`).
+- The hoop was not found in the frames for 5 of the 26 shots, but the rims never move within the game
+  (about (754,956) and (3483,679) in every shot that had them), and giving those 5 shots the game's usual
+  rim positions recovers only one usable arc, and that one is a same-time pair anyway. So a missing rim is
+  not the main cause.
+
+Added, untested until it is run on the PC with the fine-tuned weights: `BALL_BRIGHTEN=1` lifts dark frames
+(gain up to 2.6x toward mean brightness 125) before detection only, coordinates unchanged; `run_pipeline.py
+--game GAME_ID` runs just one game's shots. A quick check with the original detector on one dusk frame
+found different detections with the lift, but not the ball, so this shows the switch changes what the
+detector sees, not that it helps. Compare usable counts on `cmgf3z9rea2l7rc` with and without it, then check
+new arcs by eye like the others. If the lift does not help, the fix is to add dusk frames with ball labels to
+the training set and fine-tune again.
