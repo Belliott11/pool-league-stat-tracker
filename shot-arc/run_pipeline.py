@@ -276,6 +276,7 @@ def main():
     parser.add_argument("--seed", type=int, default=7, help="shuffle seed for which shots get picked")
     parser.add_argument("--offset", type=int, default=0, help="skip this many shots of the shuffled list first (a held-out slice)")
     parser.add_argument("--out", default="pipeline_results.json", help="results file name, next to this script")
+    parser.add_argument("--retry-no-detection", metavar="RESULTS_JSON", help="run only the shots that RESULTS_JSON records as 'No detection anywhere' (retry them with a lower BALL_MIN_CONF)")
     parser.add_argument("--delete-frames", action="store_true", help="remove each shot's ~1GB of extracted 4K frames once it is tracked (hoops are cached first); needed on a machine without hundreds of GB free")
     args = parser.parse_args()
 
@@ -285,6 +286,13 @@ def main():
     random.seed(args.seed)
     random.shuffle(candidates)
     sample = candidates[args.offset: args.offset + args.limit]
+    if args.retry_no_detection:
+        # Only the shots a previous run gave up on because the detector found nothing above its
+        # confidence gate, so they can be retried with a lower BALL_MIN_CONF.
+        previous = json.loads(Path(args.retry_no_detection).read_text())
+        redo = {safe_shot_key(r) for r in previous if str(r["fit"].get("reason", "")).startswith("No detection anywhere")}
+        sample = [c for c in candidates if safe_shot_key(c) in redo]
+        print(f"Retrying {len(sample)} shots that had no detection above the earlier confidence gate.")
     print(f"Running the pipeline on {len(sample)} shots.\n")
 
     results = []
