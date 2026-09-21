@@ -146,7 +146,7 @@ def track_shot(shot_key, seed_frame=None, seed_xy=None):
     n = len(frame_paths)
     seed_idx = seed[0]
     results = [None] * n  # each entry: {"x","y","source"} or None
-    results[seed_idx] = {"x": round(seed[1], 1), "y": round(seed[2], 1), "source": "seed"}
+    results[seed_idx] = {"x": round(seed[1], 1), "y": round(seed[2], 1), "source": "seed", "conf": round(seed[3], 3)}
 
     def propagate(direction):
         # Caught at scale (see FINDINGS.md): a moving crop can lock onto a stationary background
@@ -193,7 +193,7 @@ def track_shot(shot_key, seed_frame=None, seed_xy=None):
 
             if hit is not None:
                 x, y, conf = hit
-                results[i] = {"x": round(x, 1), "y": round(y, 1), "source": "tracked"}
+                results[i] = {"x": round(x, 1), "y": round(y, 1), "source": "tracked", "conf": round(conf, 3)}
                 cx, cy = x, y
                 last_xy = (x, y)
                 lost_streak = 0

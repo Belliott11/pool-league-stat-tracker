@@ -10,17 +10,21 @@ time (absolute videoTime translated by that game's own videoStart, same translat
 openGameAtTime()/viewer-videos.js already apply in the browser).
 """
 import json
+import os
 import re
 import random
 from pathlib import Path
 
-STATE_PATH = Path(r"C:\Users\breso\AppData\Local\Temp\claude\C--Users-breso-dashboard\be6cd57e-4d45-44a6-b05b-76c385e5c878\scratchpad\full_state.json")
-VIEWER_VIDEOS_JS = Path(r"C:\Users\breso\dashboard-viewer\viewer-videos.js")
-GAME_VIDEOS_DIR = Path(r"C:\Users\breso\dashboard-viewer\game-videos")
+# Every machine-specific location can be overridden with an environment variable, so the same code
+# runs on another computer (see pc_run/README.txt). The defaults are this laptop's own paths.
+
+STATE_PATH = Path(os.environ.get("SHOTARC_STATE", r"C:\Users\breso\AppData\Local\Temp\claude\C--Users-breso-dashboard\be6cd57e-4d45-44a6-b05b-76c385e5c878\scratchpad\full_state.json"))
+VIEWER_VIDEOS_JS = Path(os.environ.get("SHOTARC_VIEWER_VIDEOS_JS", r"C:\Users\breso\dashboard-viewer\viewer-videos.js"))
+GAME_VIDEOS_DIR = Path(os.environ.get("SHOTARC_GAME_VIDEOS_DIR", r"C:\Users\breso\dashboard-viewer\game-videos"))
 OUT_PATH = Path(__file__).parent / "sample_shots.json"
 # The state snapshot above predates the dunk flags being backfilled, so dunk is read from a newer
 # export by event id. Any export that has the flags works; without it every shot counts as not a dunk.
-DUNK_SOURCE = Path(r"C:\Users\breso\Downloads\pool-league-data (8).json")
+DUNK_SOURCE = Path(os.environ.get("SHOTARC_EXPORT", r"C:\Users\breso\Downloads\pool-league-data (8).json"))
 
 # Adam's real 4K60 handoff (see FINDINGS.md): each file is the full, unedited session recording,
 # not trimmed per game the way game-videos/*.mp4 is. Confirmed by pulling the frame at a game's
@@ -28,7 +32,7 @@ DUNK_SOURCE = Path(r"C:\Users\breso\Downloads\pool-league-data (8).json")
 # file (at videoTime directly, no offset) for two different games/files and checking they show
 # the exact same instant -- the 4K file's own t=0 is the same reference point as videoTime, no
 # separate offset needed. Games not listed here fall back to the compressed .mp4 as before.
-FOURK_ROOT = Path(r"C:\Users\breso\Videos\pool-league-4k60")
+FOURK_ROOT = Path(os.environ.get("SHOTARC_4K_DIR", r"C:\Users\breso\Videos\pool-league-4k60"))
 GAME_4K_SOURCE = {
     "jmyhhago9gvrteb": FOURK_ROOT / "IMG_2482.MOV",
     "wurjg3g9xhehuka": FOURK_ROOT / "IMG_2483.MOV",

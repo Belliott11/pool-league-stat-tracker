@@ -15,8 +15,10 @@ a number built from a mostly-empty trajectory -- same reasoning as MIN_POINTS_FO
 """
 import argparse
 import json
+import os
 import random
 import re
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -27,6 +29,7 @@ from bootstrap_track import track_shot, FRAMES_ROOT
 from hoops import detect_hoops, rim_centers
 
 FPS = 30
+POINT_CONF = float(os.environ.get("SHOTARC_POINT_CONF", "0"))
 MIN_POINTS_FOR_FIT = 8  # higher bar than detect_and_fit.py's 4 -- a tracked trajectory has more
                          # points available to spend, so ask for more before trusting a fit
 MIN_TRACKED_FRACTION = 0.35  # below this, too much of the flight is guesswork to fit at all
@@ -92,7 +95,9 @@ def find_flight_segment(tracked, frame_height, hoops=None):
     (start_frame, end_frame, fit_details) 1-indexed inclusive, or None. Replaces guessing where in
     the extraction window the shot happens."""
     frames = tracked["frames"]
-    pts = {i: (f["x"], f["y"]) for i, f in enumerate(frames) if "x" in f}
+    # SHOTARC_POINT_CONF drops detections below that confidence when fitting, so a threshold can be
+    # chosen after tracking (tracks from the older detector carry no confidence and are unaffected).
+    pts = {i: (f["x"], f["y"]) for i, f in enumerate(frames) if "x" in f and f.get("conf", 1.0) >= POINT_CONF}
 
     # Drop stuck stretches: a run of near-identical positions is a background object, not the ball.
     idx = sorted(pts)
@@ -271,6 +276,7 @@ def main():
     parser.add_argument("--seed", type=int, default=7, help="shuffle seed for which shots get picked")
     parser.add_argument("--offset", type=int, default=0, help="skip this many shots of the shuffled list first (a held-out slice)")
     parser.add_argument("--out", default="pipeline_results.json", help="results file name, next to this script")
+    parser.add_argument("--delete-frames", action="store_true", help="remove each shot's ~1GB of extracted 4K frames once it is tracked (hoops are cached first); needed on a machine without hundreds of GB free")
     args = parser.parse_args()
 
     candidates = find_clean_candidates()
@@ -312,6 +318,8 @@ def main():
         })
         status = "usable" if fit.get("usable") else f"not usable ({fit.get('reason', '?')})"
         print(f"  -> {status}\n")
+        if args.delete_frames:
+            shutil.rmtree(FRAMES_ROOT / key, ignore_errors=True)
 
     out_path = Path(__file__).parent / args.out
     out_path.write_text(json.dumps(results, indent=2))
