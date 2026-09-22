@@ -327,7 +327,16 @@
   <section id="tab-leaderboard" class="tab-panel">
   <div class="tab-body-with-sidebar" id="leaderboardSidebarWrap">
   <div class="tab-main">
-    <!-- Overview -->
+    <div class="player-section-nav">
+      <button type="button" class="player-section-nav-link" data-section="comparison">Comparison & Trends</button>
+      <button type="button" class="player-section-nav-link" data-section="shooting">Shooting</button>
+      <button type="button" class="player-section-nav-link" data-section="matchups">Matchups & Team</button>
+      <button type="button" class="player-section-nav-link" data-section="situational">Situational</button>
+      <button type="button" class="player-section-nav-link" data-section="style">Play Style & Models</button>
+      <button type="button" class="player-section-nav-link" data-section="media">History & Media</button>
+    </div>
+
+    <div id="leaderboard-section-overview">
     <div class="panel">
       <h2>Season Rates (Individual)</h2>
       <p class="hint">Every counting stat here (PTS, OREB, DREB, AST, STL, BLK, TOV, PF, Pts Allowed, Beaten, Stops, Def Rating) is a rate per 20 combined points scored in the game, not a season total or a per-game average. Only games with real shots logged <strong>and equal team sizes</strong> count toward these at all, so a game that's just been rostered but not reviewed yet (or a 3-on-2 that skews the whole game's competitive shape) doesn't drag anyone's numbers down. Games are capped at different totals (16 or 21), so a plain per-game average isn't a fair comparison between a player who mostly plays 16-point games and one who mostly plays 21s: the game's combined final score stands in for "how much game happened," since possessions aren't tracked. Includes shooting splits and defensive/advanced numbers derived from each game's Shot Log; see the Game Stats table in Stat Entry for what each one means. <strong>Off Rating</strong> is offense-only Game Score: PTS, shooting efficiency, rebounds, assists, TOV, and fouls, adapted from the standard basketball Game Score formula minus its STL and BLK terms. <strong>Def Rating</strong> is STL, plus BLK (only when it isn't already one of this player's own Stops, so a blocked-and-tagged shot isn't credited twice), plus Stops minus Beaten minus 0.4×Pts Allowed, this tool's stand-in for the NBA stat of the same name, since real Defensive Rating needs possession counts this tool doesn't track. 0 for anyone never tagged as a defender with no steals or blocks, not a penalty for conservative tagging. <strong>Two-Way</strong> is Off Rating plus Def Rating. Click a player's name for their full game log and head-to-head history. Click a column header to sort by it (click again to flip direction). Shot%/AST%/OREB%/DREB%/TRB%/TOV% are hidden by default; click below to show them (still always in the CSV export either way). <strong>Include Outlier Games</strong> (on by default, matching the original always-been-true behavior) drops a player's own statistical outlier games from their rates when turned off. For each player with at least 4 qualifying games, any single game whose Two-Way/20 falls outside 1.5x their own IQR (computed fresh from their own games, not a fixed cutoff) is set aside, so one absurdly good or bad night doesn't dominate a small-sample average. This reaches every per-player stat (this table, Two-Way Trend, Teammate Synergy/Quality, both Matchup Difficulty charts) but deliberately not panels that pool many players within the same game (League Heatmap, Matchup Grid, Head-to-Head, Balance Teams' chemistry/win-rate): an outlier for one player isn't necessarily one for everyone else who was in that same game. With fewer than 4 qualifying games, nothing gets excluded regardless of the toggle, since there isn't enough data yet to call anything an outlier.</p>
@@ -356,7 +365,73 @@
         </table>
       </div>
     </div>
+    </div>
 
+    <details class="player-section" id="lb-section-comparison">
+      <summary><h3>Comparison & Trends</h3><span class="player-section-teaser" id="lb-teaser-comparison"></span></summary>
+      <div class="player-section-body">
+    <div class="panel">
+      <h2>Player Comparison</h2>
+      <p class="hint">Pick any two players to see their full stat lines side by side: every column from the table above, including the advanced % ones, whether or not they're currently shown there. Green marks whichever value is better for a given stat where "better" has a clear direction (lower for TOV/PF/Pts Allowed/Opp FG%/Beaten/TOV%, higher for everything else with a real quality read), left uncolored for GP and the shot-share percentages (Shot%/AST%/OREB%/DREB%/TRB%), since a bigger share of the team's shots or assists reflects a role, not necessarily better play.</p>
+      <div class="compare-controls">
+        <select id="comparePlayer1Select"></select>
+        <span>vs.</span>
+        <select id="comparePlayer2Select"></select>
+      </div>
+      <div id="playerComparisonResult" class="table-scroll"></div>
+    </div>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>Awards vs. Stats</h2>
+        <p class="hint">Summer 2026's voted awards, from that season's closed ballot, checked against the closest tracked stat, computed live from whatever games are actually logged in this browser, so it's only as complete as your Shot Log is. A stat winner sitting outside the top of its column isn't a bug: the vote and the numbers are allowed to disagree, that's the point of comparing them.</p>
+        <div id="awardsVsStats" class="awards-grid"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Power Ranking vs. Performance</h2>
+        <p class="hint">A "power ranking" isn't voted or tracked by this tool: it's the real site's own per-night rank/percentile for each party (rank 1 = best that night, percentile field-size-normalized: 100 = first, 0 = last), pulled from the season spreadsheet as a frozen historical record. Paired here with that same player's actual Two-Way/20 in just the games logged for that date, computed live. Only nights with at least one reviewed game show up here at all. The other 10 real parties predate any footage existing, and a night with footage nobody's gotten to reviewing yet is left out too, rather than showing a table of nothing but dashes. A player with no games logged for that specific night still shows "—", not a zero. A game flagged Stopped Early (Export, Review Stopped-Early Games) is left out of that night's Two-Way/20 too: it's exactly the single-game case a partial game would distort undiluted.</p>
+        <div id="powerRankingVsPerformance"></div>
+      </div>
+    </div>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>Two-Way Quadrant</h2>
+        <p class="hint">Off Rating/20 (offense) vs. Def Rating/20 for every player who's played, plotted separately instead of pre-summed into Two-Way Score, so "who's good" splits into "good at what." Quadrant lines are drawn at zero on each axis.</p>
+        <div id="quadrantChart"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Volume vs. Efficiency</h2>
+        <p class="hint">Offense only, separate from the Two-Way Quadrant above: pure shot volume (FGA/20) on the x-axis against season TS% on the y-axis, so a high-volume/low-efficiency player and a low-volume/high-efficiency player show up as mirror opposites directly, instead of needing someone to cross-reference the FGA and TS% columns on the main table by hand.</p>
+        <div id="volumeEfficiencyChart"></div>
+      </div>
+    </div>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>TS% by Shot Distance</h2>
+        <p class="hint">True Shooting %, league-wide, for each of the four Shot Distance bands: the same numbers as the Shot Distance table above, laid out so "shooting gets worse with distance" (or wherever it actually breaks down) lands in one glance instead of a table someone has to compare in their head. Free throws have no shot location, so this excludes them (unlike <strong>League TS% Over Time</strong>); each bar is just that zone's own points-per-attempt. Only field goals with a marked shot location count.</p>
+        <div id="leagueTsByZoneChart"></div>
+      </div>
+
+      <div class="panel">
+        <h2>League TS% Over Time</h2>
+        <p class="hint">True Shooting % pooled across every player, per date with a reviewed game: a single league-wide efficiency line, useful for spotting drift over the season or checking the effect of a future rule change. Not a player-comparison stat.</p>
+        <div id="leagueTsChart"></div>
+      </div>
+    </div>
+    <div class="panel-row">
+      <div class="panel">
+        <h2>League Shot Heatmap</h2>
+        <p class="hint">Every marked field goal, league-wide, bucketed by court zone. Color is FG% in that zone (red low, green high), the number is attempts. A zone stays blank until at least one shot lands in it. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
+        <div id="leagueHeatmap"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Two-Way/20 Rank Over the Season</h2>
+        <p class="hint">One line per player, tracking where they'd rank if the season had ended at each date shown. A checkpoint exists for every date with at least one qualifying game, and a player's rank there comes from their <em>cumulative</em> Two-Way/20 across every qualifying game up through that date (not just that date's own games), ranked against everyone else's own cumulative number at that same moment. Rank 1 is at the top, so a climbing line means genuinely improving standing, not just a good single night. Each point is the same colored avatar used everywhere else in the app, with that checkpoint's rank number inside it instead of an initial. Built on the same games <strong>Include Imbalanced Games</strong>/<strong>Include Past Seasons</strong> already gate, deliberately not on <strong>Include Outlier Games</strong>, since a per-player outlier exclusion would mean two players could disagree about which dates even count as checkpoints.</p>
+        <div id="twoWayRankChart"></div>
+      </div>
+    </div>
     <div class="panel-row">
       <div class="panel">
         <h2>Past Seasons (League)</h2>
@@ -375,72 +450,12 @@
         </div>
       </div>
     </div>
-
-    <div class="panel">
-      <h2>Player Comparison</h2>
-      <p class="hint">Pick any two players to see their full stat lines side by side: every column from the table above, including the advanced % ones, whether or not they're currently shown there. Green marks whichever value is better for a given stat where "better" has a clear direction (lower for TOV/PF/Pts Allowed/Opp FG%/Beaten/TOV%, higher for everything else with a real quality read), left uncolored for GP and the shot-share percentages (Shot%/AST%/OREB%/DREB%/TRB%), since a bigger share of the team's shots or assists reflects a role, not necessarily better play.</p>
-      <div class="compare-controls">
-        <select id="comparePlayer1Select"></select>
-        <span>vs.</span>
-        <select id="comparePlayer2Select"></select>
       </div>
-      <div id="playerComparisonResult" class="table-scroll"></div>
-    </div>
+    </details>
 
-    <div class="panel-row">
-      <div class="panel">
-        <h2>Awards vs. Stats</h2>
-        <p class="hint">Summer 2026's voted awards, from that season's closed ballot, checked against the closest tracked stat, computed live from whatever games are actually logged in this browser, so it's only as complete as your Shot Log is. A stat winner sitting outside the top of its column isn't a bug: the vote and the numbers are allowed to disagree, that's the point of comparing them.</p>
-        <div id="awardsVsStats" class="awards-grid"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Power Ranking vs. Performance</h2>
-        <p class="hint">A "power ranking" isn't voted or tracked by this tool: it's the real site's own per-night rank/percentile for each party (rank 1 = best that night, percentile field-size-normalized: 100 = first, 0 = last), pulled from the season spreadsheet as a frozen historical record. Paired here with that same player's actual Two-Way/20 in just the games logged for that date, computed live. Only nights with at least one reviewed game show up here at all. The other 10 real parties predate any footage existing, and a night with footage nobody's gotten to reviewing yet is left out too, rather than showing a table of nothing but dashes. A player with no games logged for that specific night still shows "—", not a zero. A game flagged Stopped Early (Export, Review Stopped-Early Games) is left out of that night's Two-Way/20 too: it's exactly the single-game case a partial game would distort undiluted.</p>
-        <div id="powerRankingVsPerformance"></div>
-      </div>
-    </div>
-
-    <!-- Comparison Scatters (not to be confused with the Player Comparison panel above, a
-         side-by-side stat table for two named players — these are whole-roster scatter plots).
-         The two square-ish charts sit side by side (.panel-row) instead of each eating a full
-         row's width for a ~340px chart — the wider Rank Over the Season line chart below stays
-         its own full-width panel, since it actually uses that width. -->
-    <div class="panel-row">
-      <div class="panel">
-        <h2>Two-Way Quadrant</h2>
-        <p class="hint">Off Rating/20 (offense) vs. Def Rating/20 for every player who's played, plotted separately instead of pre-summed into Two-Way Score, so "who's good" splits into "good at what." Quadrant lines are drawn at zero on each axis.</p>
-        <div id="quadrantChart"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Volume vs. Efficiency</h2>
-        <p class="hint">Offense only, separate from the Two-Way Quadrant above: pure shot volume (FGA/20) on the x-axis against season TS% on the y-axis, so a high-volume/low-efficiency player and a low-volume/high-efficiency player show up as mirror opposites directly, instead of needing someone to cross-reference the FGA and TS% columns on the main table by hand.</p>
-        <div id="volumeEfficiencyChart"></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>Play Style Clusters</h2>
-      <p class="hint">Groups players by how their actual stat profile compares to everyone else's, not by anyone's manual Scorer/Defender/Playmaker tag. Every qualifying player's Off Rating, Def Rating, Assists, Rebounds, and Stocks (all per-20) are standardized and run through k-means clustering, and each group's label is generated from whichever of those stats sit furthest from the league average within that group. Two players landing in the same group means their box scores actually look alike, not that someone decided they play the same way. Needs at least 4 qualifying players to say anything meaningful.</p>
-      <div id="playStyleClusters"></div>
-    </div>
-
-    <!-- Shot Location & Efficiency -->
-    <div class="panel-row">
-      <div class="panel">
-        <h2>League Shot Heatmap</h2>
-        <p class="hint">Every marked field goal, league-wide, bucketed by court zone. Color is FG% in that zone (red low, green high), the number is attempts. A zone stays blank until at least one shot lands in it. Only shots with a marked location are included (see Export → Backfill Shot Locations to fill in the rest).</p>
-        <div id="leagueHeatmap"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Two-Way/20 Rank Over the Season</h2>
-        <p class="hint">One line per player, tracking where they'd rank if the season had ended at each date shown. A checkpoint exists for every date with at least one qualifying game, and a player's rank there comes from their <em>cumulative</em> Two-Way/20 across every qualifying game up through that date (not just that date's own games), ranked against everyone else's own cumulative number at that same moment. Rank 1 is at the top, so a climbing line means genuinely improving standing, not just a good single night. Each point is the same colored avatar used everywhere else in the app, with that checkpoint's rank number inside it instead of an initial. Built on the same games <strong>Include Imbalanced Games</strong>/<strong>Include Past Seasons</strong> already gate, deliberately not on <strong>Include Outlier Games</strong>, since a per-player outlier exclusion would mean two players could disagree about which dates even count as checkpoints.</p>
-        <div id="twoWayRankChart"></div>
-      </div>
-    </div>
-
+    <details class="player-section" id="lb-section-shooting">
+      <summary><h3>Shooting</h3><span class="player-section-teaser" id="lb-teaser-shooting"></span></summary>
+      <div class="player-section-body">
     <div class="panel">
       <h2>Shot Distance</h2>
       <p class="hint">Every field goal is split by how far it was from the hoop. 2-point shots divide into <strong>Close</strong> and <strong>Midrange</strong> at the distance where shooting drops off most sharply (see <strong>Calibrated Thresholds</strong> below). 3-point shots divide into <strong>Line</strong> (right at the three-point line) and <strong>Deep</strong> (a long heave). Each zone shows FG% (click to sort) with that zone's share of the player's shots underneath. <strong>Mix</strong> shows the same split as a bar: green close, amber midrange, teal at the line, red deep. Only shots with a marked location count (Export &rarr; Backfill Shot Locations fills in the rest). Early in the season these are small samples, so treat them as a first read.</p>
@@ -457,7 +472,6 @@
         </table>
       </div>
     </div>
-
     <div class="panel">
       <h2>Defensive Shot Distance</h2>
       <p class="hint">The same zones and layout as Shot Distance above, but for shots this player was tagged defending: how well opponents shoot from each zone against them, and how much of what they face comes from each. Only defended field goals with a marked location count. Free throws have no defender tagged, so they are left out. Early in the season these are small samples, so treat them as a first read.</p>
@@ -468,57 +482,36 @@
         </table>
       </div>
     </div>
-
     <div class="panel">
       <h2>Shot Type Efficiency</h2>
       <p class="hint">How each player's shots were created. <strong>Catch-and-shoot</strong>: received the ball and shot with no dribble move first. <strong>Deep heave</strong>: a long attempt right off a check or rebound, before the defense sets up. <strong>Drive</strong>: put the ball on the floor and attacked before shooting. <strong>Move</strong>: a spin, hesitation or pump fake before the shot. <strong>Dunk</strong>: any shot marked as a dunk, counted on its own automatically instead of under the other four, because dunks go in so often that they would make the other types look better than they are. Each cell shows True Shooting % with makes/attempts and that type's share of the player's tagged shots, and only appears once a player has at least 5 tagged shots of that type. Only tagged shots count (the Tagged column shows how many of a player's field goals that is), so early numbers cover a small slice of the season. Older shots can be tagged in Export, Review Shot Types.</p>
       <div id="shotTypePanel"></div>
     </div>
-
     <div class="panel">
       <h2>Deep Shot Check</h2>
       <p class="hint">How much of the league's deep 3-point volume is the rushed heave off a check or rebound, compared with a deep shot taken after a real possession, and how each one goes. Only tagged deep shots count, and at least 10 are needed to show a split.</p>
       <div id="deepShotCheckPanel"></div>
     </div>
-
     <div class="panel">
       <h2>Is the Move Working?</h2>
       <p class="hint">Is the Move actually producing better shots? For each player with at least 5 Move shots and 5 other tagged shots, this compares their True Shooting % on Move shots with their own % on everything else they have tagged, and with their catch-and-shoot when there are enough of those. A gap of 10 points or more is read as the Move working or trailing; smaller gaps are called about the same. Samples are small, so treat it as a first look, not a verdict.</p>
       <div id="moveCheckPanel"></div>
     </div>
-
     <div class="panel">
       <h2>Shot Types: Open vs. Contested</h2>
       <p class="hint">How each shot type does when wide open (no defender tagged) versus with a defender tagged. A percentage only shows once a cell has 5 shots, and the difference only when both sides do. The second table compares catch-and-shoots at the same distance, so the two sides are matched by range. Open shots tend to be the longer ones, such as heaves off a check, which can explain part of a lower open percentage.</p>
       <div id="shotTypeContestPanel"></div>
     </div>
-
     <div class="panel">
       <h2>Calibrated Thresholds</h2>
       <p class="hint">These cutoffs are set from the logged games and rechecked as more data comes in. Each section shows the current value, every check so far, and what it did: <strong>Kept</strong> when the data shows no clear signal yet, <strong>Stayed</strong> when the check confirmed the same value, <strong>Moved</strong> when the data pointed somewhere else. Distances are in shot chart units from the hoop. The close-game margin uses balanced games only.</p>
       <div id="calibrationPanel"></div>
     </div>
-
     <div class="panel">
       <h2>Shooting &amp; Wins by Direction</h2>
       <p class="hint">League-wide, not per-player: does the team shooting at one hoop actually do better than the other, across every logged game where "Where is Team A shooting?" has been set in Stat Entry (see Shooting by Direction on each Player Detail page for the same split per player)? FG%/TS% pool every attempt from every player on the team shooting that direction; Win% is at the team level, one result per game per direction. Games with no direction set yet don't count either way.</p>
       <div id="leagueDirectionSplits"></div>
     </div>
-
-    <div class="panel-row">
-      <div class="panel">
-        <h2>TS% by Shot Distance</h2>
-        <p class="hint">True Shooting %, league-wide, for each of the four Shot Distance bands: the same numbers as the Shot Distance table above, laid out so "shooting gets worse with distance" (or wherever it actually breaks down) lands in one glance instead of a table someone has to compare in their head. Free throws have no shot location, so this excludes them (unlike <strong>League TS% Over Time</strong>); each bar is just that zone's own points-per-attempt. Only field goals with a marked shot location count.</p>
-        <div id="leagueTsByZoneChart"></div>
-      </div>
-
-      <div class="panel">
-        <h2>League TS% Over Time</h2>
-        <p class="hint">True Shooting % pooled across every player, per date with a reviewed game: a single league-wide efficiency line, useful for spotting drift over the season or checking the effect of a future rule change. Not a player-comparison stat.</p>
-        <div id="leagueTsChart"></div>
-      </div>
-    </div>
-
     <div class="panel">
       <h2>Wide-Open Shooting</h2>
       <p class="hint">Every field goal attempt with <strong>no</strong> tagged defender at all: the opposite end of the Matchup Grid above. Free throws are excluded entirely (they're uncontested by rule, not by circumstance, so folding them in would trivially inflate the numbers). Share of FGA is how much of a player's own shot diet was untagged, for context on how much signal the TS% column actually carries. Click any column header to sort.</p>
@@ -529,14 +522,17 @@
         </table>
       </div>
     </div>
+      </div>
+    </details>
 
-    <!-- Matchups & Chemistry -->
+    <details class="player-section" id="lb-section-matchups">
+      <summary><h3>Matchups & Team</h3><span class="player-section-teaser" id="lb-teaser-matchups"></span></summary>
+      <div class="player-section-body">
     <div class="panel">
       <h2>Head-to-Head Matchup Grid</h2>
       <p class="hint">Every scorer down one axis, every defender across the other: the league-wide extension of the per-player Head-to-Head tables on Player Detail, which only ever show one player's matchups at a time. Each cell is that scorer's FG% against that specific defender (color follows the same red-low/green-high scale as the heatmap above, opacity ramping up with sample size). A blank cell means that pairing has never been tagged. Rows and columns are sorted by attempts, most data first. Not filtered to field goals only, same behavior as the Head-to-Head tables it extends.</p>
       <div id="matchupGrid"></div>
     </div>
-
     <div class="panel">
       <h2>Rebound Battle Record</h2>
       <p class="hint">Who wins the physical fight for a loose ball, not just who gets the rebound credit. A <strong>win</strong> is being the rebounder when someone contested it; a <strong>loss</strong> is being tagged as a contester who didn't come up with it. Rebounds nobody contested, and misses that went out of bounds, don't count. <strong>Contest Rate</strong> is the share of a player's rebounds that were contested rather than free pickups, since mostly uncontested boards mean something different from winning real fights. Needs 5+ contested rebounds to show. Numbers are small so far, so read them as a first look. Click a name for their full page, or a column header to sort.</p>
@@ -547,19 +543,16 @@
         </table>
       </div>
     </div>
-
     <div class="panel">
       <h2>Rebound Battle Head-to-Head</h2>
       <p class="hint">The direct mirror of the Head-to-Head Matchup Grid above, pointed at rebound win/loss instead of shot make/miss: same visual pattern (color-scaled by win%, opacity ramping up with sample size), reusing the same component. Unlike the shot grid, a rebound battle between two specific players can go either way on different occasions, so each cell is the row player's win rate specifically against the column player, both directions between that exact pair combined into one number. A blank cell means that pairing has never happened. Only players with 5+ real contests get a row or column at all, same gate as Rebound Battle Record.</p>
       <div id="reboundBattleGrid"></div>
     </div>
-
     <div class="panel">
       <h2>Teammate Lift Matrix</h2>
       <p class="hint">The pairwise With/Without comparison the Best Teammate award's Average Teammate Lift boils into one number per player, here as a full grid instead: row player on the team, column player's own Two-Way/20 change as a result (green = boosts them, red = drags them down; opacity tracks how large the swing is relative to the biggest one on the grid). A blank cell means that pairing hasn't logged games both with and without each other yet. This grid is <strong>not symmetric</strong>: row A / column B ("does A help B") and row B / column A ("does B help A") are two different facts about two different people's games, not mirror images of each other.</p>
       <div id="teammateLiftMatrix"></div>
     </div>
-
     <div class="panel-row">
       <div class="panel">
         <h2>Teammate Context</h2>
@@ -583,8 +576,12 @@
         </div>
       </div>
     </div>
+      </div>
+    </details>
 
-    <!-- Situational & Moments -->
+    <details class="player-section" id="lb-section-situational">
+      <summary><h3>Situational</h3><span class="player-section-teaser" id="lb-teaser-situational"></span></summary>
+      <div class="player-section-body">
     <div class="panel-row">
       <div class="panel">
         <h2>Out-of-Bounds Misses</h2>
@@ -610,7 +607,6 @@
         </div>
       </div>
     </div>
-
     <div class="panel-row">
       <div class="panel">
         <h2>Second-Chance Conversion</h2>
@@ -636,7 +632,6 @@
         </div>
       </div>
     </div>
-
     <div class="panel-row">
       <div class="panel">
         <h2>Close-Game Shooting</h2>
@@ -660,7 +655,6 @@
         </div>
       </div>
     </div>
-
     <div class="panel">
       <h2>Game-Winning Buckets</h2>
       <p class="hint">How many times a player's shot was the one that actually closed out a game their team won: the real game-ending basket in a race-to-a-target format. Worth being precise about what this is: in a race-to-target format with no clock, the last basket of every decided game is *by definition* scored by the winning team, so this isn't tracking rare, buzzer-beater moments. It's a "who tends to be the one closing games out" tally that grows by exactly one per fully-timestamped decided game. That's exactly why the Clutch comparison above is built on <strong>Close-Game Shooting</strong> instead of this, though it's still a real signal here (it correlates with who's on the floor and scoring late in wins), just not a scarce one. Only credited when that specific shot has a real video timestamp; without one, there's no trustworthy way to say it was really the last shot of the game, so the game is skipped rather than guessed at. A season count, not a rate.</p>
@@ -671,7 +665,17 @@
         </table>
       </div>
     </div>
+      </div>
+    </details>
 
+    <details class="player-section" id="lb-section-style">
+      <summary><h3>Play Style & Models</h3><span class="player-section-teaser" id="lb-teaser-style"></span></summary>
+      <div class="player-section-body">
+    <div class="panel">
+      <h2>Play Style Clusters</h2>
+      <p class="hint">Groups players by how their actual stat profile compares to everyone else's, not by anyone's manual Scorer/Defender/Playmaker tag. Every qualifying player's Off Rating, Def Rating, Assists, Rebounds, and Stocks (all per-20) are standardized and run through k-means clustering, and each group's label is generated from whichever of those stats sit furthest from the league average within that group. Two players landing in the same group means their box scores actually look alike, not that someone decided they play the same way. Needs at least 4 qualifying players to say anything meaningful.</p>
+      <div id="playStyleClusters"></div>
+    </div>
     <div class="panel">
       <h2>Defensive Load</h2>
       <p class="hint">A companion to Def Rating, not a replacement: how much of the team's own tagged defensive workload each player is actually carrying, not just how well they handle what they get (see Def Rating/20 above). Every opponent field goal attempt with at least one tagged defender is divided evenly across the team's own roster that game for an "expected fair share"; Def Load is how many of those a player actually got tagged on, divided by that share. Above 1.0 is more than an even share, below 1.0 is less. A low number is genuinely ambiguous on its own (avoided as a tough matchup, genuinely uninvolved for other reasons, or just too small a sample), so <strong>Read</strong> always names what pairing it with this same player's own Opp FG% (leading) and Def Rating/20 (secondary context) suggests, never as a standalone verdict. Opp FG% leads deliberately: it means exactly one thing and needs no trust in Def Rating's own unvalidated formula weights. <strong>Pts Allowed Under Exp</strong> adds the piece Opp FG% alone can't show: whether the shots this player actually faced were an easy or hard mix in the first place (the same zone-based expected value Expected Points uses on offense), so two defenders with an identical Opp FG% can be told apart, one merely matching expectation on an easy assignment, the other beating it against a harder one. Positive is the good outcome (fewer points allowed than the shot difficulty predicts); needs 10+ tagged defended shots to show at all, and inherits the same still-early zone-rate caveat Expected Points has. Together, Load (how much), Opp FG% and Pts Allowed Under Exp (how hard, and how well) are three separate dimensions, not one score. Click a player's name for their full page, or a column header to sort.</p>
@@ -682,19 +686,22 @@
         </table>
       </div>
     </div>
-
     <div class="panel">
       <h2>Win Shares Model (beta)</h2>
       <p class="hint">Diagnostics for the regression behind the Win Shares column below (advanced columns), refit fresh from this season's own logged games every time this page loads. Each stat is sign-constrained to only push in its basketball-plausible direction (points can only help, turnovers can only hurt, etc.), then the data determines the size of that effect within those bounds; the regularization strength (alpha) is picked by leave-one-out cross-validation, not a fixed guess. A weight sitting at exactly 0 isn't a failure: it means that stat isn't adding independent signal once its correlated neighbors are already in the model, given how little data exists so far. Beaten was dropped as a feature (not just Fouls): it correlates with Points Allowed at 0.99 in this season's own data, essentially the same information twice, so keeping only Points Allowed (it also captures shot value, a 3 beaten hurts more than a 2) frees up model capacity rather than losing signal. Assists gets a weakly-informative prior rather than the usual shrink-toward-0, since assists and points barely correlate (0.24), so its implausible weight looks like small-sample noise, not redundancy, the same fix wouldn't apply. The prior's value (0.5 points per assist) is sourced, not guessed: Basketball-Reference's own published Points Produced formula credits a flat 0.5 points per assist in its simplified (pre-1973-74) form, the only version of that formula that doesn't need minutes-played data Poolean has no equivalent of. It also gets its own, separately cross-validated regularization strength rather than sharing everyone else's, so the prior isn't just technically present but functionally outweighed by the data. Cross-validation has so far preferred weaker shrinkage here, not stronger, an honest result in its own right: it means the small sample isn't just noisy in a way regularization can smooth over, it's a real "wait for more games" case. <strong>Leave-one-out R&sup2;</strong> and <strong>correlation</strong> are the two numbers worth watching across future refits: report them alongside any change to this model so improvement (or regression) is directly comparable over time. Not enough data yet to trust for anything with real stakes (awards, "who's actually better" claims).</p>
       <div id="winSharesModelPanel"></div>
     </div>
+      </div>
+    </details>
 
+    <details class="player-section" id="lb-section-media">
+      <summary><h3>History & Media</h3><span class="player-section-teaser" id="lb-teaser-media"></span></summary>
+      <div class="player-section-body">
     <div class="panel">
       <h2>Best &amp; Worst Individual Games</h2>
       <p class="hint">Every player-game ranked by that single game's actual score, deliberately not a per-20 rate or a season total, since the rest of this page normalizes for fair player-to-player comparison and that averages away exactly the thing this panel exists to surface: one specific night's story, buried otherwise inside that game's own box score. <strong>Overall</strong> is Two-Way (Off Rating + Def Rating, the default); <strong>Offense</strong> and <strong>Defense</strong> rank by either half on its own, since a huge scoring night can bury a genuinely dominant defensive one in a combined score, and vice versa. Every player on either roster for a reviewed game gets a row, even a quiet one. On a thin season the two lists are capped so they never show the same handful of games twice, just reversed. A game flagged Stopped Early (Export, Review Stopped-Early Games) never gets a row here: a partial game's score shouldn't compete for a spot against complete ones.</p>
       <div id="individualGamePerformances"></div>
     </div>
-
     <div class="panel">
       <h2>Highlights &amp; Lowlights (League)</h2>
       <p class="hint">Every clip tagged to any player, across every game, most recent first: the league-wide version of the Highlights &amp; Lowlights table on each player's own profile, which only ever shows one player's clips at a time. Same source: the Highlight / Lowlight Reel table in Stat Entry.</p>
@@ -714,7 +721,9 @@
         <video id="leagueExportVideo" class="league-export-preview" muted playsinline></video>
       </div>
     </div>
-  </div>
+      </div>
+    </details>
+</div>
   <aside class="tab-sidebar">
     <button type="button" class="icon-btn sidebar-toggle-btn" data-sidebar-toggle="leaderboardSidebarWrap" title="Collapse/expand sidebar">☰</button>
     <div class="tab-sidebar-inner panel">
