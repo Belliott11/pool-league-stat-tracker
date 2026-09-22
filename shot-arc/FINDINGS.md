@@ -679,3 +679,18 @@ shot: 102 arcs, 82 of them attributed clearly enough for the player page.
 Shot type vs arc shape at n=102 (61 catch-and-shoot, 22 deep heave, 16 drive): still nothing reaches
 significance; the closest is deep heaves covering more horizontal distance than catch-and-shoots after
 adjusting for distance, p=0.058.
+
+## 11 hand-traced dusk shots added (arc-trace.html, all game `cmgf3z9rea2l7rc`)
+
+All 11 remaining untraced shots in the dusk game were traced by hand (3 clicks each: release, top,
+hoop), none skipped. Flight durations (0.5-1.0s) sit inside the range the tracker finds on other
+shots, so nothing looks mis-clicked. 2 of the 11 are flagged ambiguous (another logged shot lands
+within a second of the traced flight) and are left out of the player-page table; the rest are clear.
+
+Arc set is now 113 (was 102), 91 of them attributed clearly enough for the Shot Arc panel. Every shot
+in `cmgf3z9rea2l7rc` that could plausibly be traced now has an arc (16 of its 26 non-dunk field goals).
+
+Shot type vs arc shape at n=113 (68 catch-and-shoot, 22 deep heave, 19 drive, 4 move): still nothing
+significant. Closest is still deep heave vs catch-and-shoot on horizontal span, p=0.065 (was 0.058 at
+n=102) -- stable but still not significant. Treat this as settled: with this shot list, arc shape does
+not distinguish shot type, at any of the sample sizes tried (61, 95, 101, 102, 113 arcs).
