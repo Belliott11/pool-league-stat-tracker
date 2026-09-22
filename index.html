@@ -760,6 +760,16 @@
       <div id="playerLeagueRank" class="league-rank-grid"></div>
     </div>
     <div class="panel">
+      <h2>Real Site Awards</h2>
+      <p class="hint">Wins and runner-up finishes from the real Poolean site's own voted awards, straight from that closed ballot. Nothing computed here; this app can't hold an election, it just shows the result.</p>
+      <div id="playerAwardBadges"></div>
+    </div>
+    <div class="panel">
+      <h2>Power Rankings</h2>
+      <p class="hint">The real Poolean site's own per-night power ranking (rank and field-size-normalized percentile), averaged across every party this player has been ranked at, not just the ones with logged film. Frozen historical record, not something this tool computes.</p>
+      <div id="playerPowerRanking"></div>
+    </div>
+    <div class="panel">
       <h2>Personalized Tips</h2>
       <p class="hint">This player's own numbers next to the league average for that same stat, only shown when something actually stands out, not a fixed checklist. Doubles as a real scouting note on whoever you're looking at: their preferred shot zone and a real strength/weakness zone (checked against the league's own FG% from that same distance), plus real matchup-specific splits (a defender who's genuinely held them below their own usual shooting, or a scorer who's shot well above what they normally allow), each needing 5+ real attempts before it counts as a pattern rather than one bad or good night. Several tips carry their own "Watch film" links, straight to the actual games behind that number.</p>
       <div id="playerTips"></div>
@@ -920,6 +930,11 @@
       </label>
       <div id="playerSeasonHistory"></div>
     </div>
+    <div class="panel">
+      <h2>Real Game Record</h2>
+      <p class="hint">This player's actual overall win-loss across every game the real Poolean site has ever recorded, next to the smaller subset re-logged shot-by-shot in this app (the "reviewed" games everything else on this page is built from). Re-logging a game with full shot detail from film is real work; this shows how much of the real record that work has covered so far.</p>
+      <div id="playerRealRecord"></div>
+    </div>
       </div>
     </details>
 
@@ -1077,6 +1092,7 @@
      deployed site (shot-arc/ is a local-only tool, not part of the public repo's served pages),
      where a missing script tag just fails silently -- the labeling panel below checks for
      SHOT_ARC_LABEL_MANIFEST before using it and shows an explanatory message if it's not there. -->
+<script src="poolean-external-data.js"></script>
 <script src="shot-arcs-data.js"></script>
 <script src="shot-arc/labeling-manifest.js"></script>
 <script src="app.js"></script>
