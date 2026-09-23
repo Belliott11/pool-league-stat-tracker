@@ -65,7 +65,7 @@
   <div class="tab-main">
     <div class="panel">
       <h2>Live Game</h2>
-      <p class="hint">A phone scoreboard for party night. Tap a player once for Team A, twice for Team B, then start. Tap +1, +2, +3, or ✗ for a miss. It saves after every tap; defenders and assists can be added later from film.</p>
+      <p class="hint">Keeps score on your phone at party night. Tap a player once for Team A, twice for Team B, then start, and tap +1, +2 or +3 on whoever scores. It saves after every tap. A live game only records the score; log it from film for it to count toward stats.</p>
       <div id="liveGamePanel"></div>
     </div>
 
@@ -465,7 +465,7 @@
     </div>
     <div class="panel-row">
       <div class="panel">
-        <h2>Past Seasons (League)</h2>
+        <h2>Closed Seasons in This App (League)</h2>
         <p class="hint">Full standings for one closed season at a time. Pick a season, and click a name for their page. The Include Past Seasons switch above blends old seasons into the current numbers instead.</p>
         <select id="leagueSeasonSelect" style="margin-bottom:10px"></select>
         <div class="table-scroll">
@@ -765,7 +765,7 @@
     </div>
     <div class="panel">
       <h2>Iron Man <span class="real-data-tag">Real site data</span></h2>
-      <p class="hint">Whoever holds the longest real attendance streak on the roster — consecutive parties attended without missing one.</p>
+      <p class="hint">Everyone tied for the longest streak of real parties attended in a row.</p>
       <div id="ironManPanel"></div>
     </div>
     <div class="panel">
@@ -858,7 +858,7 @@
       <div id="playerPowerRanking"></div>
     </div>
     <div class="panel">
-      <h2>Season by Season <span class="real-data-tag">Real site data</span></h2>
+      <h2>Real Site Seasons <span class="real-data-tag">Real site data</span></h2>
       <p class="hint">This player's line from every season imported from the real site, with the change from the season before. Always shows every season, whichever one is picked at the top.</p>
       <div id="playerRealSeasons"></div>
     </div>
@@ -1015,8 +1015,8 @@
       <div id="playerFlakeStats"></div>
     </div>
     <div class="panel">
-      <h2>Past Seasons</h2>
-      <p class="hint">This player's final numbers from each closed season. Turn on Include Past Seasons to blend them into the current numbers instead.</p>
+      <h2>Closed Seasons in This App</h2>
+      <p class="hint">This player's final numbers from each season closed in this app (Start New Season in Export), from logged games. Real Site Seasons above has the real site's numbers. Turn on Include Past Seasons to blend them into the current numbers instead.</p>
       <label class="ios-switch-row" style="margin-bottom:10px">
         <span>Include Past Seasons</span>
         <span class="ios-switch"><input type="checkbox" id="togglePastSeasonsBtnPlayer"><span class="ios-switch-track"><span class="ios-switch-knob"></span></span></span>

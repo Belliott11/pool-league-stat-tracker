@@ -52,3 +52,4 @@ shot-arc/ft_full_v3/real_*-tracked.json
 shot-arc/ft_full_v3/real_*-hoops.json
 shot-arc/ft_full_v3/mid_frames/
 shot-arc/ft_full_v3/montages/
+__pycache__/
