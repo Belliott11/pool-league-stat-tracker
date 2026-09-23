@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pool League Stat Tracker</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230c1d29'/%3E%3Ccircle cx='50' cy='50' r='27' fill='none' stroke='%2333cbc0' stroke-width='9'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0c1d29">
+<link rel="apple-touch-icon" href="icon-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pool Tracker">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -63,6 +69,7 @@
   <section id="tab-games" class="tab-panel active">
   <div class="tab-body-with-sidebar" id="gamesSidebarWrap">
   <div class="tab-main">
+    <p id="backupReminder" class="backup-reminder" hidden></p>
     <div class="panel">
       <h2>Live Game</h2>
       <p class="hint">Keeps score on your phone at party night. Tap a player once for Team A, twice for Team B, then start, and tap +1, +2 or +3 on whoever scores. It saves after every tap. A live game only records the score; log it from film for it to count toward stats.</p>
@@ -131,6 +138,7 @@
     </div>
 
     <p id="needsReviewSummary" class="hint" style="margin:0 0 10px"></p>
+    <p id="realSiteMismatchSummary" class="hint" style="margin:0 0 10px"></p>
     <p id="shotLocationGapSummary" class="hint" style="margin:0 0 10px"></p>
 
     <div class="inline-form" style="margin-bottom:12px">
@@ -1126,6 +1134,12 @@
     </div>
 
     <div class="panel">
+      <h2>Check Against the Real Site <span class="real-data-tag">Real site data</span></h2>
+      <p class="hint">Each game here with a result (logged from film or scored live) is matched to the real site's game from the same night with the same teams. Games with a different winner, or with no matching real game, are listed so you can fix whichever side is wrong.</p>
+      <div id="realSiteCheck"></div>
+    </div>
+
+    <div class="panel">
       <h2>Review Stopped-Early Games</h2>
       <p class="hint">Flag any game that was cut short, since a partial game throws off per-game panels like best games and power ranking comparisons. Season totals aren't affected.</p>
       <div id="stoppedEarlyReview"></div>
@@ -1190,7 +1204,7 @@
         <button id="startNewSeasonBtn" class="danger-btn">Start New Season</button>
         <button id="resetDataBtn" class="danger-btn">Reset All Data</button>
       </div>
-      <p class="hint" style="margin:8px 0 0">Start New Season clears games, stats and videos but keeps the roster. Download JSON first to keep a backup. Reset All Data clears everything, roster included.</p>
+      <p class="hint" style="margin:8px 0 0">Start New Season closes the current season: its games are kept but archived (see Include Past Seasons), and videos stored in this browser are cleared. Reset All Data deletes everything, roster included. Either one saves a backup file first.</p>
     </div>
   </section>
 

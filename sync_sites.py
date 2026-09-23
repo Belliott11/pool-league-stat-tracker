@@ -4,9 +4,9 @@ sites so a broken page can't get pushed. Run it after every change, before commi
     python sync_sites.py            copy, then check
     python sync_sites.py --check    check only, copy nothing
 
-Copied: app.js, style.css, theme.css and poolean-external-data.js to the viewer; those plus
-index.html to the mail folder (app.js goes there as app.js.txt). The viewer's index.html is its
-own adapted page and is never overwritten.
+Copied: app.js, style.css, theme.css, poolean-external-data.js and sw.js (offline support) to the
+viewer; those plus index.html, the app manifest and its icons to the mail folder (app.js goes there
+as app.js.txt). The viewer's index.html and manifest are its own and are never overwritten.
 
 Checks (any failure exits 1):
   - app.js parses (node --check)
@@ -26,17 +26,17 @@ from pathlib import Path
 HERE = Path(__file__).parent
 VIEWER = HERE.parent / "dashboard-viewer"
 MAIL = HERE.parent / "dashboard-mail"
-SHARED = ["app.js", "style.css", "theme.css", "poolean-external-data.js"]
+SHARED = ["app.js", "style.css", "theme.css", "poolean-external-data.js", "sw.js"]
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
 
 
 def sync():
     for name in SHARED:
         shutil.copyfile(HERE / name, VIEWER / name)
-    for name in SHARED[1:] + ["index.html"]:
+    for name in SHARED[1:] + ["index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"]:
         shutil.copyfile(HERE / name, MAIL / name)
     shutil.copyfile(HERE / "app.js", MAIL / "app.js.txt")
-    print(f"Copied {', '.join(SHARED)} to the viewer, and those plus index.html to the mail folder.")
+    print(f"Copied {', '.join(SHARED)} to the viewer, and those plus index.html, the manifest and icons to the mail folder.")
 
 
 class TagChecker(HTMLParser):
