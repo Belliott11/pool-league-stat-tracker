@@ -78,9 +78,14 @@ def main():
         games.append({"n": game_no, "date": party_date_to_iso(date), "a": team_a.split("|"), "b": team_b.split("|"), "w": winner})
 
     cards = {}
+    names = {}
     if "season_cards" in wb.sheetnames:
         for slug, name, wins, losses, win_pct, power_pct, parties, crowns, best_rank in list(wb["season_cards"].iter_rows(values_only=True))[1:]:
             cards[slug] = {"w": wins, "l": losses, "winPct": win_pct, "powerPct": power_pct, "parties": parties, "crowns": crowns, "bestRank": best_rank}
+            names[slug] = name
+    if "players" in wb.sheetnames:
+        for slug, name, *_ in list(wb["players"].iter_rows(values_only=True))[1:]:
+            names.setdefault(slug, name)
 
     out = Path(__file__).parent / "poolean-external-data.js"
     out.write_text(
@@ -89,12 +94,15 @@ def main():
         "// POOLEAN_RECORD: each player's real overall win-loss across every recorded game.\n"
         "// POOLEAN_TOGETHER / POOLEAN_AGAINST: real pairwise win-loss, as teammates / as opponents.\n"
         "// POOLEAN_SEASON_CARDS: the site's own frozen end-of-season line per player.\n"
+        "// POOLEAN_NAMES: slug -> display name, straight from the real site -- lets every panel below\n"
+        "// show a real player by name even if they aren't (yet) in this browser's own local roster.\n"
         f"const POOLEAN_RANKINGS = {json.dumps(rankings, separators=(',', ':'))};\n"
         f"const POOLEAN_RECORD = {json.dumps(record, separators=(',', ':'))};\n"
         f"const POOLEAN_TOGETHER = {json.dumps(together, separators=(',', ':'))};\n"
         f"const POOLEAN_AGAINST = {json.dumps(against, separators=(',', ':'))};\n"
         f"const POOLEAN_SEASON_CARDS = {json.dumps(cards, separators=(',', ':'))};\n"
-        f"const POOLEAN_GAMES = {json.dumps(games, separators=(',', ':'))};\n",
+        f"const POOLEAN_GAMES = {json.dumps(games, separators=(',', ':'))};\n"
+        f"const POOLEAN_NAMES = {json.dumps(names, separators=(',', ':'))};\n",
         encoding="utf-8",
     )
     print(f"{len(rankings)} party nights, {len(record)} players, {len(together)} pairs together, "
