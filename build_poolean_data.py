@@ -9,6 +9,9 @@ downloads from the site's export feature). Things this app doesn't otherwise hav
   POOLEAN_SEASON_CARDS   the site's own frozen end-of-season line per player (win%, power%, crowns,
                          best rank) -- the authoritative numbers, used instead of recomputing an
                          average by hand so this always matches the site exactly
+  POOLEAN_GAMES          every real game in chronological order (game number, date, both rosters,
+                         winner) -- the raw material for streaks, rivalries, upsets and per-party
+                         recaps, all computed client-side from this one array
 Awards are NOT in this file on purpose -- the export's own README says per-voter ballots are
 deleted when a party closes, and a season still being voted on has no results yet at all. Copy
 AWARD_RESULTS's existing entries in app.js by hand from the site once a season's voting closes,
@@ -68,6 +71,12 @@ def main():
     together = {k: {**v, "gp": v["w"] + v["l"]} for k, v in together.items()}
     against = {k: {**v, "gp": v["w"] + v["l"]} for k, v in against.items()}
 
+    # Raw game log, in play order (GAME_NO) -- the material streaks/rivalries/upsets/party recaps
+    # are all built from client-side, so it only needs storing once here.
+    games = []
+    for game_no, gid, date, created, team_a, team_b, winner, a_size, b_size, live, events in list(wb["games"].iter_rows(values_only=True))[1:]:
+        games.append({"n": game_no, "date": party_date_to_iso(date), "a": team_a.split("|"), "b": team_b.split("|"), "w": winner})
+
     cards = {}
     if "season_cards" in wb.sheetnames:
         for slug, name, wins, losses, win_pct, power_pct, parties, crowns, best_rank in list(wb["season_cards"].iter_rows(values_only=True))[1:]:
@@ -84,11 +93,12 @@ def main():
         f"const POOLEAN_RECORD = {json.dumps(record, separators=(',', ':'))};\n"
         f"const POOLEAN_TOGETHER = {json.dumps(together, separators=(',', ':'))};\n"
         f"const POOLEAN_AGAINST = {json.dumps(against, separators=(',', ':'))};\n"
-        f"const POOLEAN_SEASON_CARDS = {json.dumps(cards, separators=(',', ':'))};\n",
+        f"const POOLEAN_SEASON_CARDS = {json.dumps(cards, separators=(',', ':'))};\n"
+        f"const POOLEAN_GAMES = {json.dumps(games, separators=(',', ':'))};\n",
         encoding="utf-8",
     )
     print(f"{len(rankings)} party nights, {len(record)} players, {len(together)} pairs together, "
-          f"{len(against)} pairs against, {len(cards)} season cards -> {out}")
+          f"{len(against)} pairs against, {len(cards)} season cards, {len(games)} games -> {out}")
 
 
 if __name__ == "__main__":
