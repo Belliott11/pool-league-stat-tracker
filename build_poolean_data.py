@@ -15,7 +15,8 @@ Output globals (all `var`, so the app's season picker can swap them to another s
   POOLEAN_AGAINST        real pairwise win-loss as opponents, key "a|b" (a's record facing b)
   POOLEAN_SEASON_CARDS   the site's own frozen end-of-season line per player (win%, power%, crowns,
                          best rank), used instead of recomputing so it always matches the site
-  POOLEAN_GAMES          every real game in play order (game number, date, both rosters, winner)
+  POOLEAN_GAMES          every real game (game number, date, both rosters, winner), sorted by
+                         date then game number: the site's numbers alone aren't in play order
   POOLEAN_NAMES          slug -> display name, merged across every season
 The single-season globals start out as the latest season's data.
 
@@ -80,6 +81,7 @@ def parse_export(path, year):
         games.append({"n": game_no, "date": party_date_to_iso(date, year), "a": ta, "b": tb, "w": winner})
     together = {k: {**v, "gp": v["w"] + v["l"]} for k, v in together.items()}
     against = {k: {**v, "gp": v["w"] + v["l"]} for k, v in against.items()}
+    games.sort(key=lambda g: (g["date"], g["n"]))
 
     cards, names = {}, {}
     if "season_cards" in wb.sheetnames:
