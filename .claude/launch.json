@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8731"],
       "port": 8731
+    },
+    {
+      "name": "viewer-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8732", "--directory", "../dashboard-viewer"],
+      "port": 8732
     }
   ]
 }
