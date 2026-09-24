@@ -7,7 +7,8 @@ overwrites an old one. The export has no year in it (its README: one season per 
 season year is given on the command line and also used to date every party night.
 
 Output globals (all `var`, so the app's season picker can swap them to another season):
-  POOLEAN_SEASONS        { "2026": {rankings, record, together, against, cards, games, names}, ... }
+  POOLEAN_SEASONS        { "2026": {rankings, record, together, against, cards, games, names,
+                         awards}, ... }
   POOLEAN_SEASON_LIST    season years, oldest first
   POOLEAN_RANKINGS       every party night's power-ranking result (rank/percentile per player)
   POOLEAN_RECORD         each player's real overall win-loss across every game that season
@@ -20,9 +21,13 @@ Output globals (all `var`, so the app's season picker can swap them to another s
   POOLEAN_NAMES          slug -> display name, merged across every season
 The single-season globals start out as the latest season's data.
 
-Awards are NOT in this file on purpose: the export's README says per-voter ballots are deleted
-when a party closes, and a season still being voted on has no results yet. Add a season's awards
-to AWARD_RESULTS in app.js by hand (with its `season` year) once voting closes.
+Awards come from award_results (who won) and award_tally_long (the frozen point tally behind
+it), when both sheets are present -- a season still being voted on has neither yet, so `awards`
+is just missing until it closes; re-run this same import once it does and the results appear,
+nothing to type by hand. This is the closed tally, not the raw per-voter ballots (those live in
+award_ballots_long, deliberately never read here). app.js's own AWARD_LABELS/AWARD_STAT_KEYS/
+AWARD_IS_DUO tables attach a label, closest tracked stat, and duo-or-not to each `key` here, so
+this file only carries the two things it can't derive: the numbers and who they picked.
 
 Usage: python build_poolean_data.py PATH_TO_EXPORT.xlsx --season YEAR
        python build_poolean_data.py --rebuild      (just re-combine the saved season files)
@@ -92,8 +97,24 @@ def parse_export(path, year):
         for slug, name, *_ in list(wb["players"].iter_rows(values_only=True))[1:]:
             names.setdefault(slug, name)
 
+    # Each award's frozen point tally (award_tally_long): borda_points for a single-candidate
+    # award, pair_votes for the two duo awards (best-duo/worst-duo aren't ranked ballots, they're
+    # just the most-named pair). Only the measure app.js's own votedStandings actually uses --
+    # first_choice_votes is in the sheet too but nothing here reads it.
+    awards = []
+    if "award_results" in wb.sheetnames and "award_tally_long" in wb.sheetnames:
+        DUO_KEYS = {"best-duo", "worst-duo"}
+        tally = defaultdict(list)
+        for award, measure, key, name, value in list(wb["award_tally_long"].iter_rows(values_only=True))[1:]:
+            wanted = "pair_votes" if award in DUO_KEYS else "borda_points"
+            if measure == wanted:
+                tally[award].append({"slug": key, "name": name, "points": value})
+        for award, winner_slugs, *_rest in list(wb["award_results"].iter_rows(values_only=True))[1:]:
+            standings = sorted(tally.get(award, []), key=lambda r: -r["points"])
+            awards.append({"key": award, "winners": winner_slugs.split("|"), "votedStandings": standings})
+
     return {"rankings": rankings, "record": record, "together": together, "against": against,
-            "cards": cards, "games": games, "names": names}
+            "cards": cards, "games": games, "names": names, "awards": awards}
 
 
 def rebuild():
@@ -143,7 +164,8 @@ def main():
         replaced = dest.exists()
         dest.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
         print(f"{'Replaced' if replaced else 'Saved'} season {args.season}: {len(data['rankings'])} party nights, "
-              f"{len(data['games'])} games, {len(data['cards'])} season cards -> {dest}")
+              f"{len(data['games'])} games, {len(data['cards'])} season cards, "
+              f"{len(data['awards'])} award{'s' if len(data['awards']) != 1 else ''} -> {dest}")
     rebuild()
 
 

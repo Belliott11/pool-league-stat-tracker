@@ -1,8 +1,17 @@
 """Copies the dashboard's shared files to the viewer and mail folders, then checks all three
 sites so a broken page can't get pushed. Run it after every change, before committing:
 
-    python sync_sites.py            copy, then check
-    python sync_sites.py --check    check only, copy nothing
+    python sync_sites.py                     copy, then check
+    python sync_sites.py --check             check only, copy nothing
+    python sync_sites.py --refresh-viewer-seed [PATH]
+        Also refreshes the friends viewer's baked-in game snapshot (viewer-seed-data.js) from a
+        "Download JSON" export -- either the one at PATH, or (with no PATH) the newest matching
+        file this finds in the Downloads folder, from either the manual Download JSON button
+        (pool-league-data*.json) or an automatic backup (pool-league-backup-*.json). Prints which
+        file it used and how many players/games it has, so a stale pick is obvious before it's
+        committed. Needs node (delegates to dashboard-viewer/scripts/regenerate-seed-data.js, the
+        one place that file's exact format is defined). Off by default: an ordinary sync never
+        touches the viewer's snapshot on its own.
 
 Copied: app.js, style.css, theme.css, poolean-external-data.js and sw.js (offline support) to the
 viewer; those plus index.html, the app manifest and its icons to the mail folder (app.js goes there
@@ -37,6 +46,31 @@ def sync():
         shutil.copyfile(HERE / name, MAIL / name)
     shutil.copyfile(HERE / "app.js", MAIL / "app.js.txt")
     print(f"Copied {', '.join(SHARED)} to the viewer, and those plus index.html, the manifest and icons to the mail folder.")
+
+
+def newest_export():
+    downloads = Path.home() / "Downloads"
+    candidates = list(downloads.glob("pool-league-data*.json")) + list(downloads.glob("pool-league-backup-*.json"))
+    return max(candidates, key=lambda p: p.stat().st_mtime) if candidates else None
+
+
+def refresh_viewer_seed(path):
+    if path is None:
+        path = newest_export()
+        if path is None:
+            print("No pool-league-data*.json or pool-league-backup-*.json found in Downloads. "
+                  "Save a backup first (Games tab), or pass a path: --refresh-viewer-seed PATH")
+            return False
+        print(f"No path given -- using the newest export in Downloads: {path}")
+    if not shutil.which("node"):
+        print("node isn't installed, so the viewer seed can't be regenerated (needs dashboard-viewer/scripts/regenerate-seed-data.js).")
+        return False
+    result = subprocess.run(["node", "scripts/regenerate-seed-data.js", str(path)], cwd=VIEWER, capture_output=True, text=True)
+    print(result.stdout.strip())
+    if result.returncode != 0:
+        print(result.stderr.strip())
+        return False
+    return True
 
 
 class TagChecker(HTMLParser):
@@ -112,9 +146,14 @@ def check():
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="only run the checks, copy nothing")
+    ap.add_argument("--refresh-viewer-seed", nargs="?", const="", metavar="PATH",
+                     help="also refresh the viewer's baked-in game snapshot from PATH, or the newest export in Downloads if PATH is omitted")
     args = ap.parse_args()
     if not args.check:
         sync()
+    if args.refresh_viewer_seed is not None:
+        if not refresh_viewer_seed(Path(args.refresh_viewer_seed) if args.refresh_viewer_seed else None):
+            sys.exit(1)
     sys.exit(0 if check() else 1)
 
 
