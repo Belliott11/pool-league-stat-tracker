@@ -23,8 +23,13 @@ Checks (any failure exits 1):
   - every element app.js grabs without a null check (document.getElementById("x").something)
     exists in each page, unless app.js creates it itself; a missing one crashes the page on load
   - no em dash in sentences the user can read, in the HTML or in app.js strings
+
+Also prints (never fails the check) a note if the viewer's baked-in game snapshot looks behind
+the newest export in Downloads, so a forgotten --refresh-viewer-seed is visible before a push
+instead of friends silently seeing old games.
 """
 import argparse
+import json
 import re
 import shutil
 import subprocess
@@ -52,6 +57,32 @@ def newest_export():
     downloads = Path.home() / "Downloads"
     candidates = list(downloads.glob("pool-league-data*.json")) + list(downloads.glob("pool-league-backup-*.json"))
     return max(candidates, key=lambda p: p.stat().st_mtime) if candidates else None
+
+
+def viewer_seed_game_count():
+    text = (VIEWER / "viewer-seed-data.js").read_text(encoding="utf-8")
+    m = re.search(r'localStorage\.setItem\("poolLeagueStatTracker", JSON\.stringify\((\{.*\})\)\);', text)
+    if not m:
+        return None
+    try:
+        return len(json.loads(m.group(1)).get("games", []))
+    except (json.JSONDecodeError, AttributeError):
+        return None
+
+
+def warn_if_viewer_seed_stale():
+    seed_count = viewer_seed_game_count()
+    newest = newest_export()
+    if seed_count is None or newest is None:
+        return
+    try:
+        newest_count = len(json.loads(newest.read_text(encoding="utf-8")).get("games", []))
+    except (json.JSONDecodeError, OSError):
+        return
+    if newest_count > seed_count:
+        print(f"Note: the viewer's game snapshot has {seed_count} games, but the newest export in "
+              f"Downloads ({newest.name}) has {newest_count}. Run --refresh-viewer-seed before "
+              f"pushing if you want friends to see the latest games.")
 
 
 def refresh_viewer_seed(path):
@@ -140,6 +171,7 @@ def check():
         print("Problems found:\n  " + "\n  ".join(problems))
         return False
     print("All checks passed: app.js parses; all three pages are well-formed with every element the code needs, and no em dashes.")
+    warn_if_viewer_seed_stale()
     return True
 
 

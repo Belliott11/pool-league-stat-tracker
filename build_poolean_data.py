@@ -16,8 +16,10 @@ Output globals (all `var`, so the app's season picker can swap them to another s
   POOLEAN_AGAINST        real pairwise win-loss as opponents, key "a|b" (a's record facing b)
   POOLEAN_SEASON_CARDS   the site's own frozen end-of-season line per player (win%, power%, crowns,
                          best rank), used instead of recomputing so it always matches the site
-  POOLEAN_GAMES          every real game (game number, date, both rosters, winner), sorted by
-                         date then game number: the site's numbers alone aren't in play order
+  POOLEAN_GAMES          every real game (game number, date, both rosters, winner, and its raw
+                         CREATED timestamp), sorted by date, then CREATED, then game number: the
+                         site's own game numbers alone aren't reliable play order, even within a
+                         single day (see this function's own comment)
   POOLEAN_NAMES          slug -> display name, merged across every season
 The single-season globals start out as the latest season's data.
 
@@ -83,10 +85,17 @@ def parse_export(path, year):
             for y in tb:
                 against[f"{x}|{y}"]["w" if a_won else "l"] += 1
                 against[f"{y}|{x}"]["l" if a_won else "w"] += 1
-        games.append({"n": game_no, "date": party_date_to_iso(date, year), "a": ta, "b": tb, "w": winner})
+        # CREATED is a real wall-clock timestamp (when the game's record was made), a better
+        # within-day tiebreak than GAME_NO -- checked against this export directly: one real date
+        # (2026-08-02) has GAME_NO and CREATED disagreeing on order outright, so GAME_NO alone
+        # isn't reliable even within a single day, only across days (see byPlayOrder in app.js).
+        # Not proof CREATED is perfectly correct either (a backfilled game's CREATED is when it
+        # was entered, not necessarily played), just a strictly better signal than an arbitrary
+        # counter. Kept as a plain sortable string (already ISO-ish, e.g. "2026-07-24 23:30:45.561Z").
+        games.append({"n": game_no, "date": party_date_to_iso(date, year), "a": ta, "b": tb, "w": winner, "created": created})
     together = {k: {**v, "gp": v["w"] + v["l"]} for k, v in together.items()}
     against = {k: {**v, "gp": v["w"] + v["l"]} for k, v in against.items()}
-    games.sort(key=lambda g: (g["date"], g["n"]))
+    games.sort(key=lambda g: (g["date"], g["created"] or "", g["n"]))
 
     cards, names = {}, {}
     if "season_cards" in wb.sheetnames:
