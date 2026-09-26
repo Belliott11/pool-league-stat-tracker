@@ -44,6 +44,7 @@
     </nav>
   </div>
 </header>
+<p id="installBanner" class="install-banner" hidden></p>
 
 <main>
 
@@ -814,7 +815,7 @@
       <p class="hint" id="playSearchSummary" style="margin:0 0 10px"></p>
       <div class="table-scroll">
         <table class="matchup-table">
-          <thead><tr><th>Date</th><th>Player</th><th>Play</th><th>Detail</th><th></th></tr></thead>
+          <thead><tr><th class="sticky-col">Player</th><th>Date</th><th>Play</th><th>Detail</th><th></th></tr></thead>
           <tbody id="playSearchBody"></tbody>
         </table>
       </div>
@@ -1238,6 +1239,13 @@
   </section>
 
 </main>
+
+<nav class="bottom-tab-bar">
+  <button class="tab-btn bottom-tab-btn active" data-tab="games"><span class="bottom-tab-icon">🏐</span><span class="bottom-tab-label">Games</span></button>
+  <button class="tab-btn bottom-tab-btn" data-tab="leaderboard"><span class="bottom-tab-icon">📊</span><span class="bottom-tab-label">Leaderboard</span></button>
+  <button class="tab-btn bottom-tab-btn" data-tab="players"><span class="bottom-tab-icon">👥</span><span class="bottom-tab-label">Players</span></button>
+  <button class="tab-btn bottom-tab-btn" data-tab="export"><span class="bottom-tab-icon">📤</span><span class="bottom-tab-label">Export</span></button>
+</nav>
 
 <!-- Optional: only present locally after running shot-arc/extract_frames.py. Absent on the
      deployed site (shot-arc/ is a local-only tool, not part of the public repo's served pages),
