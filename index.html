@@ -75,6 +75,14 @@
       <h2>Live Game</h2>
       <p class="hint">Keeps score on your phone at party night. Anyone here can be picked, including someone brand new -- add them by name first. Tap a player once for Team A, twice for Team B, set the target score (any number, not just 16 or 21), then start, and tap +1, +2 or +3 on whoever scores. It saves after every tap. A live game only records the score; log it from film for it to count toward stats.</p>
       <div id="liveGamePanel"></div>
+      <div id="liveHandoffImportWrap">
+        <p class="hint" style="margin:10px 0 6px">Someone else scored a game on the viewer and sent you a result code? Paste it here.</p>
+        <div class="inline-form">
+          <input type="text" id="liveHandoffImportInput" placeholder="Paste the result code here" style="flex:1;min-width:220px">
+          <button type="button" id="liveHandoffImportBtn" class="secondary-btn">Import</button>
+        </div>
+        <p id="liveHandoffImportMsg" class="hint" style="margin:6px 0 0"></p>
+      </div>
     </div>
 
     <div class="panel">
