@@ -194,7 +194,7 @@
     <div id="gamesList" class="games-list"></div>
   </div>
   <aside class="tab-sidebar">
-    <button type="button" class="icon-btn sidebar-toggle-btn" data-sidebar-toggle="gamesSidebarWrap" title="Collapse/expand sidebar">☰</button>
+    <button type="button" class="icon-btn sidebar-toggle-btn" data-sidebar-toggle="gamesSidebarWrap" title="Collapse/expand sidebar"><span class="sidebar-toggle-label">Quick Reference</span>☰</button>
     <div class="tab-sidebar-inner panel">
       <h4>Standings</h4>
       <div id="gamesSidebarStandings"></div>
@@ -845,7 +845,7 @@
     </details>
 </div>
   <aside class="tab-sidebar">
-    <button type="button" class="icon-btn sidebar-toggle-btn" data-sidebar-toggle="leaderboardSidebarWrap" title="Collapse/expand sidebar">☰</button>
+    <button type="button" class="icon-btn sidebar-toggle-btn" data-sidebar-toggle="leaderboardSidebarWrap" title="Collapse/expand sidebar"><span class="sidebar-toggle-label">Quick Reference</span>☰</button>
     <div class="tab-sidebar-inner panel">
       <h4>Highlights</h4>
       <div id="leaderboardSidebarHighlights"></div>
@@ -1244,13 +1244,16 @@
 
 </main>
 
-<nav class="bottom-tab-bar">
-  <button class="tab-btn bottom-tab-btn active" data-tab="games"><span class="bottom-tab-icon">🏀</span><span class="bottom-tab-label">Games</span></button>
-  <button type="button" class="bottom-tab-btn bottom-tab-live" id="liveNavBtn" title="Jump into a live game, or start one"><span class="bottom-tab-icon">⏱️<span class="bottom-tab-live-dot"></span></span><span class="bottom-tab-label">Live</span></button>
-  <button class="tab-btn bottom-tab-btn" data-tab="leaderboard"><span class="bottom-tab-icon">📊</span><span class="bottom-tab-label">Leaderboard</span></button>
-  <button class="tab-btn bottom-tab-btn" data-tab="players"><span class="bottom-tab-icon">👥</span><span class="bottom-tab-label">Players</span></button>
-  <button class="tab-btn bottom-tab-btn" data-tab="export"><span class="bottom-tab-icon">📤</span><span class="bottom-tab-label">Export</span></button>
-</nav>
+<div class="bottom-fixed-stack">
+  <button type="button" class="live-mini-bar" id="liveMiniBar" hidden></button>
+  <nav class="bottom-tab-bar">
+    <button class="tab-btn bottom-tab-btn active" data-tab="games"><span class="bottom-tab-icon">🏀</span><span class="bottom-tab-label">Games</span></button>
+    <button type="button" class="bottom-tab-btn bottom-tab-live" id="liveNavBtn" title="Jump into a live game, or start one"><span class="bottom-tab-icon">⏱️<span class="bottom-tab-live-dot"></span></span><span class="bottom-tab-label">Live</span></button>
+    <button class="tab-btn bottom-tab-btn" data-tab="leaderboard"><span class="bottom-tab-icon">📊</span><span class="bottom-tab-label">Leaderboard</span></button>
+    <button class="tab-btn bottom-tab-btn" data-tab="players"><span class="bottom-tab-icon">👥</span><span class="bottom-tab-label">Players</span></button>
+    <button class="tab-btn bottom-tab-btn" data-tab="export"><span class="bottom-tab-icon">📤</span><span class="bottom-tab-label">Export</span></button>
+  </nav>
+</div>
 
 <!-- Optional: only present locally after running shot-arc/extract_frames.py. Absent on the
      deployed site (shot-arc/ is a local-only tool, not part of the public repo's served pages),
