@@ -1,6 +1,6 @@
 {
-  "name": "Pool League Dashboard",
-  "short_name": "Pool Tracker",
+  "name": "Poolean Intel",
+  "short_name": "Poolean Intel",
   "description": "Log games, score party nights live, and track the league's stats.",
   "start_url": ".",
   "scope": ".",

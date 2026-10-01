@@ -1,4 +1,4 @@
-# Pool League Stat Tracker
+# Poolean Intel
 
 A static, no-build-step dashboard for entering box score stats and defensive matchups while
 watching game video. Open `index.html` in a browser — no server needed. Data is saved to the
